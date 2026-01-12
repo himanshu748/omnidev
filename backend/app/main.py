@@ -32,13 +32,13 @@ app = FastAPI(
     ## TechTrainingPro API
     
     A modern full-stack application featuring:
-    - 🤖 **AI Chat** - Powered by Google Gemini 2.0
+    - 🤖 **AI Chat** - Powered by OpenAI GPT-4o
     - 🖼️ **Vision Analysis** - Multimodal image understanding
     - 🛠️ **Smart DevOps Agent** - AI-powered cloud management
     - 📍 **Location Services** - Geolocation features
     - 📦 **Cloud Storage** - S3 file operations
     
-    Built with FastAPI + Next.js + Gemini AI
+    Built with FastAPI + Next.js + OpenAI GPT-4o
     """,
     version=settings.app_version,
     lifespan=lifespan,
@@ -77,7 +77,7 @@ async def root():
         "status": "operational",
         "docs": "/docs",
         "features": [
-            "AI Chat with Gemini 2.0",
+            "AI Chat with OpenAI GPT-4o",
             "Vision Analysis",
             "Smart DevOps Agent",
             "Location Services",
@@ -93,8 +93,8 @@ async def health_check():
         "status": "healthy",
         "environment": settings.app_env,
         "services": {
-            "gemini": "configured" if settings.gemini_api_key else "not configured",
+            "gemini": "configured" if settings.openai_api_key else "not configured",
             "aws": "configured" if settings.aws_access_key_id else "not configured",
-            "vision": "configured" if settings.google_vision_api_key else "using gemini"
+            "vision": "configured" if settings.openai_api_key else "not configured"
         }
     }

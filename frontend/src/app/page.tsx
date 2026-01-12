@@ -16,7 +16,7 @@ const features: Feature[] = [
   {
     id: "chat",
     title: "AI Chat",
-    description: "Powered by Gemini 2.0 - multimodal AI assistant",
+    description: "Powered by GPT-4o - multimodal AI assistant",
     icon: "💬",
     href: "/chat",
     gradient: "from-violet-500 to-purple-600",
@@ -32,7 +32,7 @@ const features: Feature[] = [
   {
     id: "vision",
     title: "Vision Lab",
-    description: "Image analysis with Gemini Vision AI",
+    description: "Image analysis with GPT-4o Vision",
     icon: "🖼️",
     href: "/vision",
     gradient: "from-amber-500 to-orange-600",
@@ -121,7 +121,7 @@ export default function Home() {
             <span className="text-white">Reimagined</span>
           </h1>
           <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            A modern full-stack platform powered by <strong className="text-violet-400">Google Gemini 2.0</strong>,
+            A modern full-stack platform powered by <strong className="text-violet-400">OpenAI GPT-4o</strong>,
             featuring intelligent DevOps automation, multimodal AI, and cloud management.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
@@ -142,7 +142,7 @@ export default function Home() {
       <section className="py-8 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap gap-3 justify-center">
-            {["Next.js 15", "FastAPI", "Gemini 2.0", "TailwindCSS", "AWS (boto3)", "TypeScript"].map((tech) => (
+            {["Next.js 15", "FastAPI", "OpenAI GPT-4o", "TailwindCSS", "AWS (boto3)", "TypeScript"].map((tech) => (
               <span
                 key={tech}
                 className="px-4 py-2 rounded-full text-sm border border-[--border] text-gray-400 hover:border-violet-500 hover:text-violet-400 transition-all"
@@ -184,7 +184,7 @@ export default function Home() {
       <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">
-            What&apos;s New in v2.0
+            What&apos;s New in v3.0
           </h2>
           <div className="glass-card p-6 overflow-x-auto">
             <table className="w-full">
@@ -192,15 +192,15 @@ export default function Home() {
                 <tr className="border-b border-[--border]">
                   <th className="text-left py-3 px-4 text-gray-400 font-medium">Feature</th>
                   <th className="text-left py-3 px-4 text-gray-400 font-medium">v1.0 (2024)</th>
-                  <th className="text-left py-3 px-4 text-violet-400 font-medium">v2.0 (2026)</th>
+                  <th className="text-left py-3 px-4 text-violet-400 font-medium">v3.0 (2026)</th>
                 </tr>
               </thead>
               <tbody className="text-sm">
                 {[
                   ["UI Framework", "Tkinter Desktop", "Next.js + React 19"],
-                  ["AI Model", "Cohere (basic)", "Gemini 2.0 (multimodal)"],
+                  ["AI Model", "Cohere (basic)", "OpenAI GPT-4o (multimodal)"],
                   ["DevOps", "Manual boto3 calls", "AI-Powered Agent"],
-                  ["Vision", "Google Vision labels", "Gemini Vision + OCR"],
+                  ["Vision", "Google Vision labels", "GPT-4o Vision + OCR"],
                   ["Deployment", "None", "Docker + CI/CD ready"],
                 ].map(([feature, old, newVal]) => (
                   <tr key={feature} className="border-b border-[--border] hover:bg-[--card-hover]">
@@ -219,7 +219,7 @@ export default function Home() {
       <footer className="py-8 px-6 border-t border-[--border]">
         <div className="max-w-6xl mx-auto text-center text-gray-500 text-sm">
           <p>
-            TechTrainingPro v2.0 — Built with ❤️ using Next.js, FastAPI & Gemini AI
+            TechTrainingPro v3.0 — Built with ❤️ using Next.js, FastAPI & OpenAI GPT-4o
           </p>
           <p className="mt-2">
             Original project by Himanshu Kumar & team (2024) • Modernized 2026
