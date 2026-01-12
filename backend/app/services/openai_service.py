@@ -1,6 +1,6 @@
 """
-TechTrainingPro - OpenAI AI Service
-Provides chat functionality powered by OpenAI GPT-4o
+OmniDev - OpenAI AI Service
+Provides chat functionality powered by OpenAI GPT-4.1 and O3 reasoning models
 """
 
 from openai import AsyncOpenAI
@@ -17,8 +17,9 @@ class OpenAIService:
     
     def __init__(self):
         self.client = None
-        self.model = "gpt-4o"  # Latest flagship model
-        self.vision_model = "gpt-4o"  # GPT-4o has built-in vision
+        self.model = "gpt-4.1"  # Latest flagship model for coding (April 2025)
+        self.vision_model = "gpt-4.1"  # GPT-4.1 has built-in vision
+        self.reasoning_model = "o3"  # O3 for complex reasoning tasks
         self._configure()
     
     def _configure(self):
@@ -28,12 +29,13 @@ class OpenAIService:
     
     def _get_system_prompt(self) -> str:
         """Get the system prompt for the AI assistant"""
-        return """You are TechTrainingPro AI Assistant, a helpful and knowledgeable AI powered by OpenAI GPT-4o.
+        return """You are OmniDev AI Assistant, a powerful and knowledgeable AI powered by OpenAI GPT-4.1.
         
 You help users with:
 - Technical questions and coding assistance
 - Cloud computing concepts (AWS, GCP, Azure)
 - DevOps practices and tools
+- Web scraping and browser automation
 - General knowledge and research
 - Image analysis and vision tasks
 

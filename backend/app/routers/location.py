@@ -1,5 +1,5 @@
 """
-TechTrainingPro - Location Router
+OmniDev - Location Router
 Endpoints for location services
 """
 

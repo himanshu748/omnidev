@@ -1,5 +1,5 @@
 """
-TechTrainingPro - Storage Router
+OmniDev - Storage Router
 Endpoints for S3 file operations
 """
 

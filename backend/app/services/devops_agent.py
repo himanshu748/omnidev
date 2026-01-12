@@ -1,5 +1,5 @@
 """
-TechTrainingPro - Smart DevOps Agent
+OmniDev - Smart DevOps Agent
 AI-powered cloud infrastructure management using Gemini + boto3
 """
 
@@ -26,7 +26,7 @@ class DevOpsAgent:
     - Infrastructure troubleshooting
     """
     
-    SYSTEM_PROMPT = """You are TechTrainingPro DevOps Agent, an AI-powered cloud infrastructure assistant.
+    SYSTEM_PROMPT = """You are OmniDev DevOps Agent, an AI-powered cloud infrastructure assistant.
 
 Your capabilities:
 1. **EC2 Management**: List, launch, stop, start, terminate instances
@@ -154,7 +154,7 @@ Always confirm destructive actions before executing."""
         self, 
         ami_id: str = "ami-0dee22c13ea7a9a67",  # Amazon Linux 2023 in ap-south-1
         instance_type: str = "t2.micro",
-        name: str = "TechTrainingPro-Instance"
+        name: str = "OmniDev-Instance"
     ) -> Dict[str, Any]:
         """Launch a new EC2 instance"""
         if not self.ec2_client:
@@ -320,7 +320,7 @@ If AWS credentials aren't configured, explain how to set them up."""
     def get_capabilities(self) -> Dict[str, Any]:
         """Return agent capabilities and status"""
         return {
-            "name": "TechTrainingPro DevOps Agent",
+            "name": "OmniDev DevOps Agent",
             "version": "2.0.0",
             "ai_enabled": bool(self.model),
             "aws_configured": bool(self.ec2_client),

@@ -87,7 +87,7 @@ export default function ChatPage() {
                     <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <span className="text-xl">←</span>
                         <span className="text-xl font-bold bg-gradient-to-r from-violet-500 to-cyan-500 bg-clip-text text-transparent">
-                            TechTrainingPro
+                            OmniDev
                         </span>
                     </Link>
                     <div className="flex items-center gap-2">

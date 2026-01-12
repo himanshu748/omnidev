@@ -1,5 +1,5 @@
 """
-TechTrainingPro - DevOps Agent Router
+OmniDev - DevOps Agent Router
 Endpoints for the Smart DevOps Agent
 """
 
@@ -58,7 +58,7 @@ async def launch_ec2_instance(request: ActionRequest):
     """Launch a new EC2 instance"""
     ami_id = request.ami_id or "ami-0dee22c13ea7a9a67"
     instance_type = request.instance_type or "t2.micro"
-    name = request.name or "TechTrainingPro-Instance"
+    name = request.name or "OmniDev-Instance"
     
     return devops_agent.launch_ec2_instance(ami_id, instance_type, name)
 

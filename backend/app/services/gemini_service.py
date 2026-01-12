@@ -1,5 +1,5 @@
 """
-TechTrainingPro - Gemini AI Service
+OmniDev - Gemini AI Service
 Provides chat functionality powered by Google Gemini 2.0
 """
 
@@ -34,7 +34,7 @@ class GeminiService:
                     "top_k": 40,
                     "max_output_tokens": 8192,
                 },
-                system_instruction="""You are TechTrainingPro AI Assistant, a helpful and knowledgeable AI.
+                system_instruction="""You are OmniDev AI Assistant, a helpful and knowledgeable AI.
                 
 You help users with:
 - Technical questions and coding assistance

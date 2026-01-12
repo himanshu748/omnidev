@@ -103,7 +103,7 @@ export default function StoragePage() {
                     <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <span className="text-xl">←</span>
                         <span className="text-xl font-bold bg-gradient-to-r from-violet-500 to-cyan-500 bg-clip-text text-transparent">
-                            TechTrainingPro
+                            OmniDev
                         </span>
                     </Link>
                     <div className="flex items-center gap-2">
@@ -134,8 +134,8 @@ export default function StoragePage() {
                                         key={bucket.name}
                                         onClick={() => fetchObjects(bucket.name)}
                                         className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${selectedBucket === bucket.name
-                                                ? "border-violet-500 bg-violet-500/10"
-                                                : "border-[--border] hover:border-violet-500/50"
+                                            ? "border-violet-500 bg-violet-500/10"
+                                            : "border-[--border] hover:border-violet-500/50"
                                             }`}
                                     >
                                         <div className="font-medium">{bucket.name}</div>

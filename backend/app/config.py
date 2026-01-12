@@ -1,5 +1,5 @@
 """
-TechTrainingPro - Configuration Module
+OmniDev - Configuration Module
 Handles environment variables and app settings
 """
 
@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     # App Settings
     app_env: str = "development"
     app_secret_key: str = "change-me-in-production"
-    app_name: str = "TechTrainingPro"
-    app_version: str = "2.0.0"
+    app_name: str = "OmniDev"
+    app_version: str = "4.0.0"
     
     # CORS
     frontend_url: str = "http://localhost:3000"

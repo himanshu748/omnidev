@@ -1,5 +1,5 @@
 """
-TechTrainingPro - Vision Router
+OmniDev - Vision Router
 Endpoints for image analysis and vision features
 """
 

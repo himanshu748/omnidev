@@ -1,5 +1,5 @@
 """
-TechTrainingPro - AI Router
+OmniDev - AI Router
 Endpoints for AI chat functionality
 """
 

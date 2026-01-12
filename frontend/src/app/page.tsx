@@ -16,7 +16,7 @@ const features: Feature[] = [
   {
     id: "chat",
     title: "AI Chat",
-    description: "Powered by GPT-4o - multimodal AI assistant",
+    description: "Powered by GPT-4.1 - cutting-edge AI assistant",
     icon: "💬",
     href: "/chat",
     gradient: "from-violet-500 to-purple-600",
@@ -32,10 +32,18 @@ const features: Feature[] = [
   {
     id: "vision",
     title: "Vision Lab",
-    description: "Image analysis with GPT-4o Vision",
+    description: "Image analysis with GPT-4.1 Vision",
     icon: "🖼️",
     href: "/vision",
     gradient: "from-amber-500 to-orange-600",
+  },
+  {
+    id: "scraper",
+    title: "Web Scraper",
+    description: "Selenium + Playwright browser automation",
+    icon: "🕷️",
+    href: "/scraper",
+    gradient: "from-red-500 to-rose-600",
   },
   {
     id: "storage",
@@ -88,7 +96,7 @@ export default function Home() {
           <div className="flex items-center gap-3">
             <span className="text-2xl">🚀</span>
             <span className="text-xl font-bold bg-gradient-to-r from-violet-500 to-cyan-500 bg-clip-text text-transparent">
-              TechTrainingPro
+              OmniDev
             </span>
           </div>
           <div className="flex items-center gap-4">
@@ -115,14 +123,14 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-5xl md:text-7xl font-bold mb-6">
             <span className="bg-gradient-to-r from-violet-500 via-cyan-500 to-violet-500 bg-clip-text text-transparent animate-gradient">
-              Technical Training
+              OmniDev
             </span>
             <br />
-            <span className="text-white">Reimagined</span>
+            <span className="text-white">All-in-One Developer Platform</span>
           </h1>
           <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-            A modern full-stack platform powered by <strong className="text-violet-400">OpenAI GPT-4o</strong>,
-            featuring intelligent DevOps automation, multimodal AI, and cloud management.
+            A powerful AI platform powered by <strong className="text-violet-400">OpenAI GPT-4.1 & O3</strong>,
+            featuring intelligent DevOps automation, vision analysis, and browser scraping.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Link href="/chat" className="glow-button text-white">
@@ -142,7 +150,7 @@ export default function Home() {
       <section className="py-8 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex flex-wrap gap-3 justify-center">
-            {["Next.js 15", "FastAPI", "OpenAI GPT-4o", "TailwindCSS", "AWS (boto3)", "TypeScript"].map((tech) => (
+            {["Next.js 15", "FastAPI", "GPT-4.1 & O3", "Selenium", "Playwright", "AWS (boto3)", "TypeScript"].map((tech) => (
               <span
                 key={tech}
                 className="px-4 py-2 rounded-full text-sm border border-[--border] text-gray-400 hover:border-violet-500 hover:text-violet-400 transition-all"
@@ -180,49 +188,16 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Comparison Section */}
-      <section className="py-16 px-6">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">
-            What&apos;s New in v3.0
-          </h2>
-          <div className="glass-card p-6 overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-[--border]">
-                  <th className="text-left py-3 px-4 text-gray-400 font-medium">Feature</th>
-                  <th className="text-left py-3 px-4 text-gray-400 font-medium">v1.0 (2024)</th>
-                  <th className="text-left py-3 px-4 text-violet-400 font-medium">v3.0 (2026)</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {[
-                  ["UI Framework", "Tkinter Desktop", "Next.js + React 19"],
-                  ["AI Model", "Cohere (basic)", "OpenAI GPT-4o (multimodal)"],
-                  ["DevOps", "Manual boto3 calls", "AI-Powered Agent"],
-                  ["Vision", "Google Vision labels", "GPT-4o Vision + OCR"],
-                  ["Deployment", "None", "Docker + CI/CD ready"],
-                ].map(([feature, old, newVal]) => (
-                  <tr key={feature} className="border-b border-[--border] hover:bg-[--card-hover]">
-                    <td className="py-3 px-4 text-white">{feature}</td>
-                    <td className="py-3 px-4 text-gray-500">{old}</td>
-                    <td className="py-3 px-4 text-emerald-400">{newVal}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
+
 
       {/* Footer */}
       <footer className="py-8 px-6 border-t border-[--border]">
         <div className="max-w-6xl mx-auto text-center text-gray-500 text-sm">
           <p>
-            TechTrainingPro v3.0 — Built with ❤️ using Next.js, FastAPI & OpenAI GPT-4o
+            OmniDev v4.0 — Built with ❤️ using Next.js, FastAPI & OpenAI GPT-4.1
           </p>
           <p className="mt-2">
-            Original project by Himanshu Kumar & team (2024) • Modernized 2026
+            Original project by Himanshu Kumar (2024) • Modernized 2026
           </p>
         </div>
       </footer>

@@ -1,5 +1,5 @@
 """
-TechTrainingPro - FastAPI Application Entry Point
+OmniDev - FastAPI Application Entry Point
 Modern full-stack application with AI and DevOps capabilities
 """
 
@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import get_settings
-from app.routers import ai, devops, vision, location, storage
+from app.routers import ai, devops, vision, location, storage, scraper
 
 
 settings = get_settings()
@@ -29,16 +29,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.app_name,
     description="""
-    ## TechTrainingPro API
+    ## OmniDev API
     
-    A modern full-stack application featuring:
-    - 🤖 **AI Chat** - Powered by OpenAI GPT-4o
+    An all-in-one AI-powered developer platform featuring:
+    - 🤖 **AI Chat** - Powered by OpenAI GPT-4.1 & O3 reasoning
     - 🖼️ **Vision Analysis** - Multimodal image understanding
     - 🛠️ **Smart DevOps Agent** - AI-powered cloud management
+    - 🕷️ **Web Scraper** - Selenium + Playwright browser automation
     - 📍 **Location Services** - Geolocation features
     - 📦 **Cloud Storage** - S3 file operations
     
-    Built with FastAPI + Next.js + OpenAI GPT-4o
+    Built with FastAPI + Next.js + OpenAI GPT-4.1 & O3
     """,
     version=settings.app_version,
     lifespan=lifespan,
@@ -64,6 +65,7 @@ app.add_middleware(
 app.include_router(ai.router, prefix="/api/ai", tags=["AI & Chat"])
 app.include_router(devops.router, prefix="/api/devops", tags=["DevOps Agent"])
 app.include_router(vision.router, prefix="/api/vision", tags=["Vision Analysis"])
+app.include_router(scraper.router, prefix="/api/scraper", tags=["Web Scraper"])
 app.include_router(location.router, prefix="/api/location", tags=["Location Services"])
 app.include_router(storage.router, prefix="/api/storage", tags=["Cloud Storage"])
 
@@ -77,9 +79,10 @@ async def root():
         "status": "operational",
         "docs": "/docs",
         "features": [
-            "AI Chat with OpenAI GPT-4o",
+            "AI Chat with OpenAI GPT-4.1 & O3",
             "Vision Analysis",
             "Smart DevOps Agent",
+            "Web Scraper (Selenium + Playwright)",
             "Location Services",
             "Cloud Storage (S3)"
         ]
