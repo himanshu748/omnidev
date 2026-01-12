@@ -104,7 +104,7 @@ export default function ChatPage() {
                     {messages.length === 0 ? (
                         <div className="text-center py-20">
                             <div className="text-6xl mb-4">🤖</div>
-                            <h2 className="text-2xl font-bold mb-2">Gemini 2.0 AI Chat</h2>
+                            <h2 className="text-2xl font-bold mb-2">GPT-4o AI Chat</h2>
                             <p className="text-gray-400 max-w-md mx-auto">
                                 Start a conversation! I can help with coding, cloud computing,
                                 technical questions, and more.

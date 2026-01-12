@@ -89,7 +89,7 @@ export default function VisionPage() {
             <div className="max-w-6xl mx-auto px-6 py-8">
                 <div className="text-center mb-8">
                     <h1 className="text-3xl font-bold mb-2">Vision Analysis Lab</h1>
-                    <p className="text-gray-400">Upload an image and let Gemini Vision AI analyze it</p>
+                    <p className="text-gray-400">Upload an image and let GPT-4o Vision analyze it</p>
                 </div>
 
                 <div className="grid lg:grid-cols-2 gap-8">
@@ -199,7 +199,7 @@ export default function VisionPage() {
 
                 {/* Features */}
                 <div className="mt-12">
-                    <h2 className="text-xl font-semibold mb-6 text-center">Powered by Gemini Vision</h2>
+                    <h2 className="text-xl font-semibold mb-6 text-center">Powered by GPT-4o Vision</h2>
                     <div className="grid md:grid-cols-4 gap-4">
                         {[
                             { icon: "🔍", title: "Scene Analysis", desc: "Understand image context and content" },
