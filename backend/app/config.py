@@ -21,19 +21,13 @@ class Settings(BaseSettings):
     frontend_url: str = "http://localhost:3000"
     backend_url: str = "http://localhost:8000"
     
-    # Google Gemini API
-    gemini_api_key: Optional[str] = None
-    
-    # OpenAI API
+    # OpenAI API (GPT-5 Nano)
     openai_api_key: Optional[str] = None
     
     # AWS Configuration
     aws_access_key_id: Optional[str] = None
     aws_secret_access_key: Optional[str] = None
     aws_default_region: str = "ap-south-1"
-    
-    # Google Cloud Vision API
-    google_vision_api_key: Optional[str] = None
     
     # Email Service
     resend_api_key: Optional[str] = None

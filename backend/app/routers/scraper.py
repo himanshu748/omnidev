@@ -1,13 +1,13 @@
 """
 OmniDev - Web Scraper Router
-API endpoints for web scraping with Selenium and Playwright
+API endpoints for web scraping with Playwright
 """
 
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, HttpUrl
-from typing import Optional, Literal
+from pydantic import BaseModel
+from typing import Optional
 
-from app.services.scraper_service import scraper_service, ScraperEngine
+from app.services.scraper_service import scraper_service
 
 
 router = APIRouter()
@@ -16,7 +16,6 @@ router = APIRouter()
 class ScrapeRequest(BaseModel):
     """Request model for scraping a URL"""
     url: str
-    engine: Literal["playwright", "selenium"] = "playwright"
     wait_time_ms: int = 2000
     capture_screenshot: bool = False
     extract_selector: Optional[str] = None
@@ -38,31 +37,26 @@ class ScrapeResponse(BaseModel):
 class ScreenshotRequest(BaseModel):
     """Request model for taking a screenshot"""
     url: str
-    engine: Literal["playwright", "selenium"] = "playwright"
 
 
 class StatusResponse(BaseModel):
     """Response model for scraper status"""
     playwright: dict
-    selenium: dict
 
 
 @router.post("/scrape", response_model=ScrapeResponse)
 async def scrape_url(request: ScrapeRequest):
     """
-    Scrape a URL using Selenium or Playwright
+    Scrape a URL using Playwright
     
     - **url**: The URL to scrape
-    - **engine**: 'playwright' (recommended) or 'selenium'
     - **wait_time_ms**: Time to wait for page to load (default: 2000ms)
     - **capture_screenshot**: Whether to capture a screenshot (base64)
     - **extract_selector**: CSS selector to extract specific content
     """
     try:
-        engine = ScraperEngine(request.engine)
         result = await scraper_service.scrape(
             url=request.url,
-            engine=engine,
             wait_time_ms=request.wait_time_ms,
             capture_screenshot=request.capture_screenshot,
             extract_selector=request.extract_selector,
@@ -89,14 +83,9 @@ async def take_screenshot(request: ScreenshotRequest):
     Take a screenshot of a URL
     
     - **url**: The URL to screenshot
-    - **engine**: 'playwright' (recommended) or 'selenium'
     """
     try:
-        engine = ScraperEngine(request.engine)
-        result = await scraper_service.take_screenshot(
-            url=request.url,
-            engine=engine,
-        )
+        result = await scraper_service.take_screenshot(url=request.url)
         
         return ScrapeResponse(
             success=result.success,
@@ -116,9 +105,9 @@ async def take_screenshot(request: ScreenshotRequest):
 @router.get("/status", response_model=StatusResponse)
 async def get_scraper_status():
     """
-    Get the status of available scraper engines
+    Get the status of Playwright scraper engine
     
-    Returns information about Playwright and Selenium availability
+    Returns information about Playwright availability
     """
     status = scraper_service.get_status()
     return StatusResponse(**status)

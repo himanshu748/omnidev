@@ -1,20 +1,13 @@
 """
 OmniDev - Web Scraping Service
-Provides browser automation with Selenium and Playwright for web scraping
+Provides browser automation with Playwright for web scraping
 """
 
 import asyncio
 import base64
-from typing import Optional, Dict, Any, Literal
+from typing import Optional, Dict, Any
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
-from enum import Enum
-
-
-class ScraperEngine(str, Enum):
-    """Available scraping engines"""
-    SELENIUM = "selenium"
-    PLAYWRIGHT = "playwright"
 
 
 @dataclass
@@ -32,12 +25,11 @@ class ScrapeResult:
 
 
 class ScraperService:
-    """Web scraping service with Selenium and Playwright support"""
+    """Web scraping service with Playwright support"""
     
     def __init__(self):
         self._playwright = None
         self._browser = None
-        self._selenium_driver = None
     
     async def _init_playwright(self):
         """Initialize Playwright browser"""
@@ -59,25 +51,7 @@ class ScraperService:
                 raise RuntimeError(f"Failed to initialize Playwright: {e}")
         return self._browser
     
-    def _init_selenium(self):
-        """Initialize Selenium with undetected-chromedriver"""
-        if self._selenium_driver is None:
-            try:
-                import undetected_chromedriver as uc
-                options = uc.ChromeOptions()
-                options.add_argument('--headless=new')
-                options.add_argument('--disable-gpu')
-                options.add_argument('--no-sandbox')
-                options.add_argument('--disable-dev-shm-usage')
-                options.add_argument('--disable-blink-features=AutomationControlled')
-                options.add_argument('--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
-                
-                self._selenium_driver = uc.Chrome(options=options)
-            except Exception as e:
-                raise RuntimeError(f"Failed to initialize Selenium: {e}")
-        return self._selenium_driver
-    
-    async def scrape_with_playwright(
+    async def scrape(
         self,
         url: str,
         wait_for_selector: Optional[str] = None,
@@ -178,126 +152,9 @@ class ScraperService:
                 engine="playwright",
             )
     
-    def scrape_with_selenium(
-        self,
-        url: str,
-        wait_time_sec: int = 3,
-        capture_screenshot: bool = False,
-        extract_selector: Optional[str] = None,
-    ) -> ScrapeResult:
-        """
-        Scrape a URL using Selenium with undetected-chromedriver
-        
-        Args:
-            url: URL to scrape
-            wait_time_sec: Time to wait for page load in seconds
-            capture_screenshot: Whether to capture a screenshot
-            extract_selector: CSS selector to extract specific content
-            
-        Returns:
-            ScrapeResult with scraped data
-        """
-        import time
-        start_time = time.time()
-        
-        try:
-            driver = self._init_selenium()
-            
-            # Navigate to URL
-            driver.get(url)
-            time.sleep(wait_time_sec)
-            
-            # Get page content
-            title = driver.title
-            
-            if extract_selector:
-                from selenium.webdriver.common.by import By
-                try:
-                    element = driver.find_element(By.CSS_SELECTOR, extract_selector)
-                    html = element.get_attribute('innerHTML')
-                except:
-                    html = driver.page_source
-            else:
-                html = driver.page_source
-            
-            # Parse with BeautifulSoup
-            soup = BeautifulSoup(html, 'lxml')
-            text = soup.get_text(separator='\n', strip=True)
-            
-            # Capture screenshot if requested
-            screenshot_b64 = None
-            if capture_screenshot:
-                screenshot_bytes = driver.get_screenshot_as_png()
-                screenshot_b64 = base64.b64encode(screenshot_bytes).decode('utf-8')
-            
-            load_time = int((time.time() - start_time) * 1000)
-            
-            return ScrapeResult(
-                success=True,
-                url=url,
-                title=title,
-                html=html,
-                text=text,
-                screenshot=screenshot_b64,
-                engine="selenium",
-                load_time_ms=load_time,
-            )
-            
-        except Exception as e:
-            return ScrapeResult(
-                success=False,
-                url=url,
-                title="",
-                html="",
-                text="",
-                error=str(e),
-                engine="selenium",
-            )
-    
-    async def scrape(
-        self,
-        url: str,
-        engine: ScraperEngine = ScraperEngine.PLAYWRIGHT,
-        wait_time_ms: int = 2000,
-        capture_screenshot: bool = False,
-        extract_selector: Optional[str] = None,
-    ) -> ScrapeResult:
-        """
-        Scrape a URL using the specified engine
-        
-        Args:
-            url: URL to scrape
-            engine: Scraping engine to use (playwright or selenium)
-            wait_time_ms: Time to wait for page load
-            capture_screenshot: Whether to capture a screenshot
-            extract_selector: CSS selector to extract specific content
-            
-        Returns:
-            ScrapeResult with scraped data
-        """
-        if engine == ScraperEngine.PLAYWRIGHT:
-            return await self.scrape_with_playwright(
-                url=url,
-                wait_time_ms=wait_time_ms,
-                capture_screenshot=capture_screenshot,
-                extract_selector=extract_selector,
-            )
-        else:
-            # Run Selenium in a thread pool since it's synchronous
-            loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(
-                None,
-                lambda: self.scrape_with_selenium(
-                    url=url,
-                    wait_time_sec=wait_time_ms // 1000,
-                    capture_screenshot=capture_screenshot,
-                    extract_selector=extract_selector,
-                )
-            )
-    
-    async def take_screenshot(self, url: str, engine: ScraperEngine = ScraperEngine.PLAYWRIGHT) -> ScrapeResult:
+    async def take_screenshot(self, url: str) -> ScrapeResult:
         """Take a screenshot of a URL"""
-        return await self.scrape(url=url, engine=engine, capture_screenshot=True)
+        return await self.scrape(url=url, capture_screenshot=True)
     
     async def cleanup(self):
         """Cleanup browser resources"""
@@ -307,14 +164,10 @@ class ScraperService:
         if self._playwright:
             await self._playwright.stop()
             self._playwright = None
-        if self._selenium_driver:
-            self._selenium_driver.quit()
-            self._selenium_driver = None
     
     def get_status(self) -> Dict[str, Any]:
-        """Get the status of scraper engines"""
+        """Get the status of scraper engine"""
         playwright_available = False
-        selenium_available = False
         
         try:
             import playwright
@@ -322,20 +175,10 @@ class ScraperService:
         except ImportError:
             pass
         
-        try:
-            import undetected_chromedriver
-            selenium_available = True
-        except ImportError:
-            pass
-        
         return {
             "playwright": {
                 "available": playwright_available,
                 "browser_active": self._browser is not None,
-            },
-            "selenium": {
-                "available": selenium_available,
-                "driver_active": self._selenium_driver is not None,
             }
         }
 

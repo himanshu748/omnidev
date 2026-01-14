@@ -1,12 +1,13 @@
 """
 OmniDev - Location Router
-Endpoints for location services
+Endpoints for location services with optional Google Maps API support
 """
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
 import geocoder
+import httpx
 
 router = APIRouter()
 
@@ -18,13 +19,90 @@ class LocationResponse(BaseModel):
     state: Optional[str]
     country: Optional[str]
     address: Optional[str]
-    raw: Optional[dict]
+    raw: Optional[dict] = None
+
+
+async def google_geocode(address: str, api_key: str) -> dict:
+    """Use Google Geocoding API for better results"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            "https://maps.googleapis.com/maps/api/geocode/json",
+            params={"address": address, "key": api_key}
+        )
+        data = response.json()
+        
+        if data.get("status") == "OK" and data.get("results"):
+            result = data["results"][0]
+            location = result["geometry"]["location"]
+            
+            # Extract address components
+            components = {}
+            for comp in result.get("address_components", []):
+                types = comp.get("types", [])
+                if "locality" in types:
+                    components["city"] = comp["long_name"]
+                elif "administrative_area_level_1" in types:
+                    components["state"] = comp["long_name"]
+                elif "country" in types:
+                    components["country"] = comp["long_name"]
+            
+            return {
+                "latitude": location["lat"],
+                "longitude": location["lng"],
+                "address": result.get("formatted_address"),
+                "city": components.get("city"),
+                "state": components.get("state"),
+                "country": components.get("country"),
+                "raw": result
+            }
+        raise Exception(f"Google Geocoding failed: {data.get('status')}")
+
+
+async def google_reverse_geocode(lat: float, lng: float, api_key: str) -> dict:
+    """Use Google Reverse Geocoding API"""
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            "https://maps.googleapis.com/maps/api/geocode/json",
+            params={"latlng": f"{lat},{lng}", "key": api_key}
+        )
+        data = response.json()
+        
+        if data.get("status") == "OK" and data.get("results"):
+            result = data["results"][0]
+            
+            # Extract address components
+            components = {}
+            for comp in result.get("address_components", []):
+                types = comp.get("types", [])
+                if "locality" in types:
+                    components["city"] = comp["long_name"]
+                elif "administrative_area_level_1" in types:
+                    components["state"] = comp["long_name"]
+                elif "country" in types:
+                    components["country"] = comp["long_name"]
+                elif "postal_code" in types:
+                    components["postal"] = comp["long_name"]
+                elif "sublocality" in types or "neighborhood" in types:
+                    components["neighborhood"] = comp["long_name"]
+            
+            return {
+                "address": result.get("formatted_address"),
+                "city": components.get("city"),
+                "state": components.get("state"),
+                "country": components.get("country"),
+                "postal": components.get("postal"),
+                "neighborhood": components.get("neighborhood"),
+                "raw": result
+            }
+        raise Exception(f"Google Reverse Geocoding failed: {data.get('status')}")
 
 
 @router.get("/current", response_model=LocationResponse)
-async def get_current_location():
+async def get_current_location(api_key: Optional[str] = None):
     """
     Get current location based on IP address
+    
+    - **api_key**: Optional Google Maps API key for better results
     
     Note: This uses IP-based geolocation which may not be perfectly accurate
     """
@@ -43,19 +121,30 @@ async def get_current_location():
             address=g.address,
             raw=g.json
         )
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/reverse")
-async def reverse_geocode(lat: float, lng: float):
+async def reverse_geocode(lat: float, lng: float, api_key: Optional[str] = None):
     """
     Get address from coordinates (reverse geocoding)
     
     - **lat**: Latitude
     - **lng**: Longitude
+    - **api_key**: Optional Google Maps API key for better results
     """
     try:
+        # Try Google API if key provided
+        if api_key:
+            try:
+                return await google_reverse_geocode(lat, lng, api_key)
+            except Exception as e:
+                print(f"Google API failed, falling back to OSM: {e}")
+        
+        # Fall back to OpenStreetMap
         g = geocoder.osm([lat, lng], method='reverse')
         
         if not g.ok:
@@ -70,18 +159,30 @@ async def reverse_geocode(lat: float, lng: float):
             "neighborhood": g.neighborhood,
             "raw": g.json
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/search")
-async def search_location(query: str):
+async def search_location(query: str, api_key: Optional[str] = None):
     """
     Search for a location by name
     
     - **query**: Location name (e.g., "Mumbai, India")
+    - **api_key**: Optional Google Maps API key for better results
     """
     try:
+        # Try Google API if key provided
+        if api_key:
+            try:
+                result = await google_geocode(query, api_key)
+                return {"query": query, **result}
+            except Exception as e:
+                print(f"Google API failed, falling back to OSM: {e}")
+        
+        # Fall back to OpenStreetMap
         g = geocoder.osm(query)
         
         if not g.ok:
@@ -97,19 +198,34 @@ async def search_location(query: str):
             "country": g.country,
             "raw": g.json
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/nearby")
-async def get_nearby_places(lat: float, lng: float):
+async def get_nearby_places(lat: float, lng: float, api_key: Optional[str] = None):
     """
     Get nearby places for given coordinates
     
     - **lat**: Latitude
     - **lng**: Longitude
+    - **api_key**: Optional Google Maps API key
     """
     try:
+        # Try Google API if key provided
+        if api_key:
+            try:
+                result = await google_reverse_geocode(lat, lng, api_key)
+                return {
+                    "coordinates": {"lat": lat, "lng": lng},
+                    **result,
+                    "nearby": {}
+                }
+            except Exception as e:
+                print(f"Google API failed, falling back to OSM: {e}")
+        
         g = geocoder.osm([lat, lng], method='reverse')
         
         if not g.ok:
@@ -132,6 +248,8 @@ async def get_nearby_places(lat: float, lng: float):
                 "locality": address_data.get('locality'),
             }
         }
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -141,7 +259,13 @@ async def location_status():
     """Check Location service status"""
     return {
         "service": "Location Services",
-        "provider": "OpenStreetMap (via geocoder)",
+        "provider": "OpenStreetMap + Google Maps (optional)",
         "status": "operational",
-        "capabilities": ["ip-location", "reverse-geocoding", "location-search", "nearby-places"]
+        "capabilities": [
+            "ip-location",
+            "reverse-geocoding", 
+            "location-search", 
+            "nearby-places",
+            "google-api-support"
+        ]
     }

@@ -6,8 +6,7 @@ pydantic==2.5.3
 pydantic-settings==2.1.0
 python-multipart==0.0.6
 
-# AI & ML
-google-generativeai==0.8.0
+# AI & ML (OpenAI GPT-5 Nano)
 openai>=1.40.0
 Pillow==10.2.0
 
@@ -28,9 +27,7 @@ aiofiles==23.2.1
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 
-# Web Scraping
-selenium>=4.15.0
-undetected-chromedriver>=3.5.0
+# Web Scraping (Playwright only - better async, stealth, and performance)
 playwright>=1.40.0
 beautifulsoup4>=4.12.0
 lxml>=5.0.0

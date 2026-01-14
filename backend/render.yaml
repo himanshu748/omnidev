@@ -1,0 +1,28 @@
+# Render Blueprint for OmniDev Backend
+# Deploy at: https://render.com/deploy
+
+services:
+  - type: web
+    name: omnidev-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: APP_ENV
+        value: production
+      - key: FRONTEND_URL
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_DEFAULT_REGION
+        value: ap-south-1
+      - key: GEMINI_API_KEY
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true

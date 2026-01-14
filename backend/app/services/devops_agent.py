@@ -1,13 +1,13 @@
 """
 OmniDev - Smart DevOps Agent
-AI-powered cloud infrastructure management using Gemini + boto3
+AI-powered cloud infrastructure management using OpenAI GPT-5 Nano + boto3
 """
 
 import json
 import boto3
 from botocore.exceptions import ClientError, NoCredentialsError
 from typing import Dict, Any, List, Optional
-import google.generativeai as genai
+from openai import AsyncOpenAI
 
 from app.config import get_settings
 
@@ -55,40 +55,40 @@ Format your responses nicely with markdown. Use tables, bullet points, and code 
 If credentials aren't configured, explain how to set them up.
 Always confirm destructive actions before executing."""
     
-    def __init__(self):
-        self.model = None
+    def __init__(self, aws_access_key: str = None, aws_secret_key: str = None, aws_region: str = None):
+        self.client = None
+        self.model = "gpt-5-nano-2025-08-07"
         self.ec2_client = None
         self.s3_client = None
+        self._user_aws_key = aws_access_key
+        self._user_aws_secret = aws_secret_key
+        self._user_aws_region = aws_region or "ap-south-1"
         self._configure()
     
     def _configure(self):
         """Configure AI model and AWS clients"""
-        # Configure Gemini
-        if settings.gemini_api_key:
-            genai.configure(api_key=settings.gemini_api_key)
-            self.model = genai.GenerativeModel(
-                model_name="gemini-2.0-flash-exp",
-                generation_config={
-                    "temperature": 0.3,
-                    "max_output_tokens": 4096,
-                },
-                system_instruction=self.SYSTEM_PROMPT
-            )
+        # Configure OpenAI
+        if settings.openai_api_key:
+            self.client = AsyncOpenAI(api_key=settings.openai_api_key)
         
-        # Configure AWS clients
+        # Configure AWS clients - prefer user-provided credentials
+        aws_key = self._user_aws_key or settings.aws_access_key_id
+        aws_secret = self._user_aws_secret or settings.aws_secret_access_key
+        aws_region = self._user_aws_region or settings.aws_default_region
+        
         try:
-            if settings.aws_access_key_id and settings.aws_secret_access_key:
+            if aws_key and aws_secret:
                 self.ec2_client = boto3.client(
                     'ec2',
-                    aws_access_key_id=settings.aws_access_key_id,
-                    aws_secret_access_key=settings.aws_secret_access_key,
-                    region_name=settings.aws_default_region
+                    aws_access_key_id=aws_key,
+                    aws_secret_access_key=aws_secret,
+                    region_name=aws_region
                 )
                 self.s3_client = boto3.client(
                     's3',
-                    aws_access_key_id=settings.aws_access_key_id,
-                    aws_secret_access_key=settings.aws_secret_access_key,
-                    region_name=settings.aws_default_region
+                    aws_access_key_id=aws_key,
+                    aws_secret_access_key=aws_secret,
+                    region_name=aws_region
                 )
         except Exception as e:
             print(f"AWS configuration error: {e}")
@@ -237,9 +237,9 @@ Always confirm destructive actions before executing."""
         2. Execute appropriate AWS operations
         3. Format and return the results
         """
-        if not self.model:
+        if not self.client:
             return {
-                "response": "⚠️ AI not configured. Please add GEMINI_API_KEY to .env",
+                "response": "⚠️ AI not configured. Please add OPENAI_API_KEY to .env",
                 "actions": []
             }
         
@@ -247,7 +247,7 @@ Always confirm destructive actions before executing."""
         context = self._build_context()
         
         # Create the prompt
-        prompt = f"""User request: {user_message}
+        user_prompt = f"""User request: {user_message}
 
 Current AWS Context:
 {json.dumps(context, indent=2)}
@@ -260,10 +260,18 @@ Based on the user's request and the current context:
 If AWS credentials aren't configured, explain how to set them up."""
         
         try:
-            response = await self.model.generate_content_async(prompt)
+            response = await self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": self.SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.3,
+                max_tokens=4096,
+            )
             
             return {
-                "response": response.text,
+                "response": response.choices[0].message.content,
                 "context": context,
                 "actions": self._extract_suggested_actions(user_message)
             }
@@ -322,7 +330,8 @@ If AWS credentials aren't configured, explain how to set them up."""
         return {
             "name": "OmniDev DevOps Agent",
             "version": "2.0.0",
-            "ai_enabled": bool(self.model),
+            "ai_enabled": bool(self.client),
+            "ai_model": self.model,
             "aws_configured": bool(self.ec2_client),
             "region": settings.aws_default_region,
             "capabilities": [

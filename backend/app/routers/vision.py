@@ -1,6 +1,6 @@
 """
 OmniDev - Vision Router
-Endpoints for image analysis and vision features
+Endpoints for image analysis and vision features using OpenAI GPT-5 Nano Vision
 """
 
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
@@ -23,7 +23,7 @@ async def analyze_image(
     prompt: Optional[str] = Form("Describe this image in detail. Include objects, colors, setting, and any text visible.")
 ):
     """
-    Analyze an uploaded image using Gemini Vision
+    Analyze an uploaded image using OpenAI GPT-5 Nano Vision
     
     - **file**: Image file (JPEG, PNG, WebP)
     - **prompt**: Custom analysis prompt (optional)
@@ -39,7 +39,7 @@ async def analyze_image(
     # Read file content
     image_data = await file.read()
     
-    # Analyze with Gemini
+    # Analyze with OpenAI
     result = await openai_service.analyze_image(image_data, prompt)
     
     return AnalysisResponse(analysis=result)
@@ -93,7 +93,7 @@ async def vision_status():
     """Check Vision service status"""
     return {
         "service": "OpenAI Vision",
-        "model": "gpt-4o",
+        "model": "gpt-5-nano-2025-08-07",
         "status": "configured" if openai_service.client else "not configured",
         "capabilities": ["image-analysis", "ocr", "object-detection", "custom-prompts"]
     }

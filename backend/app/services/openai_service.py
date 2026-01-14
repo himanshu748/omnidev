@@ -1,6 +1,6 @@
 """
 OmniDev - OpenAI AI Service
-Provides chat functionality powered by OpenAI GPT-4.1 and O3 reasoning models
+Provides chat functionality powered by OpenAI GPT-5 Nano
 """
 
 from openai import AsyncOpenAI
@@ -17,9 +17,9 @@ class OpenAIService:
     
     def __init__(self):
         self.client = None
-        self.model = "gpt-4.1"  # Latest flagship model for coding (April 2025)
-        self.vision_model = "gpt-4.1"  # GPT-4.1 has built-in vision
-        self.reasoning_model = "o3"  # O3 for complex reasoning tasks
+        self.model = "gpt-5-nano-2025-08-07"  # Latest efficient model
+        self.vision_model = "gpt-5-nano-2025-08-07"  # GPT-5 Nano has built-in vision
+        self.reasoning_model = "gpt-5-nano-2025-08-07"  # For complex reasoning tasks
         self._configure()
     
     def _configure(self):
@@ -29,7 +29,7 @@ class OpenAIService:
     
     def _get_system_prompt(self) -> str:
         """Get the system prompt for the AI assistant"""
-        return """You are OmniDev AI Assistant, a powerful and knowledgeable AI powered by OpenAI GPT-4.1.
+        return """You are OmniDev AI Assistant, a powerful and knowledgeable AI powered by OpenAI GPT-5 Nano.
         
 You help users with:
 - Technical questions and coding assistance

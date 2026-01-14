@@ -32,14 +32,14 @@ app = FastAPI(
     ## OmniDev API
     
     An all-in-one AI-powered developer platform featuring:
-    - 🤖 **AI Chat** - Powered by OpenAI GPT-4.1 & O3 reasoning
-    - 🖼️ **Vision Analysis** - Multimodal image understanding
+    - 🤖 **AI Chat** - Powered by OpenAI GPT-5 Nano
+    - 🖼️ **Vision Analysis** - Multimodal image understanding with GPT-5 Nano Vision
     - 🛠️ **Smart DevOps Agent** - AI-powered cloud management
-    - 🕷️ **Web Scraper** - Selenium + Playwright browser automation
+    - 🕷️ **Web Scraper** - Playwright browser automation
     - 📍 **Location Services** - Geolocation features
     - 📦 **Cloud Storage** - S3 file operations
     
-    Built with FastAPI + Next.js + OpenAI GPT-4.1 & O3
+    Built with FastAPI + Next.js + OpenAI GPT-5 Nano
     """,
     version=settings.app_version,
     lifespan=lifespan,
@@ -79,10 +79,10 @@ async def root():
         "status": "operational",
         "docs": "/docs",
         "features": [
-            "AI Chat with OpenAI GPT-4.1 & O3",
-            "Vision Analysis",
+            "AI Chat with OpenAI GPT-5 Nano",
+            "Vision Analysis with GPT-5 Nano",
             "Smart DevOps Agent",
-            "Web Scraper (Selenium + Playwright)",
+            "Web Scraper (Playwright)",
             "Location Services",
             "Cloud Storage (S3)"
         ]
@@ -96,8 +96,8 @@ async def health_check():
         "status": "healthy",
         "environment": settings.app_env,
         "services": {
-            "gemini": "configured" if settings.openai_api_key else "not configured",
+            "openai": "configured" if settings.openai_api_key else "not configured",
             "aws": "configured" if settings.aws_access_key_id else "not configured",
-            "vision": "configured" if settings.openai_api_key else "not configured"
+            "scraper": "available"
         }
     }
