@@ -2,11 +2,11 @@
     "rewrites": [
         {
             "source": "/api/:path*",
-            "destination": "https://omnidev-api.onrender.com/api/:path*"
+            "destination": "https://omnidev-qbiv.onrender.com/api/:path*"
         },
         {
             "source": "/health",
-            "destination": "https://omnidev-api.onrender.com/health"
+            "destination": "https://omnidev-qbiv.onrender.com/health"
         }
     ]
 }
