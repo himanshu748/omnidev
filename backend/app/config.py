@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     app_env: str = "development"
     app_secret_key: str = "change-me-in-production"
     app_name: str = "OmniDev"
-    app_version: str = "4.0.0"
+    app_version: str = "1.0.0"
     
     # CORS
     frontend_url: str = "http://localhost:3000"

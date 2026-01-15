@@ -1,12 +1,30 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useSettings } from "../hooks/useSettings";
+import { createClient } from "../lib/supabase";
 
 export default function SettingsPage() {
+    const router = useRouter();
+    const supabase = createClient();
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const { settings, isLoaded, saveSettings, clearSettings, isAiConfigured, isAwsConfigured, isLocationConfigured } = useSettings();
     const [saved, setSaved] = useState(false);
+
+    // Auth check - redirect to login if not authenticated
+    useEffect(() => {
+        const checkAuth = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                router.push('/auth/login?redirect=/settings');
+            } else {
+                setIsAuthenticated(true);
+            }
+        };
+        checkAuth();
+    }, [router, supabase.auth]);
 
     // Local state for form
     const [openaiKey, setOpenaiKey] = useState("");
@@ -52,6 +70,18 @@ export default function SettingsPage() {
         "eu-west-1", "eu-west-2", "eu-central-1",
         "ap-south-1", "ap-southeast-1", "ap-southeast-2", "ap-northeast-1"
     ];
+
+    // Show loading while checking auth
+    if (isAuthenticated === null) {
+        return (
+            <main className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="text-4xl mb-4">🔐</div>
+                    <p className="text-gray-400">Verifying authentication...</p>
+                </div>
+            </main>
+        );
+    }
 
     return (
         <main className="min-h-screen">

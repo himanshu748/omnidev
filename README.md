@@ -1,4 +1,4 @@
-# OmniDev v4.0
+# OmniDev v1.0
 
 > **All-in-One AI Developer Platform Powered by OpenAI GPT-5 Nano**
 

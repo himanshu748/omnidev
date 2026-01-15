@@ -49,7 +49,7 @@ export default function ChatPage() {
                 content: m.content,
             }));
 
-            const response = await fetch("http://localhost:8000/api/ai/chat", {
+            const response = await fetch("/api/ai/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

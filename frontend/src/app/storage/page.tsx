@@ -28,7 +28,7 @@ export default function StoragePage() {
 
     const fetchBuckets = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/storage/buckets");
+            const res = await fetch("/api/storage/buckets");
             const data = await res.json();
             setBuckets(data.buckets || []);
         } catch {
@@ -42,7 +42,7 @@ export default function StoragePage() {
         setSelectedBucket(bucketName);
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:8000/api/storage/buckets/${bucketName}/objects`);
+            const res = await fetch(`/api/storage/buckets/${bucketName}/objects`);
             const data = await res.json();
             setObjects(data.objects || []);
         } catch {
@@ -62,7 +62,7 @@ export default function StoragePage() {
         formData.append("bucket_name", selectedBucket);
 
         try {
-            await fetch("http://localhost:8000/api/storage/upload", {
+            await fetch("/api/storage/upload", {
                 method: "POST",
                 body: formData,
             });
@@ -79,7 +79,7 @@ export default function StoragePage() {
         if (!selectedBucket || !confirm(`Delete ${key}?`)) return;
 
         try {
-            await fetch(`http://localhost:8000/api/storage/delete/${selectedBucket}/${key}`, {
+            await fetch(`/api/storage/delete/${selectedBucket}/${key}`, {
                 method: "DELETE",
             });
             fetchObjects(selectedBucket);
@@ -203,7 +203,7 @@ export default function StoragePage() {
                                         </div>
                                         <div className="flex gap-2">
                                             <a
-                                                href={`http://localhost:8000/api/storage/download/${selectedBucket}/${obj.key}`}
+                                                href={`/api/storage/download/${selectedBucket}/${obj.key}`}
                                                 className="px-3 py-1 rounded-lg text-sm border border-[--border] hover:border-cyan-500 hover:text-cyan-400 transition-all"
                                             >
                                                 Download

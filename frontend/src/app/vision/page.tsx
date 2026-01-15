@@ -44,7 +44,7 @@ export default function VisionPage() {
             else if (analysisType === "extract-text") endpoint = "extract-text";
             else if (analysisType === "identify-objects") endpoint = "identify-objects";
 
-            const response = await fetch(`http://localhost:8000/api/vision/${endpoint}`, {
+            const response = await fetch(`/api/vision/${endpoint}`, {
                 method: "POST",
                 body: formData,
             });

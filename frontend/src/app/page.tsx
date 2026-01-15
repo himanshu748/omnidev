@@ -71,7 +71,7 @@ export default function Home() {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
-    fetch("http://localhost:8000/health")
+    fetch("/health")
       .then((res) => res.json())
       .then(() => setBackendStatus("online"))
       .catch(() => setBackendStatus("offline"));
@@ -393,7 +393,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-[#39ff14]" />
-            <span className="text-gray-500 text-xs sm:text-sm">OmniDev v4.0</span>
+            <span className="text-gray-500 text-xs sm:text-sm">OmniDev v1.0</span>
           </div>
           <p className="text-gray-600 text-xs sm:text-sm text-center">
             Built by <span className="text-white">Himanshu Kumar</span> • 2024-2026

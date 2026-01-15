@@ -41,7 +41,7 @@ export default function LocationPage() {
     const fetchCurrentLocation = async () => {
         setLoading(true);
         try {
-            let url = "http://localhost:8000/api/location/current";
+            let url = "/api/location/current";
             if (settings.googleMapsApiKey) {
                 url += `?api_key=${encodeURIComponent(settings.googleMapsApiKey)}`;
             }
@@ -71,7 +71,7 @@ export default function LocationPage() {
 
                 // Reverse geocode to get address
                 try {
-                    let url = `http://localhost:8000/api/location/reverse?lat=${latitude}&lng=${longitude}`;
+                    let url = `/api/location/reverse?lat=${latitude}&lng=${longitude}`;
                     if (settings.googleMapsApiKey) {
                         url += `&api_key=${encodeURIComponent(settings.googleMapsApiKey)}`;
                     }
@@ -119,7 +119,7 @@ export default function LocationPage() {
 
         setSearching(true);
         try {
-            let url = `http://localhost:8000/api/location/search?query=${encodeURIComponent(searchQuery)}`;
+            let url = `/api/location/search?query=${encodeURIComponent(searchQuery)}`;
             if (settings.googleMapsApiKey) {
                 url += `&api_key=${encodeURIComponent(settings.googleMapsApiKey)}`;
             }

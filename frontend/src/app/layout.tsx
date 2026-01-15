@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "OmniDev v4.0 | AI-Powered Developer Platform",
+  title: "OmniDev v1.0 | AI-Powered Developer Platform",
   description: "All-in-one AI developer platform with GPT-4.1, O3 reasoning, DevOps automation, and browser scraping",
 };
 

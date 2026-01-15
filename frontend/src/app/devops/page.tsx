@@ -34,7 +34,7 @@ export default function DevOpsPage() {
 
     useEffect(() => {
         // Fetch agent capabilities on mount
-        fetch("http://localhost:8000/api/devops/capabilities")
+        fetch("/api/devops/capabilities")
             .then((res) => res.json())
             .then((data) => setCapabilities(data))
             .catch(console.error);
@@ -64,7 +64,7 @@ export default function DevOpsPage() {
         setIsLoading(true);
 
         try {
-            const response = await fetch("http://localhost:8000/api/devops/command", {
+            const response = await fetch("/api/devops/command", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ command: userMessage.content }),

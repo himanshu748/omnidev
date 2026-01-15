@@ -33,7 +33,7 @@ export default function ScraperPage() {
 
     const fetchStatus = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/scraper/status");
+            const res = await fetch("/api/scraper/status");
             const data = await res.json();
             setStatus(data);
         } catch {
@@ -47,7 +47,7 @@ export default function ScraperPage() {
         setResult(null);
 
         try {
-            const res = await fetch("http://localhost:8000/api/scraper/scrape", {
+            const res = await fetch("/api/scraper/scrape", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
