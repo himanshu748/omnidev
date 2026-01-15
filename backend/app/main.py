@@ -32,14 +32,14 @@ app = FastAPI(
     ## OmniDev API
     
     An all-in-one AI-powered developer platform featuring:
-    - 🤖 **AI Chat** - Powered by OpenAI GPT-5 Nano
-    - 🖼️ **Vision Analysis** - Multimodal image understanding with GPT-5 Nano Vision
+    - 🤖 **AI Chat** - Powered by OpenAI GPT-5 Mini
+    - 🖼️ **Vision Analysis** - Multimodal image understanding with GPT-5 Mini Vision
     - 🛠️ **Smart DevOps Agent** - AI-powered cloud management
     - 🕷️ **Web Scraper** - Playwright browser automation
     - 📍 **Location Services** - Geolocation features
     - 📦 **Cloud Storage** - S3 file operations
     
-    Built with FastAPI + Next.js + OpenAI GPT-5 Nano
+    Built with FastAPI + Next.js + OpenAI GPT-5 Mini
     """,
     version=settings.app_version,
     lifespan=lifespan,
@@ -79,8 +79,8 @@ async def root():
         "status": "operational",
         "docs": "/docs",
         "features": [
-            "AI Chat with OpenAI GPT-5 Nano",
-            "Vision Analysis with GPT-5 Nano",
+            "AI Chat with OpenAI GPT-5 Mini",
+            "Vision Analysis with GPT-5 Mini",
             "Smart DevOps Agent",
             "Web Scraper (Playwright)",
             "Location Services",
