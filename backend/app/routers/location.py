@@ -3,7 +3,7 @@ OmniDev - Location Router
 Endpoints for location services with optional Google Maps API support
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import Optional
 import geocoder
@@ -98,7 +98,7 @@ async def google_reverse_geocode(lat: float, lng: float, api_key: str) -> dict:
 
 
 @router.get("/current", response_model=LocationResponse)
-async def get_current_location(api_key: Optional[str] = None):
+async def get_current_location(request: Request, api_key: Optional[str] = None):
     """
     Get current location based on IP address
     
@@ -108,59 +108,74 @@ async def get_current_location(api_key: Optional[str] = None):
     Uses multiple fallback providers for reliability.
     """
     try:
-        # Try primary: geocoder IP
-        g = geocoder.ip('me')
+        # Get client IP from headers (works behind proxies like Vercel/Render)
+        client_ip = None
+        forwarded_for = request.headers.get("x-forwarded-for")
+        if forwarded_for:
+            # X-Forwarded-For can contain multiple IPs, first one is the client
+            client_ip = forwarded_for.split(",")[0].strip()
+        if not client_ip:
+            client_ip = request.headers.get("x-real-ip")
+        if not client_ip:
+            client_ip = request.client.host if request.client else None
         
-        if g.ok:
-            return LocationResponse(
-                latitude=g.lat,
-                longitude=g.lng,
-                city=g.city,
-                state=g.state,
-                country=g.country,
-                address=g.address,
-                raw=g.json
-            )
+        print(f"Location lookup for IP: {client_ip}")
         
-        # Fallback 1: Try ipinfo.io directly
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get("https://ipinfo.io/json", timeout=5.0)
-                if response.status_code == 200:
-                    data = response.json()
-                    loc = data.get("loc", "0,0").split(",")
-                    return LocationResponse(
-                        latitude=float(loc[0]) if len(loc) > 0 else None,
-                        longitude=float(loc[1]) if len(loc) > 1 else None,
-                        city=data.get("city"),
-                        state=data.get("region"),
-                        country=data.get("country"),
-                        address=f"{data.get('city', '')}, {data.get('region', '')}, {data.get('country', '')}",
-                        raw=data
-                    )
-        except Exception as e:
-            print(f"ipinfo.io fallback failed: {e}")
+        # Try primary: geocoder IP with client's IP
+        if client_ip and client_ip not in ("127.0.0.1", "localhost", "::1"):
+            g = geocoder.ip(client_ip)
+            if g.ok:
+                return LocationResponse(
+                    latitude=g.lat,
+                    longitude=g.lng,
+                    city=g.city,
+                    state=g.state,
+                    country=g.country,
+                    address=g.address,
+                    raw=g.json
+                )
         
-        # Fallback 2: Try ip-api.com
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.get("http://ip-api.com/json", timeout=5.0)
-                if response.status_code == 200:
-                    data = response.json()
-                    if data.get("status") == "success":
+        # Fallback 1: Try ipinfo.io with client IP
+        if client_ip and client_ip not in ("127.0.0.1", "localhost", "::1"):
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(f"https://ipinfo.io/{client_ip}/json", timeout=5.0)
+                    if response.status_code == 200:
+                        data = response.json()
+                        loc = data.get("loc", "0,0").split(",")
                         return LocationResponse(
-                            latitude=data.get("lat"),
-                            longitude=data.get("lon"),
+                            latitude=float(loc[0]) if len(loc) > 0 else None,
+                            longitude=float(loc[1]) if len(loc) > 1 else None,
                             city=data.get("city"),
-                            state=data.get("regionName"),
+                            state=data.get("region"),
                             country=data.get("country"),
-                            address=f"{data.get('city', '')}, {data.get('regionName', '')}, {data.get('country', '')}",
+                            address=f"{data.get('city', '')}, {data.get('region', '')}, {data.get('country', '')}",
                             raw=data
                         )
-        except Exception as e:
-            print(f"ip-api.com fallback failed: {e}")
+            except Exception as e:
+                print(f"ipinfo.io fallback failed: {e}")
+        
+        # Fallback 2: Try ip-api.com with client IP
+        if client_ip and client_ip not in ("127.0.0.1", "localhost", "::1"):
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(f"http://ip-api.com/json/{client_ip}", timeout=5.0)
+                    if response.status_code == 200:
+                        data = response.json()
+                        if data.get("status") == "success":
+                            return LocationResponse(
+                                latitude=data.get("lat"),
+                                longitude=data.get("lon"),
+                                city=data.get("city"),
+                                state=data.get("regionName"),
+                                country=data.get("country"),
+                                address=f"{data.get('city', '')}, {data.get('regionName', '')}, {data.get('country', '')}",
+                                raw=data
+                            )
+            except Exception as e:
+                print(f"ip-api.com fallback failed: {e}")
             
-        raise HTTPException(status_code=503, detail="Unable to determine location from any provider")
+        raise HTTPException(status_code=503, detail=f"Unable to determine location for IP: {client_ip}")
     except HTTPException:
         raise
     except Exception as e:
