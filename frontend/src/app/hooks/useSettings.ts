@@ -11,7 +11,15 @@ export interface AppSettings {
     awsRegion: string;
     // Location Configuration
     googleMapsApiKey: string;
-    locationMethod: "ip" | "browser";
+    locationMethod: "ip" | "browser" | "manual";
+    savedLocation: {
+        latitude: number;
+        longitude: number;
+        city: string;
+        state: string;
+        country: string;
+        address: string;
+    } | null;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -21,6 +29,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     awsRegion: "ap-south-1",
     googleMapsApiKey: "",
     locationMethod: "ip",
+    savedLocation: null,
 };
 
 const SETTINGS_KEY = "omnidev_settings";

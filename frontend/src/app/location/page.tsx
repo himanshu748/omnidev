@@ -31,13 +31,42 @@ export default function LocationPage() {
     useEffect(() => {
         if (isLoaded) {
             setTempApiKey(settings.googleMapsApiKey);
-            if (settings.locationMethod === "browser") {
+            if (settings.locationMethod === "manual" && settings.savedLocation) {
+                // Use saved manual location
+                setCurrentLocation({
+                    latitude: settings.savedLocation.latitude,
+                    longitude: settings.savedLocation.longitude,
+                    city: settings.savedLocation.city,
+                    state: settings.savedLocation.state,
+                    country: settings.savedLocation.country,
+                    address: settings.savedLocation.address,
+                    source: "search", // Shows as "Manual" with search icon
+                });
+                setLoading(false);
+            } else if (settings.locationMethod === "browser") {
                 getBrowserLocation();
             } else {
                 fetchCurrentLocation();
             }
         }
     }, [isLoaded, settings.locationMethod]);
+
+    const saveAsMyLocation = (location: Location) => {
+        if (!location.latitude || !location.longitude) return;
+        saveSettings({
+            locationMethod: "manual",
+            savedLocation: {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                city: location.city || "",
+                state: location.state || "",
+                country: location.country || "",
+                address: location.address || "",
+            }
+        });
+        setCurrentLocation({ ...location, source: "search" });
+        alert("✅ Location saved! This will be used as your default location.");
+    };
 
     const fetchCurrentLocation = async () => {
         setLoading(true);
@@ -139,7 +168,7 @@ export default function LocationPage() {
         setShowSettings(false);
     };
 
-    const LocationCard = ({ title, location, icon }: { title: string; location: Location | null; icon: string }) => (
+    const LocationCard = ({ title, location, icon, canSave = false }: { title: string; location: Location | null; icon: string; canSave?: boolean }) => (
         <motion.div
             className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6"
             initial={{ opacity: 0, y: 20 }}
@@ -197,16 +226,28 @@ export default function LocationPage() {
                         </div>
                     )}
                     {location.latitude && location.longitude && (
-                        <motion.a
-                            href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 mt-2 rounded-lg border border-[#39ff14]/30 text-sm hover:border-[#39ff14] hover:text-[#39ff14] transition-all"
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                        >
-                            🗺️ Open in Google Maps
-                        </motion.a>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            <motion.a
+                                href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#39ff14]/30 text-sm hover:border-[#39ff14] hover:text-[#39ff14] transition-all"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                🗺️ Open in Maps
+                            </motion.a>
+                            {canSave && (
+                                <motion.button
+                                    onClick={() => saveAsMyLocation(location)}
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#39ff14]/10 border border-[#39ff14]/50 text-[#39ff14] text-sm hover:bg-[#39ff14]/20 transition-all"
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    💾 Set as My Location
+                                </motion.button>
+                            )}
+                        </div>
                     )}
                 </div>
             ) : (
@@ -436,7 +477,7 @@ export default function LocationPage() {
                         )}
 
                         {searchResult && (
-                            <LocationCard title="Search Result" location={searchResult} icon="🔍" />
+                            <LocationCard title="Search Result" location={searchResult} icon="🔍" canSave={true} />
                         )}
                     </div>
 
