@@ -235,24 +235,39 @@ async def search_location(query: str, api_key: Optional[str] = None):
                 result = await google_geocode(query, api_key)
                 return {"query": query, **result}
             except Exception as e:
-                print(f"Google API failed, falling back to OSM: {e}")
+                print(f"Google API failed, falling back to Nominatim: {e}")
         
-        # Fall back to OpenStreetMap
-        g = geocoder.osm(query)
+        # Use Nominatim API directly (more reliable than geocoder library)
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                "https://nominatim.openstreetmap.org/search",
+                params={
+                    "q": query,
+                    "format": "json",
+                    "addressdetails": 1,
+                    "limit": 1
+                },
+                headers={"User-Agent": "OmniDev/1.0"},
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data and len(data) > 0:
+                    result = data[0]
+                    address = result.get("address", {})
+                    return {
+                        "query": query,
+                        "latitude": float(result.get("lat", 0)),
+                        "longitude": float(result.get("lon", 0)),
+                        "address": result.get("display_name", ""),
+                        "city": address.get("city") or address.get("town") or address.get("village") or address.get("state_district"),
+                        "state": address.get("state"),
+                        "country": address.get("country"),
+                        "raw": result
+                    }
         
-        if not g.ok:
-            raise HTTPException(status_code=404, detail="Location not found")
-        
-        return {
-            "query": query,
-            "latitude": g.lat,
-            "longitude": g.lng,
-            "address": g.address,
-            "city": g.city,
-            "state": g.state,
-            "country": g.country,
-            "raw": g.json
-        }
+        raise HTTPException(status_code=404, detail="Location not found")
     except HTTPException:
         raise
     except Exception as e:
