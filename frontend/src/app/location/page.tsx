@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSettings } from "../hooks/useSettings";
+import { AuthGuard } from "../components/AuthGuard";
 
 interface Location {
     latitude: number | null;
@@ -215,257 +216,259 @@ export default function LocationPage() {
     );
 
     return (
-        <main className="min-h-screen bg-[#050505] text-white">
-            {/* Background Grid */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
-            </div>
-
-            <header className="backdrop-blur-xl bg-black/40 border-b border-[#39ff14]/10 sticky top-0 z-50">
-                <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-                    <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                        <span className="text-xl">←</span>
-                        <span className="text-xl font-bold text-[#39ff14]">
-                            OmniDev
-                        </span>
-                    </Link>
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl">📍</span>
-                            <span className="font-semibold">Location Services</span>
-                        </div>
-                        <motion.button
-                            onClick={() => setShowSettings(true)}
-                            className="p-2 rounded-lg border border-[#39ff14]/30 hover:border-[#39ff14] hover:text-[#39ff14] transition-all"
-                            title="Settings"
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            ⚙️
-                        </motion.button>
-                    </div>
+        <AuthGuard>
+            <main className="min-h-screen bg-[#050505] text-white">
+                {/* Background Grid */}
+                <div className="fixed inset-0 pointer-events-none">
+                    <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
                 </div>
-            </header>
 
-            {/* Settings Modal */}
-            <AnimatePresence>
-                {showSettings && (
-                    <motion.div
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                    >
-                        <motion.div
-                            className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 max-w-md w-full"
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0.9, opacity: 0 }}
-                        >
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-bold text-[#39ff14]">Location Settings</h2>
-                                <button
-                                    onClick={() => setShowSettings(false)}
-                                    className="text-gray-400 hover:text-white text-2xl"
-                                >
-                                    ×
-                                </button>
+                <header className="backdrop-blur-xl bg-black/40 border-b border-[#39ff14]/10 sticky top-0 z-50">
+                    <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+                        <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+                            <span className="text-xl">←</span>
+                            <span className="text-xl font-bold text-[#39ff14]">
+                                OmniDev
+                            </span>
+                        </Link>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl">📍</span>
+                                <span className="font-semibold">Location Services</span>
                             </div>
+                            <motion.button
+                                onClick={() => setShowSettings(true)}
+                                className="p-2 rounded-lg border border-[#39ff14]/30 hover:border-[#39ff14] hover:text-[#39ff14] transition-all"
+                                title="Settings"
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                            >
+                                ⚙️
+                            </motion.button>
+                        </div>
+                    </div>
+                </header>
 
-                            <div className="space-y-6">
-                                {/* Location Method */}
-                                <div>
-                                    <label className="text-sm text-gray-400 mb-2 block">Location Method</label>
-                                    <div className="grid grid-cols-2 gap-3">
+                {/* Settings Modal */}
+                <AnimatePresence>
+                    {showSettings && (
+                        <motion.div
+                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                        >
+                            <motion.div
+                                className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 max-w-md w-full"
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                exit={{ scale: 0.9, opacity: 0 }}
+                            >
+                                <div className="flex items-center justify-between mb-6">
+                                    <h2 className="text-xl font-bold text-[#39ff14]">Location Settings</h2>
+                                    <button
+                                        onClick={() => setShowSettings(false)}
+                                        className="text-gray-400 hover:text-white text-2xl"
+                                    >
+                                        ×
+                                    </button>
+                                </div>
+
+                                <div className="space-y-6">
+                                    {/* Location Method */}
+                                    <div>
+                                        <label className="text-sm text-gray-400 mb-2 block">Location Method</label>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <motion.button
+                                                onClick={() => saveSettings({ locationMethod: "ip" })}
+                                                className={`p-3 rounded-lg border text-sm transition-all ${settings.locationMethod === "ip"
+                                                    ? "border-[#39ff14] bg-[#39ff14]/20 text-[#39ff14]"
+                                                    : "border-[#39ff14]/20 hover:border-[#39ff14]/50"
+                                                    }`}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                            >
+                                                🌐 IP-Based
+                                            </motion.button>
+                                            <motion.button
+                                                onClick={() => saveSettings({ locationMethod: "browser" })}
+                                                className={`p-3 rounded-lg border text-sm transition-all ${settings.locationMethod === "browser"
+                                                    ? "border-[#39ff14] bg-[#39ff14]/20 text-[#39ff14]"
+                                                    : "border-[#39ff14]/20 hover:border-[#39ff14]/50"
+                                                    }`}
+                                                whileHover={{ scale: 1.02 }}
+                                                whileTap={{ scale: 0.98 }}
+                                            >
+                                                📍 GPS (Precise)
+                                            </motion.button>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            {settings.locationMethod === "browser"
+                                                ? "Uses device GPS for precise location (requires permission)"
+                                                : "Uses IP address for approximate location"}
+                                        </p>
+                                    </div>
+
+                                    {/* Google Maps API Key */}
+                                    <div>
+                                        <label className="text-sm text-gray-400 mb-2 block">
+                                            Google Maps API Key (Optional)
+                                        </label>
+                                        <input
+                                            type="password"
+                                            value={tempApiKey}
+                                            onChange={(e) => setTempApiKey(e.target.value)}
+                                            placeholder="AIza..."
+                                            className="w-full bg-[#050505] border border-[#39ff14]/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[#39ff14] transition-colors text-sm"
+                                        />
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Provides better geocoding results. Get one from{" "}
+                                            <a
+                                                href="https://console.cloud.google.com/apis/credentials"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-[#39ff14] hover:underline"
+                                            >
+                                                Google Cloud Console
+                                            </a>
+                                        </p>
+                                    </div>
+
+                                    <div className="flex gap-3">
                                         <motion.button
-                                            onClick={() => saveSettings({ locationMethod: "ip" })}
-                                            className={`p-3 rounded-lg border text-sm transition-all ${settings.locationMethod === "ip"
-                                                ? "border-[#39ff14] bg-[#39ff14]/20 text-[#39ff14]"
-                                                : "border-[#39ff14]/20 hover:border-[#39ff14]/50"
-                                                }`}
+                                            onClick={saveApiSettings}
+                                            className="flex-1 bg-[#39ff14] text-black font-semibold px-6 py-3 rounded-xl"
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                         >
-                                            🌐 IP-Based
+                                            Save Settings
                                         </motion.button>
                                         <motion.button
-                                            onClick={() => saveSettings({ locationMethod: "browser" })}
-                                            className={`p-3 rounded-lg border text-sm transition-all ${settings.locationMethod === "browser"
-                                                ? "border-[#39ff14] bg-[#39ff14]/20 text-[#39ff14]"
-                                                : "border-[#39ff14]/20 hover:border-[#39ff14]/50"
-                                                }`}
+                                            onClick={() => {
+                                                setTempApiKey("");
+                                                saveSettings({ googleMapsApiKey: "" });
+                                            }}
+                                            className="px-4 py-2 rounded-lg border border-[#39ff14]/20 hover:border-red-500 hover:text-red-400 transition-all text-sm"
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                         >
-                                            📍 GPS (Precise)
+                                            Clear
                                         </motion.button>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        {settings.locationMethod === "browser"
-                                            ? "Uses device GPS for precise location (requires permission)"
-                                            : "Uses IP address for approximate location"}
-                                    </p>
                                 </div>
-
-                                {/* Google Maps API Key */}
-                                <div>
-                                    <label className="text-sm text-gray-400 mb-2 block">
-                                        Google Maps API Key (Optional)
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={tempApiKey}
-                                        onChange={(e) => setTempApiKey(e.target.value)}
-                                        placeholder="AIza..."
-                                        className="w-full bg-[#050505] border border-[#39ff14]/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[#39ff14] transition-colors text-sm"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-2">
-                                        Provides better geocoding results. Get one from{" "}
-                                        <a
-                                            href="https://console.cloud.google.com/apis/credentials"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-[#39ff14] hover:underline"
-                                        >
-                                            Google Cloud Console
-                                        </a>
-                                    </p>
-                                </div>
-
-                                <div className="flex gap-3">
-                                    <motion.button
-                                        onClick={saveApiSettings}
-                                        className="flex-1 bg-[#39ff14] text-black font-semibold px-6 py-3 rounded-xl"
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        Save Settings
-                                    </motion.button>
-                                    <motion.button
-                                        onClick={() => {
-                                            setTempApiKey("");
-                                            saveSettings({ googleMapsApiKey: "" });
-                                        }}
-                                        className="px-4 py-2 rounded-lg border border-[#39ff14]/20 hover:border-red-500 hover:text-red-400 transition-all text-sm"
-                                        whileHover={{ scale: 1.02 }}
-                                        whileTap={{ scale: 0.98 }}
-                                    >
-                                        Clear
-                                    </motion.button>
-                                </div>
-                            </div>
+                            </motion.div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <div className="max-w-6xl mx-auto px-6 py-8">
-                {/* Action Buttons */}
-                <motion.div
-                    className="flex flex-wrap gap-3 mb-6"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                >
-                    <motion.button
-                        onClick={getBrowserLocation}
-                        disabled={gettingBrowserLocation}
-                        className="bg-[#39ff14] text-black font-semibold px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50 rounded-xl"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                    >
-                        {gettingBrowserLocation ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : "📍"}
-                        Use Precise Location
-                    </motion.button>
-                    <motion.button
-                        onClick={fetchCurrentLocation}
-                        disabled={loading}
-                        className="px-4 py-2 rounded-xl border border-[#39ff14]/30 text-sm hover:border-[#39ff14] hover:text-[#39ff14] transition-all disabled:opacity-50"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                    >
-                        🌐 Use IP Location
-                    </motion.button>
-                    {settings.googleMapsApiKey && (
-                        <span className="px-3 py-2 rounded-full text-xs bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14]/30 flex items-center gap-1">
-                            ✓ Google API Connected
-                        </span>
                     )}
-                </motion.div>
+                </AnimatePresence>
 
-                {/* Search Bar */}
-                <motion.div
-                    className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 mb-8"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                        <span className="w-8 h-8 rounded-lg bg-[#39ff14]/20 flex items-center justify-center text-sm">🔍</span>
-                        Search Location
-                    </h2>
-                    <form onSubmit={searchLocation} className="flex gap-3">
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Enter city, address, or place name..."
-                            className="flex-1 bg-[#050505] border border-[#39ff14]/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[#39ff14] transition-colors"
-                        />
+                <div className="max-w-6xl mx-auto px-6 py-8">
+                    {/* Action Buttons */}
+                    <motion.div
+                        className="flex flex-wrap gap-3 mb-6"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                    >
                         <motion.button
-                            type="submit"
-                            disabled={searching || !searchQuery.trim()}
-                            className="bg-[#39ff14] text-black font-semibold px-6 py-3 rounded-xl disabled:opacity-50"
+                            onClick={getBrowserLocation}
+                            disabled={gettingBrowserLocation}
+                            className="bg-[#39ff14] text-black font-semibold px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50 rounded-xl"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >
-                            {searching ? <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : "Search"}
+                            {gettingBrowserLocation ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : "📍"}
+                            Use Precise Location
                         </motion.button>
-                    </form>
-                </motion.div>
-
-                {/* Location Cards */}
-                <div className="grid md:grid-cols-2 gap-6">
-                    {loading ? (
-                        <div className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 flex items-center justify-center">
-                            <div className="w-8 h-8 border-2 border-[#39ff14]/30 border-t-[#39ff14] rounded-full animate-spin" />
-                        </div>
-                    ) : (
-                        <LocationCard title="Your Current Location" location={currentLocation} icon="📍" />
-                    )}
-
-                    {searchResult && (
-                        <LocationCard title="Search Result" location={searchResult} icon="🔍" />
-                    )}
-                </div>
-
-                {/* Features Info */}
-                <motion.div
-                    className="mt-12 grid md:grid-cols-4 gap-4"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                >
-                    {[
-                        { icon: "🌐", title: "IP Geolocation", desc: "Automatic location from IP" },
-                        { icon: "📍", title: "GPS Location", desc: "Precise browser location" },
-                        { icon: "🔄", title: "Reverse Geocoding", desc: "Coordinates to address" },
-                        { icon: "🔑", title: "Custom API", desc: "Use your own Google key" },
-                    ].map((feature, i) => (
-                        <motion.div
-                            key={feature.title}
-                            className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-xl p-4 text-center"
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.4 + i * 0.1 }}
-                            whileHover={{ scale: 1.05, borderColor: "rgba(57, 255, 20, 0.5)" }}
+                        <motion.button
+                            onClick={fetchCurrentLocation}
+                            disabled={loading}
+                            className="px-4 py-2 rounded-xl border border-[#39ff14]/30 text-sm hover:border-[#39ff14] hover:text-[#39ff14] transition-all disabled:opacity-50"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                         >
-                            <div className="text-3xl mb-2">{feature.icon}</div>
-                            <h3 className="font-medium mb-1">{feature.title}</h3>
-                            <p className="text-xs text-gray-400">{feature.desc}</p>
-                        </motion.div>
-                    ))}
-                </motion.div>
-            </div>
-        </main>
+                            🌐 Use IP Location
+                        </motion.button>
+                        {settings.googleMapsApiKey && (
+                            <span className="px-3 py-2 rounded-full text-xs bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14]/30 flex items-center gap-1">
+                                ✓ Google API Connected
+                            </span>
+                        )}
+                    </motion.div>
+
+                    {/* Search Bar */}
+                    <motion.div
+                        className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 mb-8"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                    >
+                        <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                            <span className="w-8 h-8 rounded-lg bg-[#39ff14]/20 flex items-center justify-center text-sm">🔍</span>
+                            Search Location
+                        </h2>
+                        <form onSubmit={searchLocation} className="flex gap-3">
+                            <input
+                                type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                placeholder="Enter city, address, or place name..."
+                                className="flex-1 bg-[#050505] border border-[#39ff14]/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[#39ff14] transition-colors"
+                            />
+                            <motion.button
+                                type="submit"
+                                disabled={searching || !searchQuery.trim()}
+                                className="bg-[#39ff14] text-black font-semibold px-6 py-3 rounded-xl disabled:opacity-50"
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                            >
+                                {searching ? <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : "Search"}
+                            </motion.button>
+                        </form>
+                    </motion.div>
+
+                    {/* Location Cards */}
+                    <div className="grid md:grid-cols-2 gap-6">
+                        {loading ? (
+                            <div className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 flex items-center justify-center">
+                                <div className="w-8 h-8 border-2 border-[#39ff14]/30 border-t-[#39ff14] rounded-full animate-spin" />
+                            </div>
+                        ) : (
+                            <LocationCard title="Your Current Location" location={currentLocation} icon="📍" />
+                        )}
+
+                        {searchResult && (
+                            <LocationCard title="Search Result" location={searchResult} icon="🔍" />
+                        )}
+                    </div>
+
+                    {/* Features Info */}
+                    <motion.div
+                        className="mt-12 grid md:grid-cols-4 gap-4"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.3 }}
+                    >
+                        {[
+                            { icon: "🌐", title: "IP Geolocation", desc: "Automatic location from IP" },
+                            { icon: "📍", title: "GPS Location", desc: "Precise browser location" },
+                            { icon: "🔄", title: "Reverse Geocoding", desc: "Coordinates to address" },
+                            { icon: "🔑", title: "Custom API", desc: "Use your own Google key" },
+                        ].map((feature, i) => (
+                            <motion.div
+                                key={feature.title}
+                                className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-xl p-4 text-center"
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.4 + i * 0.1 }}
+                                whileHover={{ scale: 1.05, borderColor: "rgba(57, 255, 20, 0.5)" }}
+                            >
+                                <div className="text-3xl mb-2">{feature.icon}</div>
+                                <h3 className="font-medium mb-1">{feature.title}</h3>
+                                <p className="text-xs text-gray-400">{feature.desc}</p>
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                </div>
+            </main>
+        </AuthGuard>
     );
 }

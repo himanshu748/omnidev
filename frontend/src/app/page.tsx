@@ -16,46 +16,93 @@ export default function Home() {
       .catch(() => setBackendStatus("offline"));
   }, []);
 
-  const stats = [
-    { value: "GPT-5", label: "AI Model" },
-    { value: "6+", label: "Tools" },
-    { value: "100%", label: "Open Source" },
-    { value: "∞", label: "Possibilities" },
-  ];
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+        <div className="w-12 h-12 border-2 border-[#39ff14]/30 border-t-[#39ff14] rounded-full animate-spin" />
+      </div>
+    );
+  }
 
-  const features = [
-    {
-      icon: "💬",
-      title: "AI Chat",
-      description: "Have intelligent conversations powered by GPT-5 Mini with markdown support and code highlighting.",
-      color: "#39ff14",
-    },
-    {
-      icon: "🖼️",
-      title: "Vision Analysis",
-      description: "Upload images and get detailed AI-powered analysis, OCR, and object detection.",
-      color: "#00d4ff",
-    },
-    {
-      icon: "🛠️",
-      title: "DevOps Agent",
-      description: "Manage your AWS infrastructure with natural language commands.",
-      color: "#ff6b35",
-    },
-    {
-      icon: "🕷️",
-      title: "Web Scraper",
-      description: "Extract data from any website with Playwright-powered stealth scraping.",
-      color: "#a855f7",
-    },
-  ];
+  // LOGGED IN: Show Dashboard
+  if (user) {
+    const features = [
+      { id: "chat", title: "AI Chat", description: "GPT-5 Mini powered conversations", icon: "💬", href: "/chat", color: "#39ff14" },
+      { id: "vision", title: "Vision Lab", description: "Image analysis with AI", icon: "🖼️", href: "/vision", color: "#00d4ff" },
+      { id: "devops", title: "DevOps Agent", description: "AWS cloud management", icon: "🛠️", href: "/devops", color: "#ff6b35" },
+      { id: "scraper", title: "Web Scraper", description: "Playwright automation", icon: "🕷️", href: "/scraper", color: "#a855f7" },
+      { id: "storage", title: "Cloud Storage", description: "S3 file manager", icon: "📦", href: "/storage", color: "#06b6d4" },
+      { id: "location", title: "Location", description: "GPS & geolocation", icon: "📍", href: "/location", color: "#f59e0b" },
+    ];
 
-  const steps = [
-    { number: "01", title: "Sign Up", description: "Create a free account in seconds" },
-    { number: "02", title: "Add API Key", description: "Connect your OpenAI or AWS credentials" },
-    { number: "03", title: "Start Building", description: "Access all tools from one dashboard" },
-  ];
+    return (
+      <main className="min-h-screen bg-[#050505] text-white">
+        {/* Background */}
+        <div className="fixed inset-0 pointer-events-none">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        </div>
 
+        {/* Navigation */}
+        <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+          <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black">O</div>
+              <span className="text-xl font-bold">OmniDev</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${backendStatus === "online" ? "bg-[#39ff14]/10 text-[#39ff14]" : "bg-white/5 text-gray-500"}`}>
+                {backendStatus === "online" ? "● API Online" : "○ Offline"}
+              </div>
+              <Link href="/settings" className="px-4 py-2 rounded-lg border border-white/10 text-sm hover:bg-white/5 transition">
+                ⚙️ Settings
+              </Link>
+              <button onClick={() => signOut()} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition">
+                Logout
+              </button>
+            </div>
+          </div>
+        </nav>
+
+        {/* Dashboard Content */}
+        <div className="pt-28 pb-12 px-6">
+          <div className="max-w-6xl mx-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
+              <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
+              <p className="text-gray-400">Select a tool to get started</p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {features.map((feature, i) => (
+                <motion.div
+                  key={feature.id}
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.1 }}
+                >
+                  <Link
+                    href={feature.href}
+                    className="block p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/20 transition-all group"
+                  >
+                    <div
+                      className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl mb-4"
+                      style={{ background: `${feature.color}15`, border: `1px solid ${feature.color}30` }}
+                    >
+                      {feature.icon}
+                    </div>
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-[#39ff14] transition">{feature.title}</h3>
+                    <p className="text-sm text-gray-500">{feature.description}</p>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  // NOT LOGGED IN: Show Marketing Page
   return (
     <main className="min-h-screen bg-[#050505] text-white relative overflow-x-hidden">
       {/* Animated Background */}
@@ -68,45 +115,14 @@ export default function Home() {
       <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black">
-              O
-            </div>
+            <div className="w-10 h-10 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black">O</div>
             <span className="text-xl font-bold">OmniDev</span>
           </div>
-          <div className="flex items-center gap-6">
-            <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${backendStatus === "online"
-                ? "bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30"
-                : "bg-white/5 text-gray-500 border border-white/10"
-              }`}>
-              {backendStatus === "online" ? "● Online" : "○ Offline"}
-            </div>
-            {!authLoading && (
-              user ? (
-                <div className="flex items-center gap-4">
-                  <Link href="/chat" className="text-sm text-gray-400 hover:text-white transition">
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={() => signOut()}
-                    className="text-sm text-gray-400 hover:text-white transition"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <div className="flex items-center gap-3">
-                  <Link href="/auth/login" className="text-sm text-gray-400 hover:text-white transition">
-                    Login
-                  </Link>
-                  <Link
-                    href="/auth/signup"
-                    className="px-4 py-2 rounded-lg bg-[#39ff14] text-black font-semibold text-sm hover:opacity-90 transition"
-                  >
-                    Get Started
-                  </Link>
-                </div>
-              )
-            )}
+          <div className="flex items-center gap-3">
+            <Link href="/auth/login" className="text-sm text-gray-400 hover:text-white transition">Login</Link>
+            <Link href="/auth/signup" className="px-4 py-2 rounded-lg bg-[#39ff14] text-black font-semibold text-sm hover:opacity-90 transition">
+              Get Started
+            </Link>
           </div>
         </div>
       </nav>
@@ -114,267 +130,106 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-6">
         <div className="max-w-5xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="inline-block mb-6"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-block mb-6">
             <span className="px-4 py-2 rounded-full text-sm font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/20">
               ✨ Powered by GPT-5 Mini
             </span>
           </motion.div>
 
           <motion.h1
-            className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.1] tracking-tight"
+            className="text-5xl md:text-7xl font-bold mb-6 leading-[1.1]"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
+            transition={{ delay: 0.1 }}
           >
-            Build Faster.
-            <br />
+            Build Faster.<br />
             <span className="text-[#39ff14]">Automate Smarter.</span>
           </motion.h1>
 
           <motion.p
-            className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-lg text-gray-400 max-w-2xl mx-auto mb-10"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            transition={{ delay: 0.2 }}
           >
-            The all-in-one AI developer platform. Chat, vision analysis, cloud automation,
-            and web scraping — unified in a beautiful interface.
+            The all-in-one AI developer platform. Chat, vision analysis, cloud automation, and web scraping — unified in a beautiful interface.
           </motion.p>
 
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.3 }}
+            transition={{ delay: 0.3 }}
           >
-            <Link
-              href={user ? "/chat" : "/auth/signup"}
-              className="px-8 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-[#39ff14]/20"
-            >
+            <Link href="/auth/signup" className="px-8 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-[#39ff14]/20">
               Get Started Free →
             </Link>
-            <Link
-              href="https://github.com/himanshu748/omnidev"
-              target="_blank"
-              className="px-8 py-4 rounded-xl border border-white/10 text-white font-semibold text-lg hover:bg-white/5 transition flex items-center justify-center gap-2"
-            >
-              <span>⭐</span> Star on GitHub
+            <Link href="https://github.com/himanshu748/omnidev" target="_blank" className="px-8 py-4 rounded-xl border border-white/10 text-white font-semibold text-lg hover:bg-white/5 transition">
+              ⭐ Star on GitHub
             </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="py-12 border-y border-white/5 bg-white/[0.02]">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <motion.div
-                key={stat.label}
-                className="text-center"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className="text-3xl md:text-4xl font-bold text-[#39ff14] mb-1">{stat.value}</div>
-                <div className="text-sm text-gray-500">{stat.label}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Problem → Solution */}
+      {/* Features Section */}
       <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
-          <motion.div
-            className="text-center mb-16"
+          <motion.h2
+            className="text-3xl md:text-4xl font-bold text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              Stop juggling <span className="text-gray-500">10 different tools</span>
-            </h2>
-            <p className="text-gray-500 text-lg max-w-xl mx-auto">
-              OmniDev brings everything you need into one powerful dashboard
-            </p>
-          </motion.div>
+            Everything you need to <span className="text-[#39ff14]">ship faster</span>
+          </motion.h2>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Without */}
-            <motion.div
-              className="p-8 rounded-2xl bg-red-500/5 border border-red-500/20"
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-red-400 font-semibold mb-4 flex items-center gap-2">
-                <span className="text-2xl">😩</span> Without OmniDev
-              </div>
-              <ul className="space-y-3 text-gray-400">
-                <li className="flex items-start gap-3"><span className="text-red-400">✗</span> Switching between ChatGPT, AWS Console, Postman...</li>
-                <li className="flex items-start gap-3"><span className="text-red-400">✗</span> Copy-pasting API keys everywhere</li>
-                <li className="flex items-start gap-3"><span className="text-red-400">✗</span> No context between tools</li>
-                <li className="flex items-start gap-3"><span className="text-red-400">✗</span> Paying for multiple subscriptions</li>
-              </ul>
-            </motion.div>
-
-            {/* With */}
-            <motion.div
-              className="p-8 rounded-2xl bg-[#39ff14]/5 border border-[#39ff14]/20"
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-            >
-              <div className="text-[#39ff14] font-semibold mb-4 flex items-center gap-2">
-                <span className="text-2xl">🚀</span> With OmniDev
-              </div>
-              <ul className="space-y-3 text-gray-300">
-                <li className="flex items-start gap-3"><span className="text-[#39ff14]">✓</span> All tools in one beautiful interface</li>
-                <li className="flex items-start gap-3"><span className="text-[#39ff14]">✓</span> Configure once, use everywhere</li>
-                <li className="flex items-start gap-3"><span className="text-[#39ff14]">✓</span> Seamless workflow between features</li>
-                <li className="flex items-start gap-3"><span className="text-[#39ff14]">✓</span> 100% open source & free</li>
-              </ul>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Bento Grid */}
-      <section className="py-24 px-6 bg-white/[0.01]">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              Everything you need to <span className="text-[#39ff14]">ship faster</span>
-            </h2>
-            <p className="text-gray-500 text-lg">Powerful features, beautifully designed</p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-6">
-            {features.map((feature, i) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { icon: "💬", title: "AI Chat", desc: "GPT-5 Mini conversations" },
+              { icon: "🖼️", title: "Vision Lab", desc: "Image analysis & OCR" },
+              { icon: "🛠️", title: "DevOps Agent", desc: "AWS cloud management" },
+              { icon: "🕷️", title: "Web Scraper", desc: "Playwright automation" },
+              { icon: "📦", title: "Cloud Storage", desc: "S3 file manager" },
+              { icon: "📍", title: "Location", desc: "GPS & geolocation" },
+            ].map((f, i) => (
               <motion.div
-                key={feature.title}
-                className="group p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all"
+                key={f.title}
+                className="p-6 rounded-2xl bg-white/[0.02] border border-white/5"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                whileHover={{ y: -5 }}
               >
-                <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl mb-6"
-                  style={{ background: `${feature.color}15`, border: `1px solid ${feature.color}30` }}
-                >
-                  {feature.icon}
-                </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            className="text-center mt-12"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
-          >
-            <Link
-              href={user ? "/chat" : "/auth/signup"}
-              className="inline-flex items-center gap-2 text-[#39ff14] hover:underline font-medium"
-            >
-              Explore all 6+ tools →
-            </Link>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* How It Works */}
-      <section className="py-24 px-6">
-        <div className="max-w-5xl mx-auto">
-          <motion.div
-            className="text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl md:text-5xl font-bold mb-4">
-              Get started in <span className="text-[#39ff14]">3 minutes</span>
-            </h2>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {steps.map((step, i) => (
-              <motion.div
-                key={step.number}
-                className="text-center"
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15 }}
-              >
-                <div className="text-5xl font-bold text-[#39ff14]/20 mb-4">{step.number}</div>
-                <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-                <p className="text-gray-500">{step.description}</p>
+                <div className="text-3xl mb-4">{f.icon}</div>
+                <h3 className="text-lg font-semibold mb-1">{f.title}</h3>
+                <p className="text-sm text-gray-500">{f.desc}</p>
               </motion.div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
+      {/* CTA Section */}
       <section className="py-24 px-6">
         <motion.div
-          className="max-w-4xl mx-auto text-center p-12 rounded-3xl bg-gradient-to-b from-[#39ff14]/10 to-transparent border border-[#39ff14]/20"
+          className="max-w-3xl mx-auto text-center p-12 rounded-3xl bg-[#39ff14]/5 border border-[#39ff14]/20"
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-3xl md:text-5xl font-bold mb-4">
-            Ready to supercharge your workflow?
-          </h2>
-          <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">
-            Join developers who are building faster with OmniDev. Free forever for personal use.
-          </p>
-          <Link
-            href={user ? "/chat" : "/auth/signup"}
-            className="inline-block px-10 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-[#39ff14]/20"
-          >
-            Start Building Today →
+          <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
+          <p className="text-gray-400 mb-8">Free forever for personal use.</p>
+          <Link href="/auth/signup" className="inline-block px-10 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition">
+            Create Free Account →
           </Link>
         </motion.div>
       </section>
 
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-white/5">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#39ff14]" />
-            <span className="text-gray-500">OmniDev v1.0</span>
-          </div>
-          <p className="text-gray-600 text-sm">
-            Built by <span className="text-white">Himanshu Kumar</span> • 2024-2026
-          </p>
-          <div className="flex items-center gap-6">
-            <Link href="https://github.com/himanshu748/omnidev" target="_blank" className="text-gray-500 hover:text-white transition">
-              GitHub
-            </Link>
-            <Link href="/settings" className="text-gray-500 hover:text-white transition">
-              Settings
-            </Link>
-          </div>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <span className="text-gray-500">OmniDev v1.0</span>
+          <span className="text-gray-600 text-sm">Built by Himanshu Kumar • 2024-2026</span>
         </div>
       </footer>
     </main>
