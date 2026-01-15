@@ -77,7 +77,7 @@ If you don't know something, say so honestly."""
                 model=self.model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=8192,
+                max_completion_tokens=8192,
             )
             
             return response.choices[0].message.content
@@ -122,7 +122,7 @@ If you don't know something, say so honestly."""
                 model=self.model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=8192,
+                max_completion_tokens=8192,
                 stream=True,
             )
             
@@ -181,7 +181,7 @@ If you don't know something, say so honestly."""
             response = await self.client.chat.completions.create(
                 model=self.vision_model,
                 messages=messages,
-                max_tokens=4096,
+                max_completion_tokens=4096,
             )
             
             return response.choices[0].message.content

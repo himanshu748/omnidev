@@ -267,7 +267,7 @@ If AWS credentials aren't configured, explain how to set them up."""
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.3,
-                max_tokens=4096,
+                max_completion_tokens=4096,
             )
             
             return {

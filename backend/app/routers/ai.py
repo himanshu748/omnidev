@@ -65,7 +65,7 @@ async def chat_with_key(message: str, history: Optional[List[dict]], api_key: st
             model="gpt-5-mini",
             messages=messages,
             temperature=0.7,
-            max_tokens=8192,
+            max_completion_tokens=8192,
         )
         
         return response.choices[0].message.content
@@ -127,7 +127,7 @@ async def chat_stream(websocket: WebSocket):
                     model="gpt-5-mini",
                     messages=messages,
                     temperature=0.7,
-                    max_tokens=8192,
+                    max_completion_tokens=8192,
                     stream=True,
                 )
                 
