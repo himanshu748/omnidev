@@ -1,0 +1,12 @@
+{
+    "rewrites": [
+        {
+            "source": "/api/:path*",
+            "destination": "https://omnidev-api.onrender.com/api/:path*"
+        },
+        {
+            "source": "/health",
+            "destination": "https://omnidev-api.onrender.com/health"
+        }
+    ]
+}

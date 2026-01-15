@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import AWSGuideModal from "../../views/AWSGuideModal";
 
 interface Message {
     id: string;
@@ -28,6 +29,7 @@ export default function DevOpsPage() {
     const [input, setInput] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
+    const [showAwsGuide, setShowAwsGuide] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -131,6 +133,14 @@ export default function DevOpsPage() {
                             <p className="text-gray-400">Region: {capabilities.region}</p>
                         </div>
                     )}
+
+                    <button
+                        onClick={() => setShowAwsGuide(true)}
+                        className="mt-4 w-full py-2 px-3 rounded-lg border border-violet-500/30 text-violet-400 text-sm hover:bg-violet-500/10 hover:border-violet-500 transition-all flex items-center justify-center gap-2"
+                    >
+                        <span>🔑</span> Get AWS API Keys
+                    </button>
+                    <AWSGuideModal isOpen={showAwsGuide} onClose={() => setShowAwsGuide(false)} />
                 </div>
 
                 <div>
