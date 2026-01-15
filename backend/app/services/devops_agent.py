@@ -57,7 +57,7 @@ Always confirm destructive actions before executing."""
     
     def __init__(self, aws_access_key: str = None, aws_secret_key: str = None, aws_region: str = None):
         self.client = None
-        self.model = "gpt-4o-mini"
+        self.model = "gpt-5-mini"
         self.ec2_client = None
         self.s3_client = None
         self._user_aws_key = aws_access_key

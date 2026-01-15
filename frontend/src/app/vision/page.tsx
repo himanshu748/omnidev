@@ -87,7 +87,7 @@ export default function VisionPage() {
                         <span className="text-2xl">🖼️</span>
                         <span className="font-semibold">Vision Lab</span>
                         <span className="ml-2 px-2 py-1 rounded-full text-xs bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14]/30">
-                            GPT-4o Mini
+                            GPT-5 Mini
                         </span>
                     </div>
                 </div>
@@ -101,7 +101,7 @@ export default function VisionPage() {
                     transition={{ duration: 0.5 }}
                 >
                     <h1 className="text-3xl font-bold mb-2 text-[#39ff14]">Vision Analysis Lab</h1>
-                    <p className="text-gray-400">Upload an image and let GPT-4o Mini Vision analyze it</p>
+                    <p className="text-gray-400">Upload an image and let GPT-5 Mini Vision analyze it</p>
                 </motion.div>
 
                 <div className="grid lg:grid-cols-2 gap-8">
@@ -269,7 +269,7 @@ export default function VisionPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
                 >
-                    <h2 className="text-xl font-semibold mb-6 text-center text-[#39ff14]">Powered by GPT-4o Mini Vision</h2>
+                    <h2 className="text-xl font-semibold mb-6 text-center text-[#39ff14]">Powered by GPT-5 Mini Vision</h2>
                     <div className="grid md:grid-cols-4 gap-4">
                         {[
                             { icon: "🔍", title: "Scene Analysis", desc: "Understand image context and content" },

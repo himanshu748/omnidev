@@ -18,7 +18,7 @@ const features: Feature[] = [
   {
     id: "chat",
     title: "AI Chat",
-    description: "GPT-4o Mini powered AI assistant with markdown support",
+    description: "GPT-5 Mini powered AI assistant with markdown support",
     icon: "💬",
     href: "/chat",
   },
@@ -32,7 +32,7 @@ const features: Feature[] = [
   {
     id: "vision",
     title: "Vision Lab",
-    description: "Image analysis with GPT-4o Mini Vision",
+    description: "Image analysis with GPT-5 Mini Vision",
     icon: "🖼️",
     href: "/vision",
   },
@@ -60,7 +60,7 @@ const features: Feature[] = [
 ];
 
 const techStack = [
-  "Next.js 16", "React 19", "FastAPI", "OpenAI GPT-4o Mini",
+  "Next.js 16", "React 19", "FastAPI", "OpenAI GPT-5 Mini",
   "Playwright", "AWS boto3", "TypeScript", "Python 3.12", "Framer Motion"
 ];
 
@@ -230,7 +230,7 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            A full-stack AI platform featuring <span className="text-[#39ff14]">GPT-4o Mini</span>,
+            A full-stack AI platform featuring <span className="text-[#39ff14]">GPT-5 Mini</span>,
             cloud automation, browser scraping, and vision analysis —
             all in one <span className="text-[#39ff14]">beautiful interface</span>.
           </motion.p>

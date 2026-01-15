@@ -99,7 +99,7 @@ export default function ChatPage() {
                         <span className="text-2xl">💬</span>
                         <span className="font-semibold text-white">AI Chat</span>
                         <span className="ml-2 px-2 py-1 rounded-full text-xs bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14]/30">
-                            GPT-4o Mini
+                            GPT-5 Mini
                         </span>
                     </div>
                 </div>
@@ -118,7 +118,7 @@ export default function ChatPage() {
                                 transition={{ duration: 0.5 }}
                             >
                                 <div className="text-6xl mb-4">🤖</div>
-                                <h2 className="text-2xl font-bold mb-2 text-[#39ff14]">GPT-4o Mini AI Chat</h2>
+                                <h2 className="text-2xl font-bold mb-2 text-[#39ff14]">GPT-5 Mini AI Chat</h2>
                                 <p className="text-gray-400 max-w-md mx-auto">
                                     Start a conversation! I can help with coding, cloud computing,
                                     technical questions, and more.

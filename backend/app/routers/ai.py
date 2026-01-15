@@ -34,7 +34,7 @@ class ChatResponse(BaseModel):
 
 def get_system_prompt() -> str:
     """Get the system prompt for the AI assistant"""
-    return """You are OmniDev AI Assistant, a powerful and knowledgeable AI powered by OpenAI GPT-4o Mini.
+    return """You are OmniDev AI Assistant, a powerful and knowledgeable AI powered by OpenAI GPT-5 Mini.
     
 You help users with:
 - Technical questions and coding assistance
@@ -62,7 +62,7 @@ async def chat_with_key(message: str, history: Optional[List[dict]], api_key: st
         messages.append({"role": "user", "content": message})
         
         response = await client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-5-mini",
             messages=messages,
             temperature=0.7,
             max_tokens=8192,
@@ -124,7 +124,7 @@ async def chat_stream(websocket: WebSocket):
                 messages.append({"role": "user", "content": message})
                 
                 stream = await client.chat.completions.create(
-                    model="gpt-4o-mini",
+                    model="gpt-5-mini",
                     messages=messages,
                     temperature=0.7,
                     max_tokens=8192,
@@ -163,7 +163,7 @@ async def ai_status():
     """Check AI service status"""
     return {
         "service": "OpenAI",
-        "model": "gpt-4o-mini",
+        "model": "gpt-5-mini",
         "status": "configured" if openai_service.client else "not configured",
         "capabilities": ["chat", "streaming", "vision", "user-api-key"]
     }

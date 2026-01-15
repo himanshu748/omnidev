@@ -4,7 +4,7 @@
 
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?style=for-the-badge&logo=next.js)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.109-009688?style=for-the-badge&logo=fastapi)
-![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o_Mini-412991?style=for-the-badge&logo=openai)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--5_Mini-412991?style=for-the-badge&logo=openai)
 ![Playwright](https://img.shields.io/badge/Playwright-1.40-2eac52?style=for-the-badge&logo=playwright)
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python)
 ![Framer Motion](https://img.shields.io/badge/Framer_Motion-11-FF0055?style=for-the-badge&logo=framer)
@@ -13,10 +13,10 @@
 
 OmniDev is a powerful all-in-one AI developer platform, rebuilt from the ground up with cutting-edge technology. Originally a Python Tkinter desktop application (2024), it's now a modern full-stack web platform featuring:
 
-- 🤖 **AI Chat** - Powered by OpenAI GPT-4o Mini
+- 🤖 **AI Chat** - Powered by OpenAI GPT-5 Mini
 - 🕷️ **Web Scraper** - Playwright browser automation with stealth mode
 - 🛠️ **Smart DevOps Agent** - AI-powered AWS infrastructure management
-- 🖼️ **Vision Lab** - Image analysis with GPT-4o Mini Vision
+- 🖼️ **Vision Lab** - Image analysis with GPT-5 Mini Vision
 - 📦 **Cloud Storage** - S3 file manager
 - 📍 **Location Services** - Geolocation and geocoding
 
@@ -123,7 +123,7 @@ AWS_DEFAULT_REGION=ap-south-1
 ## 📱 Features
 
 ### 🤖 AI Chat
-- Powered by OpenAI GPT-4o Mini
+- Powered by OpenAI GPT-5 Mini
 - Conversation memory & streaming responses
 - Code assistance & debugging
 
@@ -191,13 +191,13 @@ curl http://localhost:8000/api/scraper/status
 
 - **Frontend**: Next.js 16, React 19, TypeScript, Tailwind CSS, Framer Motion
 - **Backend**: FastAPI, Python 3.12, Playwright
-- **AI**: OpenAI GPT-4o Mini
+- **AI**: OpenAI GPT-5 Mini
 - **Cloud**: AWS boto3
 
 ## 👥 Creator
 
 **Himanshu Kumar** (2024 - 2026)
-- Rebuilt with modern stack & OpenAI GPT-4o Mini
+- Rebuilt with modern stack & OpenAI GPT-5 Mini
 
 ## 📄 License
 
