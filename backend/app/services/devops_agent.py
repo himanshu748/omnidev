@@ -266,7 +266,6 @@ If AWS credentials aren't configured, explain how to set them up."""
                     {"role": "system", "content": self.SYSTEM_PROMPT},
                     {"role": "user", "content": user_prompt}
                 ],
-                temperature=0.3,
                 max_completion_tokens=4096,
             )
             

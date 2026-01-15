@@ -76,7 +76,6 @@ If you don't know something, say so honestly."""
             response = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=0.7,
                 max_completion_tokens=8192,
             )
             
@@ -121,7 +120,6 @@ If you don't know something, say so honestly."""
             stream = await self.client.chat.completions.create(
                 model=self.model,
                 messages=messages,
-                temperature=0.7,
                 max_completion_tokens=8192,
                 stream=True,
             )
