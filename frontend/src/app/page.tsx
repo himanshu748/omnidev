@@ -3,72 +3,11 @@
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { useSettings } from "./hooks/useSettings";
 import { useAuth } from "./context/AuthContext";
 
-interface Feature {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  href: string;
-}
-
-const features: Feature[] = [
-  {
-    id: "chat",
-    title: "AI Chat",
-    description: "GPT-5 Mini powered AI assistant with markdown support",
-    icon: "💬",
-    href: "/chat",
-  },
-  {
-    id: "devops",
-    title: "DevOps Agent",
-    description: "Smart AI agent for AWS cloud management",
-    icon: "🛠️",
-    href: "/devops",
-  },
-  {
-    id: "vision",
-    title: "Vision Lab",
-    description: "Image analysis with GPT-5 Mini Vision",
-    icon: "🖼️",
-    href: "/vision",
-  },
-  {
-    id: "scraper",
-    title: "Web Scraper",
-    description: "Playwright browser automation with stealth mode",
-    icon: "🕷️",
-    href: "/scraper",
-  },
-  {
-    id: "storage",
-    title: "Cloud Storage",
-    description: "S3 file manager with upload/download",
-    icon: "📦",
-    href: "/storage",
-  },
-  {
-    id: "location",
-    title: "Location Services",
-    description: "GPS & IP geolocation with Google Maps",
-    icon: "📍",
-    href: "/location",
-  },
-];
-
-const techStack = [
-  "Next.js 16", "React 19", "FastAPI", "OpenAI GPT-5 Mini",
-  "Playwright", "AWS boto3", "TypeScript", "Python 3.12", "Framer Motion"
-];
-
 export default function Home() {
-  const { isAiConfigured, isAwsConfigured } = useSettings();
   const { user, loading: authLoading, signOut } = useAuth();
   const [backendStatus, setBackendStatus] = useState<"loading" | "online" | "offline">("loading");
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     fetch("/health")
@@ -77,130 +16,95 @@ export default function Home() {
       .catch(() => setBackendStatus("offline"));
   }, []);
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  const stats = [
+    { value: "GPT-5", label: "AI Model" },
+    { value: "6+", label: "Tools" },
+    { value: "100%", label: "Open Source" },
+    { value: "∞", label: "Possibilities" },
+  ];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-      },
+  const features = [
+    {
+      icon: "💬",
+      title: "AI Chat",
+      description: "Have intelligent conversations powered by GPT-5 Mini with markdown support and code highlighting.",
+      color: "#39ff14",
     },
-  };
+    {
+      icon: "🖼️",
+      title: "Vision Analysis",
+      description: "Upload images and get detailed AI-powered analysis, OCR, and object detection.",
+      color: "#00d4ff",
+    },
+    {
+      icon: "🛠️",
+      title: "DevOps Agent",
+      description: "Manage your AWS infrastructure with natural language commands.",
+      color: "#ff6b35",
+    },
+    {
+      icon: "🕷️",
+      title: "Web Scraper",
+      description: "Extract data from any website with Playwright-powered stealth scraping.",
+      color: "#a855f7",
+    },
+  ];
 
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 },
-  };
+  const steps = [
+    { number: "01", title: "Sign Up", description: "Create a free account in seconds" },
+    { number: "02", title: "Add API Key", description: "Connect your OpenAI or AWS credentials" },
+    { number: "03", title: "Start Building", description: "Access all tools from one dashboard" },
+  ];
 
   return (
-    <main className="min-h-screen bg-[#050505] text-white relative overflow-hidden">
-      {/* Animated Grid Background - Neon Green */}
+    <main className="min-h-screen bg-[#050505] text-white relative overflow-x-hidden">
+      {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
-        <motion.div
-          className="absolute w-[600px] h-[600px] rounded-full blur-[120px] opacity-20"
-          style={{
-            background: "radial-gradient(circle, #39ff14 0%, transparent 70%)",
-          }}
-          animate={{
-            left: mousePos.x - 300,
-            top: mousePos.y - 300,
-          }}
-          transition={{ type: "spring", damping: 30, stiffness: 200 }}
-        />
-      </div>
-
-      {/* Floating Orbs - Neon Green */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <motion.div
-          className="absolute top-20 left-20 w-72 h-72 bg-[#39ff14]/10 rounded-full blur-[100px]"
-          animate={{ y: [0, -20, 0], rotate: [0, 1, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-40 right-20 w-96 h-96 bg-[#39ff14]/10 rounded-full blur-[120px]"
-          animate={{ y: [0, -20, 0], rotate: [0, -1, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/2 w-64 h-64 bg-[#32CD32]/10 rounded-full blur-[80px]"
-          animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }}
-          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-        />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#39ff14]/5 rounded-full blur-[150px]" />
       </div>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/40 border-b border-[#39ff14]/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <motion.div
-              className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black text-sm sm:text-base"
-              whileHover={{ scale: 1.1 }}
-              whileTap={{ scale: 0.95 }}
-            >
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black">
               O
-            </motion.div>
-            <span className="text-lg sm:text-xl font-bold text-[#39ff14]">
-              OmniDev
-            </span>
-          </div>
-          <div className="flex items-center gap-2 sm:gap-4">
-            {/* Status Indicators */}
-            <div className="hidden sm:flex items-center gap-2">
-              <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium border ${backendStatus === "online"
-                ? "border-[#39ff14]/50 bg-[#39ff14]/10 text-[#39ff14]"
-                : backendStatus === "offline"
-                  ? "border-red-500/50 bg-red-500/10 text-red-400"
-                  : "border-white/20 bg-white/5 text-gray-400"
-                }`}>
-                {backendStatus === "loading" ? "..." : backendStatus === "online" ? "● API" : "○ Offline"}
-              </div>
-              <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium border ${isAiConfigured
-                ? "border-[#39ff14]/50 bg-[#39ff14]/10 text-[#39ff14]"
-                : "border-white/20 bg-white/5 text-gray-500"
-                }`}>
-                {isAiConfigured ? "● AI" : "○ AI"}
-              </div>
-              <div className={`px-2 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium border ${isAwsConfigured
-                ? "border-[#39ff14]/50 bg-[#39ff14]/10 text-[#39ff14]"
-                : "border-white/20 bg-white/5 text-gray-500"
-                }`}>
-                {isAwsConfigured ? "● AWS" : "○ AWS"}
-              </div>
             </div>
-            <Link
-              href="/settings"
-              className="px-3 sm:px-4 py-2 rounded-xl border border-[#39ff14]/30 hover:border-[#39ff14] hover:bg-[#39ff14]/10 transition-all flex items-center gap-2 text-[#39ff14]"
-            >
-              <span>⚙️</span>
-              <span className="hidden sm:inline text-sm">Settings</span>
-            </Link>
-            {/* Auth Buttons */}
+            <span className="text-xl font-bold">OmniDev</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${backendStatus === "online"
+                ? "bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/30"
+                : "bg-white/5 text-gray-500 border border-white/10"
+              }`}>
+              {backendStatus === "online" ? "● Online" : "○ Offline"}
+            </div>
             {!authLoading && (
               user ? (
-                <motion.button
-                  onClick={() => signOut()}
-                  className="px-3 sm:px-4 py-2 rounded-xl border border-red-500/30 hover:border-red-500 hover:bg-red-500/10 transition-all text-red-400 text-sm"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  Logout
-                </motion.button>
+                <div className="flex items-center gap-4">
+                  <Link href="/chat" className="text-sm text-gray-400 hover:text-white transition">
+                    Dashboard
+                  </Link>
+                  <button
+                    onClick={() => signOut()}
+                    className="text-sm text-gray-400 hover:text-white transition"
+                  >
+                    Logout
+                  </button>
+                </div>
               ) : (
-                <Link
-                  href="/auth/login"
-                  className="px-3 sm:px-4 py-2 rounded-xl bg-[#39ff14] text-black font-semibold hover:opacity-90 transition-all text-sm"
-                >
-                  Login
-                </Link>
+                <div className="flex items-center gap-3">
+                  <Link href="/auth/login" className="text-sm text-gray-400 hover:text-white transition">
+                    Login
+                  </Link>
+                  <Link
+                    href="/auth/signup"
+                    className="px-4 py-2 rounded-lg bg-[#39ff14] text-black font-semibold text-sm hover:opacity-90 transition"
+                  >
+                    Get Started
+                  </Link>
+                </div>
               )
             )}
           </div>
@@ -208,203 +112,268 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-24 sm:pt-32 pb-12 sm:pb-20 px-4 sm:px-6">
+      <section className="relative pt-32 pb-20 px-6">
         <div className="max-w-5xl mx-auto text-center">
-          {/* Title */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="inline-block mb-6"
+          >
+            <span className="px-4 py-2 rounded-full text-sm font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/20">
+              ✨ Powered by GPT-5 Mini
+            </span>
+          </motion.div>
+
           <motion.h1
-            className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-bold mb-4 sm:mb-6 leading-tight"
+            className="text-5xl md:text-7xl lg:text-8xl font-bold mb-6 leading-[1.1] tracking-tight"
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <span className="block text-white mb-2">Developer</span>
-            <span className="block text-[#39ff14]">
-              Powerhouse
-            </span>
+            Build Faster.
+            <br />
+            <span className="text-[#39ff14]">Automate Smarter.</span>
           </motion.h1>
 
-          {/* Subtitle */}
           <motion.p
-            className="text-base sm:text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed px-4"
+            className="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            A full-stack AI platform featuring <span className="text-[#39ff14]">GPT-5 Mini</span>,
-            cloud automation, browser scraping, and vision analysis —
-            all in one <span className="text-[#39ff14]">beautiful interface</span>.
+            The all-in-one AI developer platform. Chat, vision analysis, cloud automation,
+            and web scraping — unified in a beautiful interface.
           </motion.p>
 
-          {/* CTA Buttons */}
           <motion.div
-            className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4"
+            className="flex flex-col sm:flex-row gap-4 justify-center"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
           >
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                href="/chat"
-                className="block px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-black hover:opacity-90 transition-opacity text-center"
-                style={{ background: "#39ff14" }}
-              >
-                Start Chatting →
-              </Link>
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                href="/settings"
-                className="block px-6 sm:px-8 py-3 sm:py-4 rounded-xl border border-[#39ff14]/30 text-[#39ff14] hover:bg-[#39ff14]/10 transition-all text-center"
-              >
-                Configure APIs
-              </Link>
-            </motion.div>
+            <Link
+              href={user ? "/chat" : "/auth/signup"}
+              className="px-8 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-[#39ff14]/20"
+            >
+              Get Started Free →
+            </Link>
+            <Link
+              href="https://github.com/himanshu748/omnidev"
+              target="_blank"
+              className="px-8 py-4 rounded-xl border border-white/10 text-white font-semibold text-lg hover:bg-white/5 transition flex items-center justify-center gap-2"
+            >
+              <span>⭐</span> Star on GitHub
+            </Link>
           </motion.div>
         </div>
       </section>
 
-      {/* Tech Stack Marquee */}
-      <section className="py-6 sm:py-10 border-y border-[#39ff14]/10 overflow-hidden">
-        <div className="flex animate-marquee whitespace-nowrap">
-          {[...techStack, ...techStack].map((tech, i) => (
-            <span key={i} className="mx-4 sm:mx-8 text-gray-500 text-sm sm:text-lg font-medium">
-              {tech}
-            </span>
-          ))}
+      {/* Stats Bar */}
+      <section className="py-12 border-y border-white/5 bg-white/[0.02]">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+            {stats.map((stat, i) => (
+              <motion.div
+                key={stat.label}
+                className="text-center"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <div className="text-3xl md:text-4xl font-bold text-[#39ff14] mb-1">{stat.value}</div>
+                <div className="text-sm text-gray-500">{stat.label}</div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-12 sm:py-20 px-4 sm:px-6">
+      {/* Problem → Solution */}
+      <section className="py-24 px-6">
         <div className="max-w-6xl mx-auto">
           <motion.div
-            className="text-center mb-10 sm:mb-16"
+            className="text-center mb-16"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
-              <span className="text-[#39ff14]">Powerful</span> Features
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">
+              Stop juggling <span className="text-gray-500">10 different tools</span>
             </h2>
-            <p className="text-gray-500 text-sm sm:text-base max-w-xl mx-auto px-4">
-              Everything you need to build, automate, and manage modern applications
+            <p className="text-gray-500 text-lg max-w-xl mx-auto">
+              OmniDev brings everything you need into one powerful dashboard
             </p>
           </motion.div>
 
-          <motion.div
-            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {features.map((feature) => (
-              <motion.div key={feature.id} variants={itemVariants}>
-                <Link
-                  href={feature.href}
-                  className="group block p-4 sm:p-6 rounded-2xl border border-white/5 bg-white/[0.02] backdrop-blur-sm hover:border-[#39ff14]/30 hover:bg-[#39ff14]/5 transition-all duration-300"
-                >
-                  {/* Icon */}
-                  <motion.div
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-[#39ff14]/20 flex items-center justify-center text-xl sm:text-2xl mb-3 sm:mb-4 group-hover:bg-[#39ff14]/30 transition-all duration-300"
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    {feature.icon}
-                  </motion.div>
-
-                  {/* Content */}
-                  <h3 className="text-lg sm:text-xl font-semibold mb-1 sm:mb-2 group-hover:text-[#39ff14] transition-colors">
-                    {feature.title}
-                  </h3>
-                  <p className="text-gray-500 text-xs sm:text-sm leading-relaxed">
-                    {feature.description}
-                  </p>
-
-                  {/* Arrow */}
-                  <div className="mt-3 sm:mt-4 text-gray-500 group-hover:text-[#39ff14] transition-colors text-sm">
-                    Open →
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-12 sm:py-20 px-4 sm:px-6 border-t border-[#39ff14]/10">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8"
-            variants={containerVariants}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-          >
-            {[
-              { value: "6+", label: "Modules" },
-              { value: "1", label: "AI Model" },
-              { value: "∞", label: "Possibilities" },
-              { value: "100%", label: "Configurable" },
-            ].map((stat) => (
-              <motion.div key={stat.label} className="text-center" variants={itemVariants}>
-                <div className="text-3xl sm:text-4xl md:text-5xl font-bold text-[#39ff14] mb-1 sm:mb-2">
-                  {stat.value}
-                </div>
-                <div className="text-gray-500 text-xs sm:text-sm uppercase tracking-wider">
-                  {stat.label}
-                </div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-12 sm:py-20 px-4 sm:px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            className="relative p-8 sm:p-12 rounded-3xl border border-[#39ff14]/20 bg-[#39ff14]/5 overflow-hidden"
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="relative text-2xl sm:text-3xl md:text-4xl font-bold mb-3 sm:mb-4">
-              Ready to <span className="text-[#39ff14]">explore</span>?
-            </h2>
-            <p className="relative text-gray-400 text-sm sm:text-base mb-6 sm:mb-8 max-w-lg mx-auto">
-              Configure your API keys and unlock the full potential of OmniDev
-            </p>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Link
-                href="/settings"
-                className="relative inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold text-black hover:opacity-90 transition-opacity"
-                style={{ background: "#39ff14" }}
-              >
-                ⚙️ Open Settings
-              </Link>
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Without */}
+            <motion.div
+              className="p-8 rounded-2xl bg-red-500/5 border border-red-500/20"
+              initial={{ opacity: 0, x: -30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="text-red-400 font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">😩</span> Without OmniDev
+              </div>
+              <ul className="space-y-3 text-gray-400">
+                <li className="flex items-start gap-3"><span className="text-red-400">✗</span> Switching between ChatGPT, AWS Console, Postman...</li>
+                <li className="flex items-start gap-3"><span className="text-red-400">✗</span> Copy-pasting API keys everywhere</li>
+                <li className="flex items-start gap-3"><span className="text-red-400">✗</span> No context between tools</li>
+                <li className="flex items-start gap-3"><span className="text-red-400">✗</span> Paying for multiple subscriptions</li>
+              </ul>
             </motion.div>
+
+            {/* With */}
+            <motion.div
+              className="p-8 rounded-2xl bg-[#39ff14]/5 border border-[#39ff14]/20"
+              initial={{ opacity: 0, x: 30 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="text-[#39ff14] font-semibold mb-4 flex items-center gap-2">
+                <span className="text-2xl">🚀</span> With OmniDev
+              </div>
+              <ul className="space-y-3 text-gray-300">
+                <li className="flex items-start gap-3"><span className="text-[#39ff14]">✓</span> All tools in one beautiful interface</li>
+                <li className="flex items-start gap-3"><span className="text-[#39ff14]">✓</span> Configure once, use everywhere</li>
+                <li className="flex items-start gap-3"><span className="text-[#39ff14]">✓</span> Seamless workflow between features</li>
+                <li className="flex items-start gap-3"><span className="text-[#39ff14]">✓</span> 100% open source & free</li>
+              </ul>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Bento Grid */}
+      <section className="py-24 px-6 bg-white/[0.01]">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">
+              Everything you need to <span className="text-[#39ff14]">ship faster</span>
+            </h2>
+            <p className="text-gray-500 text-lg">Powerful features, beautifully designed</p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {features.map((feature, i) => (
+              <motion.div
+                key={feature.title}
+                className="group p-8 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.1 }}
+                whileHover={{ y: -5 }}
+              >
+                <div
+                  className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl mb-6"
+                  style={{ background: `${feature.color}15`, border: `1px solid ${feature.color}30` }}
+                >
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-gray-400 leading-relaxed">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            className="text-center mt-12"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+          >
+            <Link
+              href={user ? "/chat" : "/auth/signup"}
+              className="inline-flex items-center gap-2 text-[#39ff14] hover:underline font-medium"
+            >
+              Explore all 6+ tools →
+            </Link>
           </motion.div>
         </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="py-24 px-6">
+        <div className="max-w-5xl mx-auto">
+          <motion.div
+            className="text-center mb-16"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-5xl font-bold mb-4">
+              Get started in <span className="text-[#39ff14]">3 minutes</span>
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {steps.map((step, i) => (
+              <motion.div
+                key={step.number}
+                className="text-center"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.15 }}
+              >
+                <div className="text-5xl font-bold text-[#39ff14]/20 mb-4">{step.number}</div>
+                <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
+                <p className="text-gray-500">{step.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-24 px-6">
+        <motion.div
+          className="max-w-4xl mx-auto text-center p-12 rounded-3xl bg-gradient-to-b from-[#39ff14]/10 to-transparent border border-[#39ff14]/20"
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-3xl md:text-5xl font-bold mb-4">
+            Ready to supercharge your workflow?
+          </h2>
+          <p className="text-gray-400 text-lg mb-8 max-w-xl mx-auto">
+            Join developers who are building faster with OmniDev. Free forever for personal use.
+          </p>
+          <Link
+            href={user ? "/chat" : "/auth/signup"}
+            className="inline-block px-10 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-[#39ff14]/20"
+          >
+            Start Building Today →
+          </Link>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="py-6 sm:py-8 px-4 sm:px-6 border-t border-[#39ff14]/10">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 sm:w-6 sm:h-6 rounded bg-[#39ff14]" />
-            <span className="text-gray-500 text-xs sm:text-sm">OmniDev v1.0</span>
+      <footer className="py-12 px-6 border-t border-white/5">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-[#39ff14]" />
+            <span className="text-gray-500">OmniDev v1.0</span>
           </div>
-          <p className="text-gray-600 text-xs sm:text-sm text-center">
+          <p className="text-gray-600 text-sm">
             Built by <span className="text-white">Himanshu Kumar</span> • 2024-2026
           </p>
-          <div className="flex items-center gap-4">
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#39ff14] transition-colors text-xs sm:text-sm">
+          <div className="flex items-center gap-6">
+            <Link href="https://github.com/himanshu748/omnidev" target="_blank" className="text-gray-500 hover:text-white transition">
               GitHub
-            </a>
-            <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-[#39ff14] transition-colors text-xs sm:text-sm">
-              LinkedIn
-            </a>
+            </Link>
+            <Link href="/settings" className="text-gray-500 hover:text-white transition">
+              Settings
+            </Link>
           </div>
         </div>
       </footer>
