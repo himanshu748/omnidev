@@ -11,6 +11,7 @@ import json
 
 from app.services.openai_service import openai_service
 from app.config import get_settings
+from app.services.auth_service import decode_jwt, get_user_id, verify_api_key
 
 router = APIRouter()
 settings = get_settings()
@@ -102,6 +103,21 @@ async def chat_stream(websocket: WebSocket):
     Send JSON: {"message": "your message", "history": [...], "api_key": "optional"}
     Receive chunked text responses
     """
+    token = websocket.query_params.get("token", "")
+    api_key = websocket.query_params.get("api_key", "")
+    if not token:
+        await websocket.close(code=4401)
+        return
+    try:
+        payload = decode_jwt(token)
+        user_id = get_user_id(payload)
+        if not api_key or not verify_api_key(user_id, api_key):
+            await websocket.close(code=4403)
+            return
+    except Exception:
+        await websocket.close(code=4401)
+        return
+
     await websocket.accept()
     
     try:

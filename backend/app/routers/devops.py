@@ -10,6 +10,7 @@ import json
 import boto3
 
 from app.services.devops_agent import devops_agent, DevOpsAgent
+from app.services.auth_service import decode_jwt, get_user_id, verify_api_key
 
 router = APIRouter()
 
@@ -148,6 +149,21 @@ async def devops_agent_ws(websocket: WebSocket):
     Send JSON: {"command": "your command", "aws_access_key": "optional", "aws_secret_key": "optional", "aws_region": "optional"}
     Receive agent responses
     """
+    token = websocket.query_params.get("token", "")
+    api_key = websocket.query_params.get("api_key", "")
+    if not token:
+        await websocket.close(code=4401)
+        return
+    try:
+        payload = decode_jwt(token)
+        user_id = get_user_id(payload)
+        if not api_key or not verify_api_key(user_id, api_key):
+            await websocket.close(code=4403)
+            return
+    except Exception:
+        await websocket.close(code=4401)
+        return
+
     await websocket.accept()
     
     # Send welcome message

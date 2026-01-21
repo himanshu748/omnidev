@@ -8,8 +8,11 @@ from pydantic import BaseModel
 from typing import Optional
 import geocoder
 import httpx
+import time
 
 router = APIRouter()
+
+location_cache = {}
 
 
 class LocationResponse(BaseModel):
@@ -121,11 +124,15 @@ async def get_current_location(request: Request, api_key: Optional[str] = None):
         
         print(f"Location lookup for IP: {client_ip}")
         
+        cached = location_cache.get(client_ip)
+        if cached and cached["expires_at"] > time.time():
+            return LocationResponse(**cached["data"])
+
         # Try primary: geocoder IP with client's IP
         if client_ip and client_ip not in ("127.0.0.1", "localhost", "::1"):
             g = geocoder.ip(client_ip)
             if g.ok:
-                return LocationResponse(
+                data = LocationResponse(
                     latitude=g.lat,
                     longitude=g.lng,
                     city=g.city,
@@ -134,6 +141,11 @@ async def get_current_location(request: Request, api_key: Optional[str] = None):
                     address=g.address,
                     raw=g.json
                 )
+                location_cache[client_ip] = {
+                    "expires_at": time.time() + 600,
+                    "data": data.model_dump(),
+                }
+                return data
         
         # Fallback 1: Try ipinfo.io with client IP
         if client_ip and client_ip not in ("127.0.0.1", "localhost", "::1"):
@@ -143,7 +155,7 @@ async def get_current_location(request: Request, api_key: Optional[str] = None):
                     if response.status_code == 200:
                         data = response.json()
                         loc = data.get("loc", "0,0").split(",")
-                        return LocationResponse(
+                        data = LocationResponse(
                             latitude=float(loc[0]) if len(loc) > 0 else None,
                             longitude=float(loc[1]) if len(loc) > 1 else None,
                             city=data.get("city"),
@@ -152,6 +164,11 @@ async def get_current_location(request: Request, api_key: Optional[str] = None):
                             address=f"{data.get('city', '')}, {data.get('region', '')}, {data.get('country', '')}",
                             raw=data
                         )
+                        location_cache[client_ip] = {
+                            "expires_at": time.time() + 600,
+                            "data": data.model_dump(),
+                        }
+                        return data
             except Exception as e:
                 print(f"ipinfo.io fallback failed: {e}")
         
@@ -163,7 +180,7 @@ async def get_current_location(request: Request, api_key: Optional[str] = None):
                     if response.status_code == 200:
                         data = response.json()
                         if data.get("status") == "success":
-                            return LocationResponse(
+                            data = LocationResponse(
                                 latitude=data.get("lat"),
                                 longitude=data.get("lon"),
                                 city=data.get("city"),
@@ -172,6 +189,11 @@ async def get_current_location(request: Request, api_key: Optional[str] = None):
                                 address=f"{data.get('city', '')}, {data.get('regionName', '')}, {data.get('country', '')}",
                                 raw=data
                             )
+                            location_cache[client_ip] = {
+                                "expires_at": time.time() + 600,
+                                "data": data.model_dump(),
+                            }
+                            return data
             except Exception as e:
                 print(f"ip-api.com fallback failed: {e}")
             
@@ -192,6 +214,9 @@ async def reverse_geocode(lat: float, lng: float, api_key: Optional[str] = None)
     - **api_key**: Optional Google Maps API key for better results
     """
     try:
+        if lat < -90 or lat > 90 or lng < -180 or lng > 180:
+            raise HTTPException(status_code=400, detail="Invalid coordinates")
+
         # Try Google API if key provided
         if api_key:
             try:
@@ -284,6 +309,9 @@ async def get_nearby_places(lat: float, lng: float, api_key: Optional[str] = Non
     - **api_key**: Optional Google Maps API key
     """
     try:
+        if lat < -90 or lat > 90 or lng < -180 or lng > 180:
+            raise HTTPException(status_code=400, detail="Invalid coordinates")
+
         # Try Google API if key provided
         if api_key:
             try:

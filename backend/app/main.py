@@ -8,7 +8,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import get_settings
-from app.routers import ai, devops, vision, location, storage, scraper
+from app.routers import ai, devops, vision, location, storage, scraper, auth, analytics
+from app.routers import monitoring
+from app.middleware.security import SecurityMiddleware
 
 
 settings = get_settings()
@@ -60,6 +62,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.add_middleware(SecurityMiddleware)
+
 
 # Include routers
 app.include_router(ai.router, prefix="/api/ai", tags=["AI & Chat"])
@@ -68,6 +72,9 @@ app.include_router(vision.router, prefix="/api/vision", tags=["Vision Analysis"]
 app.include_router(scraper.router, prefix="/api/scraper", tags=["Web Scraper"])
 app.include_router(location.router, prefix="/api/location", tags=["Location Services"])
 app.include_router(storage.router, prefix="/api/storage", tags=["Cloud Storage"])
+app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+app.include_router(analytics.router, prefix="/analytics", tags=["Analytics"])
+app.include_router(monitoring.router, prefix="/monitoring", tags=["Monitoring"])
 
 
 @app.get("/", tags=["Health"])

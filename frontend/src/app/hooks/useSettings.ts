@@ -9,6 +9,7 @@ export interface AppSettings {
     awsAccessKeyId: string;
     awsSecretAccessKey: string;
     awsRegion: string;
+    apiAccessKey: string;
     // Location Configuration
     googleMapsApiKey: string;
     locationMethod: "ip" | "browser" | "manual";
@@ -27,6 +28,7 @@ const DEFAULT_SETTINGS: AppSettings = {
     awsAccessKeyId: "",
     awsSecretAccessKey: "",
     awsRegion: "ap-south-1",
+    apiAccessKey: "",
     googleMapsApiKey: "",
     locationMethod: "ip",
     savedLocation: null,

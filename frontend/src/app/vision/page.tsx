@@ -4,6 +4,8 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { AuthGuard } from "../components/AuthGuard";
+import { buildAuthHeaders } from "../lib/api";
+import { useSettings } from "../hooks/useSettings";
 
 interface AnalysisResult {
     analysis?: string;
@@ -14,6 +16,7 @@ interface AnalysisResult {
 }
 
 export default function VisionPage() {
+    const { settings } = useSettings();
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [analysis, setAnalysis] = useState<string | null>(null);
@@ -39,6 +42,9 @@ export default function VisionPage() {
         try {
             const formData = new FormData();
             formData.append("file", selectedFile);
+            if (settings.openaiApiKey) {
+                formData.append("api_key", settings.openaiApiKey);
+            }
 
             let endpoint = "analyze";
             if (analysisType === "describe") endpoint = "describe";
@@ -47,6 +53,7 @@ export default function VisionPage() {
 
             const response = await fetch(`/api/vision/${endpoint}`, {
                 method: "POST",
+                headers: await buildAuthHeaders(),
                 body: formData,
             });
 

@@ -132,9 +132,10 @@ If you don't know something, say so honestly."""
             yield f"❌ Error: {str(e)}"
     
     async def analyze_image(
-        self, 
-        image_data: bytes, 
-        prompt: str = "Describe this image in detail."
+        self,
+        image_data: bytes,
+        prompt: str = "Describe this image in detail.",
+        api_key: Optional[str] = None
     ) -> str:
         """
         Analyze an image using OpenAI GPT-4o Vision
@@ -146,7 +147,10 @@ If you don't know something, say so honestly."""
         Returns:
             Image analysis text
         """
-        if not self.client:
+        client = self.client
+        if api_key:
+            client = AsyncOpenAI(api_key=api_key)
+        if not client:
             return "⚠️ OpenAI API not configured."
         
         try:
@@ -176,7 +180,7 @@ If you don't know something, say so honestly."""
                 }
             ]
             
-            response = await self.client.chat.completions.create(
+            response = await client.chat.completions.create(
                 model=self.vision_model,
                 messages=messages,
                 max_completion_tokens=4096,

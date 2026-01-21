@@ -72,7 +72,7 @@ export default function AWSGuideModal({ isOpen, onClose }: AWSGuideModalProps) {
                                 <h3 className="font-semibold text-lg">Navigate to IAM (Identity and Access Management)</h3>
                             </div>
                             <div className="pl-11 text-gray-400">
-                                <p>Search for <strong>"IAM"</strong> in the top search bar and select it.</p>
+                            <p>Search for <strong>&quot;IAM&quot;</strong> in the top search bar and select it.</p>
                             </div>
                         </div>
 
@@ -135,7 +135,7 @@ export default function AWSGuideModal({ isOpen, onClose }: AWSGuideModalProps) {
                                 <h3 className="font-semibold text-lg">Copy Your Keys</h3>
                             </div>
                             <div className="pl-11 text-gray-400 space-y-4">
-                                <p>You will see your <strong>Access Key ID</strong> and <strong>Secret Access Key</strong>. Copy them immediately as you won't be able to see the Secret Key again.</p>
+                                <p>You will see your <strong>Access Key ID</strong> and <strong>Secret Access Key</strong>. Copy them immediately as you won&apos;t be able to see the Secret Key again.</p>
 
                                 <div className="p-4 bg-black/40 rounded-lg border border-white/10 space-y-3">
                                     <div className="flex justify-between items-center">

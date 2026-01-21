@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "./context/AuthContext";
+import { trackEvent } from "./lib/analytics";
 
 export default function Home() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [backendStatus, setBackendStatus] = useState<"loading" | "online" | "offline">("loading");
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     fetch("/health")
@@ -15,6 +17,12 @@ export default function Home() {
       .then(() => setBackendStatus("online"))
       .catch(() => setBackendStatus("offline"));
   }, []);
+
+  useEffect(() => {
+    if (!user && !authLoading) {
+      trackEvent("landing_view");
+    }
+  }, [user, authLoading]);
 
   // Show loading while checking auth
   if (authLoading) {
@@ -37,7 +45,7 @@ export default function Home() {
     ];
 
     return (
-      <main className="min-h-screen bg-[#050505] text-white">
+      <main className="min-h-screen bg-[#050505] text-white" id="main-content">
         {/* Background */}
         <div className="fixed inset-0 pointer-events-none">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
@@ -57,7 +65,7 @@ export default function Home() {
               <Link href="/settings" className="px-4 py-2 rounded-lg border border-white/10 text-sm hover:bg-white/5 transition">
                 ⚙️ Settings
               </Link>
-              <button onClick={() => signOut()} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition">
+              <button onClick={() => signOut()} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition" aria-label="Sign out">
                 Logout
               </button>
             </div>
@@ -67,7 +75,12 @@ export default function Home() {
         {/* Dashboard Content */}
         <div className="pt-28 pb-12 px-6">
           <div className="max-w-6xl mx-auto">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.4 }}
+              className="mb-12"
+            >
               <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
               <p className="text-gray-400">Select a tool to get started</p>
             </motion.div>
@@ -76,9 +89,9 @@ export default function Home() {
               {features.map((feature, i) => (
                 <motion.div
                   key={feature.id}
-                  initial={{ opacity: 0, y: 30 }}
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
+                  transition={{ delay: reduceMotion ? 0 : i * 0.1 }}
                 >
                   <Link
                     href={feature.href}
@@ -104,7 +117,10 @@ export default function Home() {
 
   // NOT LOGGED IN: Show Marketing Page
   return (
-    <main className="min-h-screen bg-[#050505] text-white relative overflow-x-hidden">
+    <main className="min-h-screen bg-[#050505] text-white relative overflow-x-hidden" id="main-content">
+      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-black focus:text-white">
+        Skip to content
+      </a>
       {/* Animated Background */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
@@ -112,15 +128,22 @@ export default function Home() {
       </div>
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5" aria-label="Primary">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black">O</div>
             <span className="text-xl font-bold">OmniDev</span>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="text-sm text-gray-400 hover:text-white transition">Login</Link>
-            <Link href="/auth/signup" className="px-4 py-2 rounded-lg bg-[#39ff14] text-black font-semibold text-sm hover:opacity-90 transition">
+            <Link href="/auth/login" className="text-sm text-gray-400 hover:text-white transition" aria-label="Log in">
+              Login
+            </Link>
+            <Link
+              href="/auth/signup"
+              className="px-4 py-2 rounded-lg bg-[#39ff14] text-black font-semibold text-sm hover:opacity-90 transition"
+              aria-label="Get started"
+              onClick={() => trackEvent("cta_signup_nav")}
+            >
               Get Started
             </Link>
           </div>
@@ -130,7 +153,12 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative pt-32 pb-20 px-6">
         <div className="max-w-5xl mx-auto text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="inline-block mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.4 }}
+            className="inline-block mb-6"
+          >
             <span className="px-4 py-2 rounded-full text-sm font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/20">
               ✨ Powered by GPT-5 Mini
             </span>
@@ -138,9 +166,9 @@ export default function Home() {
 
           <motion.h1
             className="text-5xl md:text-7xl font-bold mb-6 leading-[1.1]"
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: reduceMotion ? 0 : 0.1 }}
           >
             Build Faster.<br />
             <span className="text-[#39ff14]">Automate Smarter.</span>
@@ -148,23 +176,34 @@ export default function Home() {
 
           <motion.p
             className="text-lg text-gray-400 max-w-2xl mx-auto mb-10"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            transition={{ delay: reduceMotion ? 0 : 0.2 }}
           >
             The all-in-one AI developer platform. Chat, vision analysis, cloud automation, and web scraping — unified in a beautiful interface.
           </motion.p>
 
           <motion.div
             className="flex flex-col sm:flex-row gap-4 justify-center"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: reduceMotion ? 0 : 0.3 }}
           >
-            <Link href="/auth/signup" className="px-8 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-[#39ff14]/20">
+            <Link
+              href="/auth/signup"
+              className="px-8 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-[#39ff14]/20"
+              onClick={() => trackEvent("cta_signup_hero")}
+              aria-label="Create free account"
+            >
               Get Started Free →
             </Link>
-            <Link href="https://github.com/himanshu748/omnidev" target="_blank" className="px-8 py-4 rounded-xl border border-white/10 text-white font-semibold text-lg hover:bg-white/5 transition">
+            <Link
+              href="https://github.com/himanshu748/omnidev"
+              target="_blank"
+              className="px-8 py-4 rounded-xl border border-white/10 text-white font-semibold text-lg hover:bg-white/5 transition"
+              onClick={() => trackEvent("cta_github")}
+              aria-label="Star the GitHub repository"
+            >
               ⭐ Star on GitHub
             </Link>
           </motion.div>
@@ -176,7 +215,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto">
           <motion.h2
             className="text-3xl md:text-4xl font-bold text-center mb-16"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
@@ -195,10 +234,10 @@ export default function Home() {
               <motion.div
                 key={f.title}
                 className="p-6 rounded-2xl bg-white/[0.02] border border-white/5"
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ delay: reduceMotion ? 0 : i * 0.1 }}
               >
                 <div className="text-3xl mb-4">{f.icon}</div>
                 <h3 className="text-lg font-semibold mb-1">{f.title}</h3>
@@ -219,7 +258,12 @@ export default function Home() {
         >
           <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
           <p className="text-gray-400 mb-8">Free forever for personal use.</p>
-          <Link href="/auth/signup" className="inline-block px-10 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition">
+          <Link
+            href="/auth/signup"
+            className="inline-block px-10 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition"
+            onClick={() => trackEvent("cta_signup_footer")}
+            aria-label="Create your free account"
+          >
             Create Free Account →
           </Link>
         </motion.div>

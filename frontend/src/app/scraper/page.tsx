@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { AuthGuard } from "../components/AuthGuard";
+import { buildAuthHeaders } from "../lib/api";
 
 interface ScrapeResult {
     success: boolean;
@@ -34,7 +35,9 @@ export default function ScraperPage() {
 
     const fetchStatus = async () => {
         try {
-            const res = await fetch("/api/scraper/status");
+            const res = await fetch("/api/scraper/status", {
+                headers: await buildAuthHeaders(),
+            });
             const data = await res.json();
             setStatus(data);
         } catch {
@@ -50,7 +53,10 @@ export default function ScraperPage() {
         try {
             const res = await fetch("/api/scraper/scrape", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    ...(await buildAuthHeaders()),
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({
                     url,
                     wait_time_ms: waitTime,

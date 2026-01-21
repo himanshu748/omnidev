@@ -20,7 +20,7 @@ Render is chosen because it supports the system dependencies required by Playwri
         - `AWS_SECRET_ACCESS_KEY`: Your AWS Secret (optional)
         - `GEMINI_API_KEY`: If used.
 5. **Deploy**: Click **Apply** or **Deploy**.
-    - Watch the build logs. It will install Python 3.12, dependencies, and Chromium.
+    - Watch the build logs. It will install Python 3.12+, dependencies, and Chromium.
     - Once "Live", copy your backend URL (e.g., `https://omnidev-api.onrender.com`).
 
 ---

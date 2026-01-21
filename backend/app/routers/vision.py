@@ -20,7 +20,8 @@ class AnalysisResponse(BaseModel):
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_image(
     file: UploadFile = File(...),
-    prompt: Optional[str] = Form("Describe this image in detail. Include objects, colors, setting, and any text visible.")
+    prompt: Optional[str] = Form("Describe this image in detail. Include objects, colors, setting, and any text visible."),
+    api_key: Optional[str] = Form(None)
 ):
     """
     Analyze an uploaded image using OpenAI GPT-5 Mini Vision
@@ -40,13 +41,13 @@ async def analyze_image(
     image_data = await file.read()
     
     # Analyze with OpenAI
-    result = await openai_service.analyze_image(image_data, prompt)
+    result = await openai_service.analyze_image(image_data, prompt, api_key=api_key)
     
     return AnalysisResponse(analysis=result)
 
 
 @router.post("/describe")
-async def describe_image(file: UploadFile = File(...)):
+async def describe_image(file: UploadFile = File(...), api_key: Optional[str] = Form(None)):
     """Get a detailed description of an image"""
     image_data = await file.read()
     result = await openai_service.analyze_image(
@@ -56,26 +57,28 @@ async def describe_image(file: UploadFile = File(...)):
         "2. Colors and visual style\n"
         "3. Setting and context\n"
         "4. Any text visible\n"
-        "5. Overall mood or tone"
+        "5. Overall mood or tone",
+        api_key=api_key
     )
     return {"description": result}
 
 
 @router.post("/extract-text")
-async def extract_text(file: UploadFile = File(...)):
+async def extract_text(file: UploadFile = File(...), api_key: Optional[str] = Form(None)):
     """Extract text (OCR) from an image"""
     image_data = await file.read()
     result = await openai_service.analyze_image(
         image_data,
         "Extract and transcribe ALL text visible in this image. "
         "Format the text clearly, preserving structure where possible. "
-        "If no text is visible, say 'No text detected'."
+        "If no text is visible, say 'No text detected'.",
+        api_key=api_key
     )
     return {"text": result}
 
 
 @router.post("/identify-objects")
-async def identify_objects(file: UploadFile = File(...)):
+async def identify_objects(file: UploadFile = File(...), api_key: Optional[str] = Form(None)):
     """Identify and list objects in an image"""
     image_data = await file.read()
     result = await openai_service.analyze_image(
@@ -83,7 +86,8 @@ async def identify_objects(file: UploadFile = File(...)):
         "Identify all objects in this image. Return as a JSON-formatted list with:\n"
         "- object: name of the object\n"
         "- confidence: high/medium/low\n"
-        "- location: general position (top-left, center, etc.)"
+        "- location: general position (top-left, center, etc.)",
+        api_key=api_key
     )
     return {"objects": result}
 

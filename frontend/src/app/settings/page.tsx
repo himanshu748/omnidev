@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSettings } from "../hooks/useSettings";
 import { createClient } from "../lib/supabase";
+import { buildAuthHeaders } from "../lib/api";
 
 export default function SettingsPage() {
     const router = useRouter();
@@ -12,6 +13,8 @@ export default function SettingsPage() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const { settings, isLoaded, saveSettings, clearSettings, isAiConfigured, isAwsConfigured, isLocationConfigured } = useSettings();
     const [saved, setSaved] = useState(false);
+    const [apiKeyStatus, setApiKeyStatus] = useState<"idle" | "saving" | "error" | "success">("idle");
+    const isApiKeyConfigured = Boolean(settings.apiAccessKey);
 
     // Auth check - redirect to login if not authenticated
     useEffect(() => {
@@ -32,6 +35,7 @@ export default function SettingsPage() {
     const [awsSecretKey, setAwsSecretKey] = useState("");
     const [awsRegion, setAwsRegion] = useState("ap-south-1");
     const [googleKey, setGoogleKey] = useState("");
+    const [apiAccessKey, setApiAccessKey] = useState("");
 
     // Sync local state when settings load
     useState(() => {
@@ -41,6 +45,7 @@ export default function SettingsPage() {
             setAwsSecretKey(settings.awsSecretAccessKey);
             setAwsRegion(settings.awsRegion);
             setGoogleKey(settings.googleMapsApiKey);
+            setApiAccessKey(settings.apiAccessKey);
         }
     });
 
@@ -51,6 +56,7 @@ export default function SettingsPage() {
             awsSecretAccessKey: awsSecretKey,
             awsRegion: awsRegion,
             googleMapsApiKey: googleKey,
+            apiAccessKey: apiAccessKey,
         });
         setSaved(true);
         setTimeout(() => setSaved(false), 2000);
@@ -63,6 +69,29 @@ export default function SettingsPage() {
         setAwsSecretKey("");
         setAwsRegion("ap-south-1");
         setGoogleKey("");
+        setApiAccessKey("");
+    };
+
+    const generateApiKey = async () => {
+        setApiKeyStatus("saving");
+        try {
+            const headers = await buildAuthHeaders(false);
+            const response = await fetch("/api/auth/api-key", {
+                method: "POST",
+                headers,
+            });
+            if (!response.ok) {
+                setApiKeyStatus("error");
+                return;
+            }
+            const data = await response.json();
+            setApiAccessKey(data.api_key);
+            saveSettings({ apiAccessKey: data.api_key });
+            setApiKeyStatus("success");
+            setTimeout(() => setApiKeyStatus("idle"), 2000);
+        } catch {
+            setApiKeyStatus("error");
+        }
     };
 
     const awsRegions = [
@@ -108,7 +137,7 @@ export default function SettingsPage() {
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                         🔌 Connection Status
                     </h2>
-                    <div className="grid grid-cols-3 gap-4">
+                    <div className="grid grid-cols-4 gap-4">
                         <div className={`p-4 rounded-xl border ${isAiConfigured ? "border-neon-cyan bg-neon-cyan/10" : "border-[--border]"}`}>
                             <div className="text-2xl mb-2">🤖</div>
                             <div className="font-medium">AI (OpenAI)</div>
@@ -128,6 +157,13 @@ export default function SettingsPage() {
                             <div className="font-medium">Location</div>
                             <div className={`text-sm ${isLocationConfigured ? "text-emerald-400" : "text-gray-500"}`}>
                                 {isLocationConfigured ? "✓ Google API" : "Using free API"}
+                            </div>
+                        </div>
+                        <div className={`p-4 rounded-xl border ${isApiKeyConfigured ? "border-blue-500 bg-blue-500/10" : "border-[--border]"}`}>
+                            <div className="text-2xl mb-2">🔐</div>
+                            <div className="font-medium">API Key</div>
+                            <div className={`text-sm ${isApiKeyConfigured ? "text-blue-400" : "text-gray-500"}`}>
+                                {isApiKeyConfigured ? "✓ Ready" : "Not set"}
                             </div>
                         </div>
                     </div>
@@ -157,6 +193,41 @@ export default function SettingsPage() {
                                     OpenAI Platform
                                 </a>
                             </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="glass-card p-6">
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                        🔐 API Access
+                    </h2>
+                    <p className="text-gray-400 text-sm mb-4">
+                        Use this key to authorize API requests tied to your account.
+                    </p>
+                    <div className="space-y-4">
+                        <div>
+                            <label className="text-sm text-gray-400 mb-2 block">API Access Key</label>
+                            <input
+                                type="password"
+                                value={apiAccessKey}
+                                onChange={(e) => setApiAccessKey(e.target.value)}
+                                placeholder="Generate or paste your key"
+                                className="w-full bg-[--card] border border-[--border] rounded-xl px-4 py-3 focus:outline-none focus:border-neon-cyan transition-colors font-mono text-sm"
+                            />
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={generateApiKey}
+                                className="px-4 py-2 rounded-lg border border-neon-cyan/40 text-neon-cyan hover:bg-neon-cyan/10 transition-colors text-sm"
+                            >
+                                {apiKeyStatus === "saving" ? "Generating..." : "Generate API Key"}
+                            </button>
+                            {apiKeyStatus === "success" && (
+                                <span className="text-xs text-emerald-400">Saved</span>
+                            )}
+                            {apiKeyStatus === "error" && (
+                                <span className="text-xs text-red-400">Failed</span>
+                            )}
                         </div>
                     </div>
                 </div>

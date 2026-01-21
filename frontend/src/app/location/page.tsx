@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSettings } from "../hooks/useSettings";
 import { AuthGuard } from "../components/AuthGuard";
+import { buildAuthHeaders } from "../lib/api";
 
 interface Location {
     latitude: number | null;
@@ -75,7 +76,9 @@ export default function LocationPage() {
             if (settings.googleMapsApiKey) {
                 url += `?api_key=${encodeURIComponent(settings.googleMapsApiKey)}`;
             }
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: await buildAuthHeaders(),
+            });
             const data = await res.json();
             setCurrentLocation({ ...data, source: "ip" });
         } catch {
@@ -105,7 +108,9 @@ export default function LocationPage() {
                     if (settings.googleMapsApiKey) {
                         url += `&api_key=${encodeURIComponent(settings.googleMapsApiKey)}`;
                     }
-                    const res = await fetch(url);
+                    const res = await fetch(url, {
+                        headers: await buildAuthHeaders(),
+                    });
                     const data = await res.json();
 
                     setCurrentLocation({
@@ -153,7 +158,9 @@ export default function LocationPage() {
             if (settings.googleMapsApiKey) {
                 url += `&api_key=${encodeURIComponent(settings.googleMapsApiKey)}`;
             }
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                headers: await buildAuthHeaders(),
+            });
             const data = await res.json();
             setSearchResult({ ...data, source: "search" });
         } catch {

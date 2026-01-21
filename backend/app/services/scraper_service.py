@@ -6,9 +6,14 @@ Provides browser automation with Playwright for web scraping
 import asyncio
 import base64
 from typing import Optional, Dict, Any
+from urllib.parse import urlparse
+from urllib import robotparser
 from bs4 import BeautifulSoup
 from dataclasses import dataclass
 
+from app.config import get_settings
+
+settings = get_settings()
 
 @dataclass
 class ScrapeResult:
@@ -73,6 +78,60 @@ class ScraperService:
             ScrapeResult with scraped data
         """
         import time
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower()
+        if not domain:
+            return ScrapeResult(
+                success=False,
+                url=url,
+                title="",
+                html="",
+                text="",
+                error="Invalid URL",
+                engine="playwright",
+            )
+        if settings.scraper_allowed_domains:
+            allowed = {d.strip().lower() for d in settings.scraper_allowed_domains.split(",") if d.strip()}
+            if domain not in allowed:
+                return ScrapeResult(
+                    success=False,
+                    url=url,
+                    title="",
+                    html="",
+                    text="",
+                    error="Domain not allowed",
+                    engine="playwright",
+                )
+        if settings.scraper_blocked_domains:
+            blocked = {d.strip().lower() for d in settings.scraper_blocked_domains.split(",") if d.strip()}
+            if domain in blocked:
+                return ScrapeResult(
+                    success=False,
+                    url=url,
+                    title="",
+                    html="",
+                    text="",
+                    error="Domain blocked",
+                    engine="playwright",
+                )
+        if settings.scraper_respect_robots:
+            robots_url = f"{parsed.scheme}://{domain}/robots.txt"
+            rp = robotparser.RobotFileParser()
+            rp.set_url(robots_url)
+            try:
+                await asyncio.to_thread(rp.read)
+                if not rp.can_fetch("*", url):
+                    return ScrapeResult(
+                        success=False,
+                        url=url,
+                        title="",
+                        html="",
+                        text="",
+                        error="Blocked by robots.txt",
+                        engine="playwright",
+                    )
+            except Exception:
+                pass
         start_time = time.time()
         
         try:

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 
 export default function SignupPage() {
@@ -13,7 +12,6 @@ export default function SignupPage() {
     const [success, setSuccess] = useState(false);
     const [loading, setLoading] = useState(false);
     const { signUp } = useAuth();
-    const router = useRouter();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

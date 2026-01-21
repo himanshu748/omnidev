@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { AuthGuard } from "../components/AuthGuard";
+import { buildAuthHeaders } from "../lib/api";
 
 interface Bucket {
     name: string;
@@ -29,7 +30,9 @@ export default function StoragePage() {
 
     const fetchBuckets = async () => {
         try {
-            const res = await fetch("/api/storage/buckets");
+            const res = await fetch("/api/storage/buckets", {
+                headers: await buildAuthHeaders(),
+            });
             const data = await res.json();
             setBuckets(data.buckets || []);
         } catch {
@@ -43,7 +46,9 @@ export default function StoragePage() {
         setSelectedBucket(bucketName);
         setLoading(true);
         try {
-            const res = await fetch(`/api/storage/buckets/${bucketName}/objects`);
+            const res = await fetch(`/api/storage/buckets/${bucketName}/objects`, {
+                headers: await buildAuthHeaders(),
+            });
             const data = await res.json();
             setObjects(data.objects || []);
         } catch {
@@ -65,6 +70,7 @@ export default function StoragePage() {
         try {
             await fetch("/api/storage/upload", {
                 method: "POST",
+                headers: await buildAuthHeaders(),
                 body: formData,
             });
             fetchObjects(selectedBucket);
@@ -82,10 +88,32 @@ export default function StoragePage() {
         try {
             await fetch(`/api/storage/delete/${selectedBucket}/${key}`, {
                 method: "DELETE",
+                headers: await buildAuthHeaders(),
             });
             fetchObjects(selectedBucket);
         } catch {
             console.error("Delete failed");
+        }
+    };
+
+    const handleDownload = async (key: string) => {
+        if (!selectedBucket) return;
+        try {
+            const res = await fetch(`/api/storage/download/${selectedBucket}/${key}`, {
+                headers: await buildAuthHeaders(),
+            });
+            if (!res.ok) {
+                return;
+            }
+            const blob = await res.blob();
+            const blobUrl = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = blobUrl;
+            link.download = key.split("/").pop() || key;
+            link.click();
+            URL.revokeObjectURL(blobUrl);
+        } catch {
+            console.error("Download failed");
         }
     };
 
@@ -204,12 +232,12 @@ export default function StoragePage() {
                                                 </div>
                                             </div>
                                             <div className="flex gap-2">
-                                                <a
-                                                    href={`/api/storage/download/${selectedBucket}/${obj.key}`}
+                                                <button
+                                                    onClick={() => handleDownload(obj.key)}
                                                     className="px-3 py-1 rounded-lg text-sm border border-[--border] hover:border-cyan-500 hover:text-cyan-400 transition-all"
                                                 >
                                                     Download
-                                                </a>
+                                                </button>
                                                 <button
                                                     onClick={() => handleDelete(obj.key)}
                                                     className="px-3 py-1 rounded-lg text-sm border border-[--border] hover:border-red-500 hover:text-red-400 transition-all"

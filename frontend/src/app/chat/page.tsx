@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { MarkdownRenderer } from "../components/MarkdownRenderer";
 import { AuthGuard } from "../components/AuthGuard";
 import { useSettings } from "../hooks/useSettings";
+import { buildAuthHeaders } from "../lib/api";
 
 interface Message {
     id: string;
@@ -52,7 +53,10 @@ export default function ChatPage() {
 
             const response = await fetch("/api/ai/chat", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    ...(await buildAuthHeaders()),
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({
                     message: userMessage.content,
                     history,

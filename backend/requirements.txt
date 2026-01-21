@@ -1,38 +1,37 @@
 # OmniDev Backend
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-python-dotenv==1.0.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
-python-multipart==0.0.6
+fastapi==0.128.0
+uvicorn[standard]==0.40.0
+python-dotenv==1.2.1
+pydantic==2.12.5
+pydantic-settings==2.12.0
+python-multipart==0.0.21
 
 # AI & ML (OpenAI GPT-5 Nano)
-openai>=1.40.0
-Pillow>=10.2.0
+openai==2.15.0
+Pillow==12.1.0
 
 # AWS
-boto3==1.34.25
+boto3==1.42.31
 
 # Location Services
 geocoder==1.38.1
 
 # WebSockets
-websockets==12.0
+websockets==16.0
 
 # HTTP Client
-httpx==0.26.0
-aiofiles==23.2.1
+httpx==0.28.1
+aiofiles==25.1.0
 
 # Security
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]==3.5.0
 passlib[bcrypt]==1.7.4
 
 # Web Scraping (Playwright only - better async, stealth, and performance)
-playwright>=1.40.0
-beautifulsoup4>=4.12.0
-lxml>=5.0.0
+playwright==1.57.0
+beautifulsoup4==4.14.3
+lxml==6.0.2
 
 # Testing
-pytest==7.4.4
-pytest-asyncio==0.23.3
-
+pytest==9.0.2
+pytest-asyncio==1.3.0

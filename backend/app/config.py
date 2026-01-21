@@ -3,7 +3,7 @@ OmniDev - Configuration Module
 Handles environment variables and app settings
 """
 
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from typing import Optional
 
@@ -31,11 +31,21 @@ class Settings(BaseSettings):
     
     # Email Service
     resend_api_key: Optional[str] = None
+
+    supabase_jwt_secret: Optional[str] = None
+    api_key_salt: str = "change-me"
+    rate_limit_per_minute: int = 120
+    rate_limit_burst: int = 30
+    rate_limit_block_seconds: int = 60
+    scraper_allowed_domains: Optional[str] = None
+    scraper_blocked_domains: Optional[str] = None
+    scraper_respect_robots: bool = True
     
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore"
+    )
 
 
 @lru_cache()

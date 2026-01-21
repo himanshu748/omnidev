@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import AWSGuideModal from "../../views/AWSGuideModal";
 import { AuthGuard } from "../components/AuthGuard";
+import { buildAuthHeaders } from "../lib/api";
 
 interface Message {
     id: string;
@@ -34,11 +35,18 @@ export default function DevOpsPage() {
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // Fetch agent capabilities on mount
-        fetch("/api/devops/capabilities")
-            .then((res) => res.json())
-            .then((data) => setCapabilities(data))
-            .catch(console.error);
+        const loadCapabilities = async () => {
+            try {
+                const res = await fetch("/api/devops/capabilities", {
+                    headers: await buildAuthHeaders(),
+                });
+                const data = await res.json();
+                setCapabilities(data);
+            } catch (error) {
+                console.error(error);
+            }
+        };
+        loadCapabilities();
     }, []);
 
     const scrollToBottom = () => {
@@ -67,7 +75,10 @@ export default function DevOpsPage() {
         try {
             const response = await fetch("/api/devops/command", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    ...(await buildAuthHeaders()),
+                    "Content-Type": "application/json",
+                },
                 body: JSON.stringify({ command: userMessage.content }),
             });
 

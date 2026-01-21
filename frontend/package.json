@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "lint:md": "markdownlint-cli2 ../README.md",
+    "test": "vitest run --coverage"
   },
   "dependencies": {
     "@supabase/ssr": "^0.8.0",
@@ -22,13 +24,16 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@vitest/coverage-v8": "^3.2.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.1",
+    "markdownlint-cli2": "^0.17.2",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }
