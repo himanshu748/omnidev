@@ -2,6 +2,8 @@
 
 ## Required Environment Variables
 
+**Important:** These are **deployment secrets** that you (the deployer) must configure. End users do NOT need to set these - they are server-side configuration only.
+
 The following environment variables **must** be set in your Render deployment for authentication to work:
 
 ### 1. SUPABASE_JWT_SECRET (Required)

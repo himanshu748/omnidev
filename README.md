@@ -64,16 +64,16 @@ AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
 AWS_DEFAULT_REGION=ap-south-1
 
-# REQUIRED: Supabase JWT Secret for authentication
+# REQUIRED: Supabase JWT Secret for authentication (deployment secret - set by you)
 # Get from: Supabase Dashboard > Project Settings > API > JWT Secret
 SUPABASE_JWT_SECRET=your_supabase_jwt_secret
 
-# REQUIRED: API Key Salt for API key generation/verification
+# REQUIRED: API Key Salt for API key generation/verification (deployment secret - set by you)
 # Generate with: openssl rand -hex 32
 API_KEY_SALT=your_api_key_salt
 ```
 
-**Important:** `SUPABASE_JWT_SECRET` and `API_KEY_SALT` are **required** for authentication to work. Without them, the backend will return 503 errors when trying to authenticate users.
+**Important:** `SUPABASE_JWT_SECRET` and `API_KEY_SALT` are **deployment secrets** that you must configure when deploying the backend. End users do not need to set these - they are server-side configuration only. Without them, the backend will return 503 errors when trying to authenticate users.
 
 Frontend (`frontend/.env.local`):
 
