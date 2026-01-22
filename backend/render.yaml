@@ -14,6 +14,10 @@ services:
         value: production
       - key: FRONTEND_URL
         sync: false
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      - key: API_KEY_SALT
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
       - key: AWS_ACCESS_KEY_ID

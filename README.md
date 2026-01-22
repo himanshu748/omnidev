@@ -63,9 +63,17 @@ OPENAI_API_KEY=your_openai_api_key
 AWS_ACCESS_KEY_ID=your_aws_access_key
 AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
 AWS_DEFAULT_REGION=ap-south-1
+
+# REQUIRED: Supabase JWT Secret for authentication
+# Get from: Supabase Dashboard > Project Settings > API > JWT Secret
 SUPABASE_JWT_SECRET=your_supabase_jwt_secret
+
+# REQUIRED: API Key Salt for API key generation/verification
+# Generate with: openssl rand -hex 32
 API_KEY_SALT=your_api_key_salt
-```env
+```
+
+**Important:** `SUPABASE_JWT_SECRET` and `API_KEY_SALT` are **required** for authentication to work. Without them, the backend will return 503 errors when trying to authenticate users.
 
 Frontend (`frontend/.env.local`):
 
