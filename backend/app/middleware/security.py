@@ -46,10 +46,19 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if request.scope.get("type") != "http":
             return await call_next(request)
 
+        # Public endpoints
         if path in {"/", "/health"} or path.startswith(("/docs", "/redoc", "/openapi.json")):
             return await call_next(request)
 
         if path.startswith("/analytics"):
+            return await call_next(request)
+
+        # Status endpoints are public
+        if path.endswith("/status") and path.startswith("/api/"):
+            return await call_next(request)
+        
+        # Capabilities endpoint is public
+        if path.endswith("/capabilities") and path.startswith("/api/"):
             return await call_next(request)
 
         if not path.startswith("/api/"):

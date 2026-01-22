@@ -1,44 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  /* Factory AI-inspired Light Theme */
-  --background: #f5f5f0;
-  --background-secondary: #ebebdf;
-  --foreground: #0a0a0a;
-  --foreground-muted: #666666;
+  /* Modern Slate Color Palette */
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --foreground-muted: #64748b;
   
-  /* Orange Accent (Factory-style) */
-  --accent: #e55c1c;
-  --accent-light: #ff6b2b;
+  /* Accent Colors */
+  --accent: #0f172a;
+  --accent-light: #1e293b;
   
   /* Neutrals */
-  --border: #d4d4c8;
-  --border-light: #e8e8dc;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
   --card: #ffffff;
-  --card-hover: #fafaf5;
+  --card-hover: #f8fafc;
   
   /* Status Colors */
-  --success: #22c55e;
+  --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
   
   /* Typography */
   --font-display: 'Geist', system-ui, sans-serif;
   --font-mono: 'Geist Mono', 'SF Mono', 'Consolas', monospace;
-}
-
-/* Dark theme override */
-@media (prefers-color-scheme: dark) {
-  :root.auto-dark {
-    --background: #0a0a0a;
-    --background-secondary: #111111;
-    --foreground: #fafafa;
-    --foreground-muted: #888888;
-    --border: #222222;
-    --border-light: #1a1a1a;
-    --card: #111111;
-    --card-hover: #1a1a1a;
-  }
 }
 
 * {
@@ -60,132 +45,22 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Display Typography - Factory-style bold condensed */
-.font-display {
-  font-family: var(--font-display);
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+/* Smooth transitions */
+a, button {
+  transition: all 0.2s ease;
 }
 
-/* Mono Typography */
-.font-mono {
-  font-family: var(--font-mono);
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Section Label with orange dot */
-.section-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--foreground);
-}
-
-.section-label::before {
-  content: '';
-  width: 8px;
-  height: 8px;
+/* Selection */
+::selection {
   background: var(--accent);
-  border-radius: 50%;
-}
-
-/* Code Block */
-.code-block {
-  background: var(--foreground);
-  color: var(--background);
-  font-family: var(--font-mono);
-  padding: 1rem 1.5rem;
-  border-radius: 0.75rem;
-  font-size: 0.875rem;
-  overflow-x: auto;
-}
-
-/* Navigation Link */
-.nav-link {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--foreground);
-  transition: opacity 0.2s;
-}
-
-.nav-link:hover {
-  opacity: 0.7;
-}
-
-/* Button Styles */
-.btn-primary {
-  background: var(--foreground);
-  color: var(--background);
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-  letter-spacing: 0.02em;
-  transition: all 0.2s;
-  border: 1px solid var(--foreground);
-}
-
-.btn-primary:hover {
-  background: transparent;
-  color: var(--foreground);
-}
-
-.btn-secondary {
-  background: transparent;
-  color: var(--foreground);
-  padding: 0.75rem 1.5rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-  letter-spacing: 0.02em;
-  border: 1px solid var(--border);
-  transition: all 0.2s;
-}
-
-.btn-secondary:hover {
-  border-color: var(--foreground);
-}
-
-/* Feature Card */
-.feature-card {
-  background: var(--card);
-  border: 1px solid var(--border-light);
-  border-radius: 1rem;
-  padding: 2rem;
-  transition: all 0.3s;
-}
-
-.feature-card:hover {
-  background: var(--card-hover);
-  border-color: var(--border);
-  transform: translateY(-2px);
-}
-
-/* Logo Marquee */
-@keyframes marquee {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
-}
-
-.marquee-container {
-  overflow: hidden;
-  mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
-}
-
-.marquee-content {
-  display: flex;
-  gap: 4rem;
-  animation: marquee 30s linear infinite;
+  color: white;
 }
 
 /* Scrollbar */
@@ -195,7 +70,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--background-secondary);
+  background: var(--border-light);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -205,29 +80,4 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--foreground-muted);
-}
-
-/* Selection */
-::selection {
-  background: var(--accent);
-  color: white;
-}
-
-/* Focus */
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-/* Smooth transitions */
-a, button {
-  transition: all 0.2s ease;
-}
-
-/* Grid pattern background */
-.grid-pattern {
-  background-image: 
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 50px 50px;
 }
