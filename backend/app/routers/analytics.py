@@ -1,5 +1,5 @@
 from collections import defaultdict, deque
-from typing import Deque, Dict
+from typing import Deque, Dict, Optional
 from time import time
 
 from fastapi import APIRouter, Request
@@ -11,8 +11,8 @@ router = APIRouter()
 
 class AnalyticsEvent(BaseModel):
     name: str
-    path: str | None = None
-    meta: dict | None = None
+    path: Optional[str] = None
+    meta: Optional[dict] = None
 
 
 events: Dict[str, Deque[dict]] = defaultdict(deque)

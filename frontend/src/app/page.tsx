@@ -6,6 +6,17 @@ import { motion, useReducedMotion } from "framer-motion";
 import { useAuth } from "./context/AuthContext";
 import { trackEvent } from "./lib/analytics";
 
+const features = [
+  { id: "chat", title: "AI Chat", description: "GPT-5 Mini powered conversations", icon: "💬", href: "/chat" },
+  { id: "vision", title: "Vision Lab", description: "Image analysis with AI", icon: "🖼️", href: "/vision" },
+  { id: "devops", title: "DevOps Agent", description: "AWS cloud management", icon: "🛠️", href: "/devops" },
+  { id: "scraper", title: "Web Scraper", description: "Playwright automation", icon: "🕷️", href: "/scraper" },
+  { id: "storage", title: "Cloud Storage", description: "S3 file manager", icon: "📦", href: "/storage" },
+  { id: "location", title: "Location", description: "GPS & geolocation", icon: "📍", href: "/location" },
+];
+
+const techStack = ["FastAPI", "Next.js", "OpenAI", "AWS S3", "Playwright", "Supabase"];
+
 export default function Home() {
   const { user, loading: authLoading, signOut } = useAuth();
   const [backendStatus, setBackendStatus] = useState<"loading" | "online" | "offline">("loading");
@@ -24,56 +35,51 @@ export default function Home() {
     }
   }, [user, authLoading]);
 
-  // Show loading while checking auth
+  // Loading state
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
-        <div className="w-12 h-12 border-2 border-[#39ff14]/30 border-t-[#39ff14] rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#f5f5f0] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-2 border-[#e55c1c]/20 border-t-[#e55c1c] rounded-full animate-spin" />
+          <span className="text-[#666] text-sm tracking-wide uppercase">Loading...</span>
+        </div>
       </div>
     );
   }
 
-  // LOGGED IN: Show Dashboard
+  // Dashboard for logged-in users
   if (user) {
-    const features = [
-      { id: "chat", title: "AI Chat", description: "GPT-5 Mini powered conversations", icon: "💬", href: "/chat", color: "#39ff14" },
-      { id: "vision", title: "Vision Lab", description: "Image analysis with AI", icon: "🖼️", href: "/vision", color: "#00d4ff" },
-      { id: "devops", title: "DevOps Agent", description: "AWS cloud management", icon: "🛠️", href: "/devops", color: "#ff6b35" },
-      { id: "scraper", title: "Web Scraper", description: "Playwright automation", icon: "🕷️", href: "/scraper", color: "#a855f7" },
-      { id: "storage", title: "Cloud Storage", description: "S3 file manager", icon: "📦", href: "/storage", color: "#06b6d4" },
-      { id: "location", title: "Location", description: "GPS & geolocation", icon: "📍", href: "/location", color: "#f59e0b" },
-    ];
-
     return (
-      <main className="min-h-screen bg-[#050505] text-white" id="main-content">
+      <main className="min-h-screen bg-[#f5f5f0] text-[#0a0a0a]" id="main-content">
         {/* Background */}
-        <div className="fixed inset-0 pointer-events-none">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        </div>
+        <div className="fixed inset-0 grid-pattern pointer-events-none" />
 
         {/* Navigation */}
-        <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f5f0]/90 backdrop-blur-md border-b border-[#d4d4c8]">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black">O</div>
-              <span className="text-xl font-bold">OmniDev</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className={`px-3 py-1.5 rounded-full text-xs font-medium ${backendStatus === "online" ? "bg-[#39ff14]/10 text-[#39ff14]" : "bg-white/5 text-gray-500"}`}>
-                {backendStatus === "online" ? "● API Online" : "○ Offline"}
+              <div className="w-8 h-8 bg-[#0a0a0a] rounded-lg flex items-center justify-center">
+                <span className="text-[#f5f5f0] font-bold text-sm">O</span>
               </div>
-              <Link href="/settings" className="px-4 py-2 rounded-lg border border-white/10 text-sm hover:bg-white/5 transition">
-                ⚙️ Settings
-              </Link>
-              <button onClick={() => signOut()} className="px-4 py-2 rounded-lg text-sm text-gray-400 hover:text-white transition" aria-label="Sign out">
-                Logout
+              <span className="font-semibold text-lg tracking-tight">OmniDev</span>
+            </div>
+            <div className="flex items-center gap-6">
+              <div className={`flex items-center gap-2 text-xs uppercase tracking-wider ${
+                backendStatus === "online" ? "text-green-600" : "text-[#666]"
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${backendStatus === "online" ? "bg-green-500" : "bg-gray-400"}`} />
+                {backendStatus === "online" ? "Online" : "Offline"}
+              </div>
+              <Link href="/settings" className="nav-link">Settings</Link>
+              <button onClick={() => signOut()} className="nav-link text-[#666]">
+                Sign Out
               </button>
             </div>
           </div>
         </nav>
 
         {/* Dashboard Content */}
-        <div className="pt-28 pb-12 px-6">
+        <div className="pt-28 pb-16 px-6">
           <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
@@ -81,30 +87,25 @@ export default function Home() {
               transition={{ duration: reduceMotion ? 0 : 0.4 }}
               className="mb-12"
             >
-              <h1 className="text-3xl font-bold mb-2">Welcome back!</h1>
-              <p className="text-gray-400">Select a tool to get started</p>
+              <span className="section-label mb-6 block">Dashboard</span>
+              <h1 className="text-4xl md:text-5xl font-display mb-4">Welcome back</h1>
+              <p className="text-[#666] text-lg">Select a tool to get started.</p>
             </motion.div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
               {features.map((feature, i) => (
                 <motion.div
                   key={feature.id}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: reduceMotion ? 0 : i * 0.1 }}
+                  transition={{ delay: reduceMotion ? 0 : i * 0.06, duration: 0.4 }}
                 >
-                  <Link
-                    href={feature.href}
-                    className="block p-6 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-white/20 transition-all group"
-                  >
-                    <div
-                      className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl mb-4"
-                      style={{ background: `${feature.color}15`, border: `1px solid ${feature.color}30` }}
-                    >
-                      {feature.icon}
-                    </div>
-                    <h3 className="text-lg font-semibold mb-1 group-hover:text-[#39ff14] transition">{feature.title}</h3>
-                    <p className="text-sm text-gray-500">{feature.description}</p>
+                  <Link href={feature.href} className="feature-card block group">
+                    <span className="text-3xl mb-4 block">{feature.icon}</span>
+                    <h3 className="text-lg font-semibold mb-1 group-hover:text-[#e55c1c] transition-colors">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-[#666]">{feature.description}</p>
                   </Link>
                 </motion.div>
               ))}
@@ -115,33 +116,40 @@ export default function Home() {
     );
   }
 
-  // NOT LOGGED IN: Show Marketing Page
+  // Landing page for visitors - Factory AI inspired
   return (
-    <main className="min-h-screen bg-[#050505] text-white relative overflow-x-hidden" id="main-content">
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-black focus:text-white">
+    <main className="min-h-screen bg-[#f5f5f0] text-[#0a0a0a] relative" id="main-content">
+      <a 
+        href="#main-content" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:px-4 focus:py-2 focus:bg-[#e55c1c] focus:text-white focus:rounded-lg focus:z-50"
+      >
         Skip to content
       </a>
-      {/* Animated Background */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.02)_1px,transparent_1px)] bg-[size:60px_60px]" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-[#39ff14]/5 rounded-full blur-[150px]" />
-      </div>
+
+      {/* Background Pattern */}
+      <div className="fixed inset-0 grid-pattern pointer-events-none" />
 
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5" aria-label="Primary">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#f5f5f0]/90 backdrop-blur-md" aria-label="Primary">
+        <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black">O</div>
-            <span className="text-xl font-bold">OmniDev</span>
+            <div className="w-8 h-8 bg-[#0a0a0a] rounded-lg flex items-center justify-center">
+              <span className="text-[#f5f5f0] font-bold text-sm">O</span>
+            </div>
+            <span className="font-semibold text-lg tracking-tight">OmniDev</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/auth/login" className="text-sm text-gray-400 hover:text-white transition" aria-label="Log in">
-              Login
-            </Link>
+          
+          <div className="hidden md:flex items-center gap-8">
+            <Link href="#features" className="nav-link">Features</Link>
+            <Link href="#platform" className="nav-link">Platform</Link>
+            <Link href="https://github.com/himanshu748/omnidev" target="_blank" className="nav-link">Docs</Link>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Link href="/auth/login" className="nav-link hidden sm:block">Log In</Link>
             <Link
               href="/auth/signup"
-              className="px-4 py-2 rounded-lg bg-[#39ff14] text-black font-semibold text-sm hover:opacity-90 transition"
-              aria-label="Get started"
+              className="btn-primary"
               onClick={() => trackEvent("cta_signup_nav")}
             >
               Get Started
@@ -151,99 +159,271 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6">
-        <div className="max-w-5xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.4 }}
-            className="inline-block mb-6"
-          >
-            <span className="px-4 py-2 rounded-full text-sm font-medium bg-[#39ff14]/10 text-[#39ff14] border border-[#39ff14]/20">
-              ✨ Powered by GPT-5 Mini
-            </span>
-          </motion.div>
-
-          <motion.h1
-            className="text-5xl md:text-7xl font-bold mb-6 leading-[1.1]"
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduceMotion ? 0 : 0.1 }}
-          >
-            Build Faster.<br />
-            <span className="text-[#39ff14]">Automate Smarter.</span>
-          </motion.h1>
-
-          <motion.p
-            className="text-lg text-gray-400 max-w-2xl mx-auto mb-10"
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduceMotion ? 0 : 0.2 }}
-          >
-            The all-in-one AI developer platform. Chat, vision analysis, cloud automation, and web scraping — unified in a beautiful interface.
-          </motion.p>
-
-          <motion.div
-            className="flex flex-col sm:flex-row gap-4 justify-center"
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: reduceMotion ? 0 : 0.3 }}
-          >
-            <Link
-              href="/auth/signup"
-              className="px-8 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition shadow-lg shadow-[#39ff14]/20"
-              onClick={() => trackEvent("cta_signup_hero")}
-              aria-label="Create free account"
+      <section className="pt-32 pb-20 px-6 min-h-[85vh] flex items-center">
+        <div className="max-w-7xl mx-auto w-full">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            {/* Left - Text Content */}
+            <motion.div
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 32 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduceMotion ? 0 : 0.6 }}
             >
-              Get Started Free →
-            </Link>
-            <Link
-              href="https://github.com/himanshu748/omnidev"
-              target="_blank"
-              className="px-8 py-4 rounded-xl border border-white/10 text-white font-semibold text-lg hover:bg-white/5 transition"
-              onClick={() => trackEvent("cta_github")}
-              aria-label="Star the GitHub repository"
+              <span className="section-label mb-8 block">Platform</span>
+              
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display mb-8 leading-[0.95]">
+                AI-Powered<br />
+                Developer<br />
+                Platform
+              </h1>
+
+              <div className="space-y-4 mb-10 max-w-lg">
+                <p className="text-lg text-[#666] font-mono leading-relaxed">
+                  The only all-in-one platform that handles everything from AI chat to cloud automation.
+                </p>
+                <p className="text-[#666] font-mono leading-relaxed">
+                  From code assistance to DevOps — delegate complete tasks like deployments, 
+                  image analysis, and web scraping without switching tools.
+                </p>
+              </div>
+
+              {/* CLI Install */}
+              <div className="bg-white border border-[#d4d4c8] rounded-xl p-1 mb-8 max-w-md">
+                <div className="flex items-center gap-2 px-3 py-1 border-b border-[#e8e8dc]">
+                  <span className="text-xs uppercase tracking-wider text-[#666] font-medium">Quick Start</span>
+                </div>
+                <div className="code-block !bg-[#0a0a0a] !rounded-lg m-1">
+                  <code className="text-sm">
+                    <span className="text-[#e55c1c]">$</span> npx create-omnidev-app my-project
+                  </code>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  href="/auth/signup"
+                  className="btn-primary inline-flex items-center gap-2"
+                  onClick={() => trackEvent("cta_signup_hero")}
+                >
+                  Start Building
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                  </svg>
+                </Link>
+                <Link
+                  href="https://github.com/himanshu748/omnidev"
+                  target="_blank"
+                  className="btn-secondary inline-flex items-center gap-2"
+                  onClick={() => trackEvent("cta_github")}
+                >
+                  View on GitHub
+                </Link>
+              </div>
+            </motion.div>
+
+            {/* Right - Visual/Graphic */}
+            <motion.div
+              className="hidden lg:block relative"
+              initial={{ opacity: 0, x: reduceMotion ? 0 : 40 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: reduceMotion ? 0 : 0.3, duration: 0.6 }}
             >
-              ⭐ Star on GitHub
-            </Link>
-          </motion.div>
+              <div className="relative">
+                {/* Connection Lines SVG */}
+                <svg className="w-full h-auto" viewBox="0 0 400 400" fill="none">
+                  {/* Grid of dots */}
+                  {Array.from({ length: 8 }).map((_, row) =>
+                    Array.from({ length: 8 }).map((_, col) => (
+                      <circle
+                        key={`${row}-${col}`}
+                        cx={50 + col * 45}
+                        cy={50 + row * 45}
+                        r={row === 2 && col === 3 || row === 4 && col === 5 || row === 1 && col === 6 ? 8 : 3}
+                        fill={row === 2 && col === 3 || row === 4 && col === 5 || row === 1 && col === 6 ? "#e55c1c" : "#d4d4c8"}
+                      />
+                    ))
+                  )}
+                  {/* Connection lines */}
+                  <path
+                    d="M185 140 L275 185 L320 95"
+                    stroke="#d4d4c8"
+                    strokeWidth="1"
+                    strokeDasharray="4 4"
+                    fill="none"
+                  />
+                  <path
+                    d="M185 140 L275 230"
+                    stroke="#e55c1c"
+                    strokeWidth="2"
+                    fill="none"
+                  />
+                  <path
+                    d="M275 185 L320 230 L275 275"
+                    stroke="#d4d4c8"
+                    strokeWidth="1"
+                    strokeDasharray="4 4"
+                    fill="none"
+                  />
+                </svg>
+
+                {/* Floating Labels */}
+                <div className="absolute top-[20%] right-[10%] bg-white border border-[#d4d4c8] rounded-lg px-4 py-2 shadow-sm">
+                  <span className="text-xs uppercase tracking-wider text-[#666]">AI Chat</span>
+                </div>
+                <div className="absolute top-[45%] right-[5%] bg-white border border-[#d4d4c8] rounded-lg px-4 py-2 shadow-sm">
+                  <span className="text-xs uppercase tracking-wider text-[#666]">DevOps</span>
+                </div>
+                <div className="absolute bottom-[25%] right-[15%] bg-white border border-[#d4d4c8] rounded-lg px-4 py-2 shadow-sm">
+                  <span className="text-xs uppercase tracking-wider text-[#666]">Vision</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tech Stack Marquee */}
+      <section className="py-12 border-y border-[#d4d4c8]">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-center gap-8">
+            <span className="section-label whitespace-nowrap">Built With</span>
+            <div className="marquee-container flex-1">
+              <div className="marquee-content">
+                {[...techStack, ...techStack].map((tech, i) => (
+                  <span key={i} className="text-[#666] font-mono text-sm whitespace-nowrap">{tech}</span>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.h2
-            className="text-3xl md:text-4xl font-bold text-center mb-16"
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+      <section id="features" className="py-24 px-6">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            className="mb-16"
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            Everything you need to <span className="text-[#39ff14]">ship faster</span>
-          </motion.h2>
+            <span className="section-label mb-6 block">Features</span>
+            <h2 className="text-4xl md:text-5xl font-display mb-6 max-w-2xl">
+              Everything you need to ship faster.
+            </h2>
+            <p className="text-lg text-[#666] font-mono max-w-xl">
+              Six powerful tools unified in one platform. No context switching, no fragmented workflows.
+            </p>
+          </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: "💬", title: "AI Chat", desc: "GPT-5 Mini conversations" },
-              { icon: "🖼️", title: "Vision Lab", desc: "Image analysis & OCR" },
-              { icon: "🛠️", title: "DevOps Agent", desc: "AWS cloud management" },
-              { icon: "🕷️", title: "Web Scraper", desc: "Playwright automation" },
-              { icon: "📦", title: "Cloud Storage", desc: "S3 file manager" },
-              { icon: "📍", title: "Location", desc: "GPS & geolocation" },
-            ].map((f, i) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((feature, i) => (
               <motion.div
-                key={f.title}
-                className="p-6 rounded-2xl bg-white/[0.02] border border-white/5"
-                initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                key={feature.id}
+                className="feature-card group cursor-default"
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 32 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: reduceMotion ? 0 : i * 0.1 }}
+                transition={{ delay: reduceMotion ? 0 : i * 0.08 }}
               >
-                <div className="text-3xl mb-4">{f.icon}</div>
-                <h3 className="text-lg font-semibold mb-1">{f.title}</h3>
-                <p className="text-sm text-gray-500">{f.desc}</p>
+                <div className="flex items-start justify-between mb-4">
+                  <span className="text-3xl">{feature.icon}</span>
+                  <span className="text-xs text-[#999] font-mono uppercase">0{i + 1}</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-2 group-hover:text-[#e55c1c] transition-colors">
+                  {feature.title}
+                </h3>
+                <p className="text-[#666] font-mono text-sm">{feature.description}</p>
               </motion.div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Section */}
+      <section id="platform" className="py-24 px-6 bg-white border-y border-[#d4d4c8]">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <motion.div
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="section-label mb-6 block">Platform</span>
+              <h2 className="text-4xl md:text-5xl font-display mb-6">
+                AI that works with you, not against you.
+              </h2>
+              <p className="text-[#666] font-mono mb-8 leading-relaxed">
+                OmniDev is designed to enhance your workflow — secure, scalable, and ready 
+                to integrate with your existing development tools. Built with modern 
+                technologies that developers trust.
+              </p>
+              
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-lg bg-[#f5f5f0] flex items-center justify-center shrink-0">
+                    <span className="text-[#e55c1c]">✓</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Open Source</h4>
+                    <p className="text-sm text-[#666] font-mono">Full transparency with MIT license</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-lg bg-[#f5f5f0] flex items-center justify-center shrink-0">
+                    <span className="text-[#e55c1c]">✓</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">Self-Hostable</h4>
+                    <p className="text-sm text-[#666] font-mono">Deploy on your own infrastructure</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-8 h-8 rounded-lg bg-[#f5f5f0] flex items-center justify-center shrink-0">
+                    <span className="text-[#e55c1c]">✓</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-1">API-First</h4>
+                    <p className="text-sm text-[#666] font-mono">RESTful APIs with full documentation</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div
+              className="relative"
+              initial={{ opacity: 0, x: reduceMotion ? 0 : 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+            >
+              <div className="bg-[#0a0a0a] rounded-2xl p-6 text-white font-mono text-sm">
+                <div className="flex items-center gap-2 mb-4">
+                  <span className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+                  <span className="w-3 h-3 rounded-full bg-[#febc2e]" />
+                  <span className="w-3 h-3 rounded-full bg-[#28c840]" />
+                  <span className="ml-4 text-[#666] text-xs">api-example.py</span>
+                </div>
+                <pre className="text-[#888] overflow-x-auto">
+                  <code>{`from omnidev import Client
+
+client = Client(api_key="your-key")
+
+# AI Chat
+response = client.chat.send(
+    message="Explain Docker"
+)
+
+# Vision Analysis  
+analysis = client.vision.analyze(
+    image_url="https://..."
+)
+
+# DevOps Command
+result = client.devops.execute(
+    command="list-instances"
+)`}</code>
+                </pre>
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -251,29 +431,63 @@ export default function Home() {
       {/* CTA Section */}
       <section className="py-24 px-6">
         <motion.div
-          className="max-w-3xl mx-auto text-center p-12 rounded-3xl bg-[#39ff14]/5 border border-[#39ff14]/20"
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
+          className="max-w-4xl mx-auto text-center"
+          initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-3xl font-bold mb-4">Ready to get started?</h2>
-          <p className="text-gray-400 mb-8">Free forever for personal use.</p>
-          <Link
-            href="/auth/signup"
-            className="inline-block px-10 py-4 rounded-xl bg-[#39ff14] text-black font-semibold text-lg hover:opacity-90 transition"
-            onClick={() => trackEvent("cta_signup_footer")}
-            aria-label="Create your free account"
-          >
-            Create Free Account →
-          </Link>
+          <span className="section-label justify-center mb-8">Get Started</span>
+          <h2 className="text-4xl md:text-5xl font-display mb-6">
+            Ready to build the<br />software of the future?
+          </h2>
+          <p className="text-lg text-[#666] font-mono mb-10 max-w-lg mx-auto">
+            Free forever for personal use. Start building today.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/auth/signup"
+              className="btn-primary inline-flex items-center justify-center gap-2"
+              onClick={() => trackEvent("cta_signup_footer")}
+            >
+              Start Building
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </Link>
+            <Link
+              href="/auth/login"
+              className="btn-secondary inline-flex items-center justify-center"
+            >
+              Sign In
+            </Link>
+          </div>
         </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 px-6 border-t border-white/5">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <span className="text-gray-500">OmniDev v1.0</span>
-          <span className="text-gray-600 text-sm">Built by Himanshu Kumar • 2024-2026</span>
+      <footer className="py-12 px-6 border-t border-[#d4d4c8]">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-3">
+              <div className="w-6 h-6 bg-[#0a0a0a] rounded flex items-center justify-center">
+                <span className="text-[#f5f5f0] font-bold text-xs">O</span>
+              </div>
+              <span className="text-[#666] font-mono text-sm">OmniDev v1.0</span>
+            </div>
+            
+            <div className="flex items-center gap-8">
+              <Link href="https://github.com/himanshu748/omnidev" target="_blank" className="text-[#666] hover:text-[#0a0a0a] text-sm font-mono">
+                GitHub
+              </Link>
+              <Link href="/auth/login" className="text-[#666] hover:text-[#0a0a0a] text-sm font-mono">
+                Sign In
+              </Link>
+            </div>
+
+            <span className="text-[#999] text-sm font-mono">
+              Built by Himanshu Kumar • 2024-2026
+            </span>
+          </div>
         </div>
       </footer>
     </main>

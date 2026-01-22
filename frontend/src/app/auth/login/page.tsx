@@ -1,111 +1,116 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
+import Link from "next/link";
 
 export default function LoginPage() {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
-    const { signIn } = useAuth();
-    const router = useRouter();
+  const { signIn } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError("");
-        setLoading(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
-        const { error } = await signIn(email, password);
+    const { error } = await signIn(email, password);
+    
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    }
+  };
 
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-        } else {
-            router.push("/");
-        }
-    };
+  return (
+    <main className="min-h-screen bg-[#f5f5f0] flex items-center justify-center px-4">
+      {/* Background Pattern */}
+      <div className="fixed inset-0 grid-pattern pointer-events-none" />
 
-    return (
-        <main className="min-h-screen bg-[#050505] flex items-center justify-center px-4">
-            {/* Background */}
-            <div className="fixed inset-0 pointer-events-none">
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
+      <div className="w-full max-w-md relative z-10">
+        {/* Logo */}
+        <div className="text-center mb-10">
+          <Link href="/" className="inline-flex items-center gap-3">
+            <div className="w-10 h-10 bg-[#0a0a0a] rounded-xl flex items-center justify-center">
+              <span className="text-[#f5f5f0] font-bold text-lg">O</span>
+            </div>
+            <span className="text-2xl font-bold tracking-tight">OmniDev</span>
+          </Link>
+        </div>
+
+        {/* Login Card */}
+        <div className="bg-white border border-[#d4d4c8] rounded-2xl p-8 shadow-sm">
+          <h1 className="text-2xl font-display mb-2">Welcome back</h1>
+          <p className="text-[#666] font-mono text-sm mb-8">Sign in to your account</p>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm font-mono">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium mb-2 text-[#0a0a0a]">Email</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[#f5f5f0] border border-[#d4d4c8] text-[#0a0a0a] placeholder-[#999] focus:outline-none focus:border-[#0a0a0a] focus:ring-1 focus:ring-[#0a0a0a] transition-all font-mono text-sm"
+                placeholder="you@example.com"
+                required
+              />
             </div>
 
-            <div className="w-full max-w-md relative z-10">
-                {/* Logo */}
-                <div className="text-center mb-8">
-                    <Link href="/" className="inline-flex items-center gap-2">
-                        <div className="w-12 h-12 rounded-xl bg-[#39ff14] flex items-center justify-center font-bold text-black text-xl">
-                            O
-                        </div>
-                        <span className="text-2xl font-bold text-[#39ff14]">OmniDev</span>
-                    </Link>
-                </div>
-
-                {/* Login Card */}
-                <div className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-8">
-                    <h1 className="text-2xl font-bold text-white mb-2">Welcome back</h1>
-                    <p className="text-gray-500 mb-6">Sign in to your account</p>
-
-                    {error && (
-                        <div className="bg-red-500/10 border border-red-500/30 text-red-400 px-4 py-3 rounded-xl mb-6 text-sm">
-                            {error}
-                        </div>
-                    )}
-
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="text-sm text-gray-400 mb-2 block">Email</label>
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
-                                required
-                                className="w-full bg-[#050505] border border-[#39ff14]/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#39ff14] transition-colors"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="text-sm text-gray-400 mb-2 block">Password</label>
-                            <input
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder="••••••••"
-                                required
-                                className="w-full bg-[#050505] border border-[#39ff14]/20 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-[#39ff14] transition-colors"
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="w-full py-3 rounded-xl font-semibold text-black bg-[#39ff14] hover:opacity-90 transition-opacity disabled:opacity-50"
-                        >
-                            {loading ? "Signing in..." : "Sign In"}
-                        </button>
-                    </form>
-
-                    <div className="mt-6 text-center text-gray-500 text-sm">
-                        Don&apos;t have an account?{" "}
-                        <Link href="/auth/signup" className="text-[#39ff14] hover:underline">
-                            Sign up
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Back to home */}
-                <div className="text-center mt-6">
-                    <Link href="/" className="text-gray-500 hover:text-[#39ff14] transition-colors text-sm">
-                        ← Back to home
-                    </Link>
-                </div>
+            <div>
+              <label className="block text-sm font-medium mb-2 text-[#0a0a0a]">Password</label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-[#f5f5f0] border border-[#d4d4c8] text-[#0a0a0a] placeholder-[#999] focus:outline-none focus:border-[#0a0a0a] focus:ring-1 focus:ring-[#0a0a0a] transition-all font-mono text-sm"
+                placeholder="••••••••"
+                required
+              />
             </div>
-        </main>
-    );
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 rounded-xl bg-[#0a0a0a] text-white font-semibold hover:bg-[#1a1a1a] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : (
+                "Sign In"
+              )}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center text-sm font-mono">
+            <span className="text-[#666]">Don&apos;t have an account? </span>
+            <Link href="/auth/signup" className="text-[#e55c1c] hover:underline font-medium">
+              Sign up
+            </Link>
+          </div>
+        </div>
+
+        {/* Back Link */}
+        <div className="mt-8 text-center">
+          <Link href="/" className="inline-flex items-center gap-2 text-[#666] hover:text-[#0a0a0a] text-sm font-mono transition-colors">
+            <span>←</span>
+            <span>Back to home</span>
+          </Link>
+        </div>
+      </div>
+    </main>
+  );
 }
