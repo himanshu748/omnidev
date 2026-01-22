@@ -7,14 +7,6 @@
         {
             "source": "/health",
             "destination": "https://omnidev-qbiv.onrender.com/health"
-        },
-        {
-            "source": "/analytics/:path*",
-            "destination": "https://omnidev-qbiv.onrender.com/analytics/:path*"
-        },
-        {
-            "source": "/monitoring/:path*",
-            "destination": "https://omnidev-qbiv.onrender.com/monitoring/:path*"
         }
     ]
 }

@@ -42,7 +42,7 @@ export default function SignupPage() {
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <div className="text-center mb-10">
+        <div className="text-center mb-12 sm:mb-16">
           <Link href="/" className="inline-flex items-center gap-3">
             <div className="w-10 h-10 bg-[#0a0a0a] rounded-xl flex items-center justify-center">
               <span className="text-[#f5f5f0] font-bold text-lg">O</span>
@@ -52,19 +52,19 @@ export default function SignupPage() {
         </div>
 
         {/* Signup Card */}
-        <div className="bg-white border border-[#d4d4c8] rounded-2xl p-8 shadow-sm">
-          <h1 className="text-2xl font-display mb-2">Create account</h1>
-          <p className="text-[#666] font-mono text-sm mb-8">Get started with OmniDev</p>
+        <div className="bg-white border border-[#d4d4c8] rounded-2xl p-8 sm:p-10 shadow-sm">
+          <h1 className="text-2xl sm:text-3xl font-display mb-3">Create account</h1>
+          <p className="text-[#666] font-mono text-sm sm:text-base mb-8 sm:mb-10">Get started with OmniDev</p>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm font-mono">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 sm:mb-8 text-sm font-mono">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
-              <label className="block text-sm font-medium mb-2 text-[#0a0a0a]">Email</label>
+              <label className="block text-sm font-medium mb-2.5 sm:mb-3 text-[#0a0a0a]">Email</label>
               <input
                 type="email"
                 value={email}
@@ -76,7 +76,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-[#0a0a0a]">Password</label>
+              <label className="block text-sm font-medium mb-2.5 sm:mb-3 text-[#0a0a0a]">Password</label>
               <input
                 type="password"
                 value={password}
@@ -88,7 +88,7 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-[#0a0a0a]">Confirm Password</label>
+              <label className="block text-sm font-medium mb-2.5 sm:mb-3 text-[#0a0a0a]">Confirm Password</label>
               <input
                 type="password"
                 value={confirmPassword}
@@ -102,7 +102,7 @@ export default function SignupPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-[#0a0a0a] text-white font-semibold hover:bg-[#1a1a1a] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="w-full py-3.5 sm:py-4 rounded-xl bg-[#0a0a0a] text-white font-semibold hover:bg-[#1a1a1a] transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base mt-2"
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -118,7 +118,7 @@ export default function SignupPage() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm font-mono">
+          <div className="mt-8 sm:mt-10 text-center text-sm font-mono">
             <span className="text-[#666]">Already have an account? </span>
             <Link href="/auth/login" className="text-[#e55c1c] hover:underline font-medium">
               Sign in
@@ -127,7 +127,7 @@ export default function SignupPage() {
         </div>
 
         {/* Back Link */}
-        <div className="mt-8 text-center">
+        <div className="mt-10 sm:mt-12 text-center">
           <Link href="/" className="inline-flex items-center gap-2 text-[#666] hover:text-[#0a0a0a] text-sm font-mono transition-colors">
             <span>←</span>
             <span>Back to home</span>
