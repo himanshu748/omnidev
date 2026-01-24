@@ -141,7 +141,6 @@ export default function Home() {
           
           <div className="hidden md:flex items-center gap-8">
             <Link href="#features" className="nav-link">Features</Link>
-            <Link href="#platform" className="nav-link">Platform</Link>
             <Link href="https://github.com/himanshu748/omnidev" target="_blank" className="nav-link">Docs</Link>
           </div>
 
@@ -159,7 +158,7 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 sm:pt-40 pb-20 sm:pb-28 px-4 sm:px-6 min-h-[90vh] flex items-center">
+      <section className="pt-32 sm:pt-40 pb-18 sm:pb-24 px-4 sm:px-6 min-h-[88vh] flex items-center">
         <div className="max-w-7xl mx-auto w-full">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             {/* Left - Text Content */}
@@ -168,23 +167,20 @@ export default function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: reduceMotion ? 0 : 0.6 }}
             >
-              <span className="section-label mb-6 sm:mb-8 block">Platform</span>
+              <span className="section-label mb-6 sm:mb-8 block">All-in-one</span>
               
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display mb-6 sm:mb-8 leading-[0.95]">
-                AI-Powered<br />
-                Developer<br />
-                Platform
+                Build, ship,<br />
+                automate —<br />
+                in one place.
               </h1>
 
-              <div className="space-y-4 sm:space-y-5 mb-10 sm:mb-12 max-w-2xl">
-                <p className="text-lg sm:text-xl text-[#666] leading-relaxed">
-                  The only all-in-one platform that handles everything from AI chat to cloud automation.
-                </p>
-                <p className="text-base sm:text-lg text-[#666] leading-relaxed">
-                  From code assistance to DevOps — delegate complete tasks like deployments, 
-                  image analysis, and web scraping without switching tools.
-                </p>
-              </div>
+              <p className="text-lg sm:text-xl text-[#666] leading-relaxed max-w-xl mb-4 sm:mb-5">
+                A clean, opinionated workspace that combines AI chat, vision, scraping, and cloud tooling — without context switching.
+              </p>
+              <p className="text-base sm:text-lg text-[#666] leading-relaxed max-w-xl mb-10 sm:mb-12">
+                Designed for demos, prototypes, and real workflows. Fast UI, simple auth, and a backend you can deploy anywhere.
+              </p>
 
               <div className="flex flex-wrap gap-3 sm:gap-4">
                 <Link
@@ -206,16 +202,32 @@ export default function Home() {
                   View on GitHub
                 </Link>
               </div>
+
+              <div className="mt-10 sm:mt-12 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-[#666]">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#e55c1c]" />
+                  <span className="font-mono">FastAPI + Next.js</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#e55c1c]" />
+                  <span className="font-mono">Supabase Auth</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[#e55c1c]" />
+                  <span className="font-mono">Render backend</span>
+                </div>
+              </div>
             </motion.div>
 
             {/* Right - 3D Network Visualization */}
             <motion.div
-              className="hidden lg:block relative"
+              className="relative"
               initial={{ opacity: 0, x: reduceMotion ? 0 : 40 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: reduceMotion ? 0 : 0.3, duration: 0.6 }}
             >
-              <div className="relative w-full aspect-square">
+              <div className="relative w-full aspect-[1/1] max-w-[520px] mx-auto lg:max-w-none" aria-hidden="true">
+                <div className="absolute inset-0 rounded-[32px] bg-white/50 border border-[#d4d4c8]/60 shadow-[0_12px_60px_rgba(10,10,10,0.08)]" />
                 <svg className="w-full h-full" viewBox="0 0 500 500" fill="none" preserveAspectRatio="xMidYMid meet">
                   <defs>
                     <linearGradient id="heroGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -394,10 +406,10 @@ export default function Home() {
           >
             <span className="section-label mb-6 sm:mb-8 block">Features</span>
             <h2 className="text-4xl md:text-5xl font-display mb-6 sm:mb-8 max-w-2xl">
-              Everything you need to ship faster.
+              The core tools you’ll demo.
             </h2>
             <p className="text-base sm:text-lg text-[#666] max-w-xl leading-relaxed">
-              Six powerful tools unified in one platform. No context switching, no fragmented workflows.
+              A tight set of workflows — built to look good on stage, and still hold up under real usage.
             </p>
           </motion.div>
 
@@ -425,52 +437,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Platform Section */}
-      <section id="platform" className="py-24 sm:py-32 px-4 sm:px-6 bg-white border-y border-[#d4d4c8]">
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center"
-          >
-            <span className="section-label mb-6 sm:mb-8 block">Platform</span>
-            <h2 className="text-4xl md:text-5xl font-display mb-6 sm:mb-8">
-              AI that works with you, not against you.
-            </h2>
-            <p className="text-base sm:text-lg text-[#666] font-mono mb-12 sm:mb-16 leading-relaxed max-w-2xl mx-auto">
-              OmniDev is designed to enhance your workflow — secure, scalable, and ready 
-              to integrate with your existing development tools. Built with modern 
-              technologies that developers trust.
-            </p>
-            
-            <div className="grid md:grid-cols-3 gap-8 sm:gap-12 max-w-3xl mx-auto">
-              <div className="flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-xl bg-[#f5f5f0] flex items-center justify-center mb-5">
-                  <span className="text-[#e55c1c] text-xl">✓</span>
-                </div>
-                <h4 className="font-semibold mb-2 text-lg">Open Source</h4>
-                <p className="text-sm text-[#666] font-mono leading-relaxed">Full transparency with MIT license</p>
-              </div>
-              <div className="flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-xl bg-[#f5f5f0] flex items-center justify-center mb-5">
-                  <span className="text-[#e55c1c] text-xl">✓</span>
-                </div>
-                <h4 className="font-semibold mb-2 text-lg">Self-Hostable</h4>
-                <p className="text-sm text-[#666] font-mono leading-relaxed">Deploy on your own infrastructure</p>
-              </div>
-              <div className="flex flex-col items-center text-center">
-                <div className="w-14 h-14 rounded-xl bg-[#f5f5f0] flex items-center justify-center mb-5">
-                  <span className="text-[#e55c1c] text-xl">✓</span>
-                </div>
-                <h4 className="font-semibold mb-2 text-lg">API-First</h4>
-                <p className="text-sm text-[#666] font-mono leading-relaxed">RESTful APIs with full documentation</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-24 sm:py-32 px-4 sm:px-6">
         <motion.div
@@ -480,10 +446,10 @@ export default function Home() {
           viewport={{ once: true }}
         >
           <span className="section-label justify-center mb-6 sm:mb-8 block">Get Started</span>
-          <h2 className="text-4xl md:text-5xl font-display mb-6 sm:mb-8 leading-tight">
+          <h2 className="text-4xl md:text-5xl font-display mb-8 sm:mb-10 leading-tight">
             Ready to build the<br />software of the future?
           </h2>
-          <p className="text-lg sm:text-xl text-[#666] mb-10 sm:mb-12 max-w-lg mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-[#666] mb-12 sm:mb-14 max-w-lg mx-auto leading-relaxed">
             Free forever for personal use. Start building today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -570,9 +536,6 @@ export default function Home() {
                 </Link>
                 <Link href="#features" className="text-[#666] hover:text-[#0a0a0a] text-sm transition-colors">
                   Features
-                </Link>
-                <Link href="#platform" className="text-[#666] hover:text-[#0a0a0a] text-sm transition-colors">
-                  Platform
                 </Link>
               </div>
             </div>

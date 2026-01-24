@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     resend_api_key: Optional[str] = None
 
     supabase_jwt_secret: Optional[str] = None
+    # Supabase JWT verification via JWKS (recommended for modern Supabase projects)
+    # Example: https://<project-ref>.supabase.co/auth/v1/.well-known/jwks.json
+    supabase_jwks_url: Optional[str] = None
+    # Optional issuer check. Example: https://<project-ref>.supabase.co/auth/v1
+    supabase_jwt_issuer: Optional[str] = None
     api_key_salt: str = "change-me"
     rate_limit_per_minute: int = 120
     rate_limit_burst: int = 30

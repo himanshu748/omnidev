@@ -11,7 +11,7 @@ export default function SettingsPage() {
     const router = useRouter();
     const supabase = createClient();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-    const { settings, isLoaded, saveSettings, clearSettings, isAiConfigured, isAwsConfigured, isLocationConfigured } = useSettings();
+    const { settings, saveSettings, clearSettings, isAiConfigured, isAwsConfigured, isLocationConfigured } = useSettings();
     const [saved, setSaved] = useState(false);
     const [apiKeyStatus, setApiKeyStatus] = useState<"idle" | "saving" | "error" | "success">("idle");
     const isApiKeyConfigured = Boolean(settings.apiAccessKey);
@@ -29,25 +29,13 @@ export default function SettingsPage() {
         checkAuth();
     }, [router, supabase.auth]);
 
-    // Local state for form
-    const [openaiKey, setOpenaiKey] = useState("");
-    const [awsAccessKey, setAwsAccessKey] = useState("");
-    const [awsSecretKey, setAwsSecretKey] = useState("");
-    const [awsRegion, setAwsRegion] = useState("ap-south-1");
-    const [googleKey, setGoogleKey] = useState("");
-    const [apiAccessKey, setApiAccessKey] = useState("");
-
-    // Sync local state when settings load
-    useState(() => {
-        if (isLoaded) {
-            setOpenaiKey(settings.openaiApiKey);
-            setAwsAccessKey(settings.awsAccessKeyId);
-            setAwsSecretKey(settings.awsSecretAccessKey);
-            setAwsRegion(settings.awsRegion);
-            setGoogleKey(settings.googleMapsApiKey);
-            setApiAccessKey(settings.apiAccessKey);
-        }
-    });
+    // Local state for form (initialized from localStorage-backed settings)
+    const [openaiKey, setOpenaiKey] = useState(settings.openaiApiKey);
+    const [awsAccessKey, setAwsAccessKey] = useState(settings.awsAccessKeyId);
+    const [awsSecretKey, setAwsSecretKey] = useState(settings.awsSecretAccessKey);
+    const [awsRegion, setAwsRegion] = useState(settings.awsRegion || "ap-south-1");
+    const [googleKey, setGoogleKey] = useState(settings.googleMapsApiKey);
+    const [apiAccessKey, setApiAccessKey] = useState(settings.apiAccessKey);
 
     const handleSave = () => {
         saveSettings({

@@ -1,14 +1,14 @@
 # OmniDev Backend
 fastapi==0.128.0
-uvicorn[standard]==0.40.0
+uvicorn[standard]==0.39.0
 python-dotenv==1.2.1
 pydantic==2.12.5
-pydantic-settings==2.12.0
-python-multipart==0.0.21
+pydantic-settings==2.11.0
+python-multipart==0.0.20
 
 # AI & ML (OpenAI GPT-5 Nano)
 openai==2.15.0
-Pillow==12.1.0
+Pillow==11.3.0
 
 # AWS
 boto3==1.42.31
@@ -17,7 +17,7 @@ boto3==1.42.31
 geocoder==1.38.1
 
 # WebSockets
-websockets==16.0
+websockets==15.0.1
 
 # HTTP Client
 httpx==0.28.1
@@ -33,5 +33,5 @@ beautifulsoup4==4.14.3
 lxml==6.0.2
 
 # Testing
-pytest==9.0.2
-pytest-asyncio==1.3.0
+pytest==8.4.2
+pytest-asyncio==1.2.0

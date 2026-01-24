@@ -92,7 +92,7 @@ def test_vision_status_and_analyze(monkeypatch):
     assert status_res.status_code == 200
     assert status_res.json()["service"] == "OpenAI Vision"
 
-    async def fake_analyze_image(image_data, prompt):
+    async def fake_analyze_image(image_data, prompt, api_key=None):
         return "ok"
 
     monkeypatch.setattr(openai_service, "analyze_image", fake_analyze_image)

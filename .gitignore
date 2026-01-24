@@ -32,3 +32,5 @@ npm-debug.log*
 coverage/
 .coverage
 htmlcov/
+.vercel
+.env*.local
