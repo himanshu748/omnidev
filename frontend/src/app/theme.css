@@ -119,11 +119,12 @@ body {
   border-color: var(--foreground);
 }
 
+/* Global card spacing (tightened) */
 .feature-card {
   background: var(--card);
   border: 1px solid var(--border-light);
   border-radius: 1rem;
-  padding: 2rem;
+  padding: 1.5rem;
   transition: all 0.25s;
 }
 
@@ -181,13 +182,15 @@ body {
   mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
 }
 
+/* Slightly tighter marquee spacing */
 .marquee-content {
   display: flex;
-  gap: 6rem;
+  gap: 4rem;
   animation: marquee 40s linear infinite;
   will-change: transform;
 }
 
+/* Correct pseudo selectors */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

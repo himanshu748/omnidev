@@ -119,13 +119,13 @@ export default function SettingsPage() {
                 </div>
             </header>
 
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5">
                 {/* Status Overview */}
-                <div className="app-panel p-6">
-                    <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                <div className="app-panel p-5 sm:p-6">
+                    <h2 className="text-xl font-display mb-3 flex items-center gap-2">
                         🔌 Connection Status
                     </h2>
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div className={`p-3 sm:p-4 rounded-xl border bg-white ${isAiConfigured ? "border-[#0a0a0a]" : "border-[#d4d4c8]"}`}>
                             <div className="text-2xl mb-2">🤖</div>
                             <div className="font-medium">AI (OpenAI)</div>
@@ -158,16 +158,16 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Main Settings (desktop gets 2 columns) */}
-                <div className="grid lg:grid-cols-2 gap-6">
+                <div className="grid lg:grid-cols-2 gap-5">
                     {/* AI Configuration */}
-                    <div className="app-panel p-6">
-                        <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                    <div className="app-panel p-5 sm:p-6">
+                        <h2 className="text-xl font-display mb-3 flex items-center gap-2">
                             🤖 AI Configuration
                         </h2>
-                        <p className="text-[#666] text-sm mb-4">
+                        <p className="text-[#666] text-sm mb-3">
                             Configure your OpenAI API key for AI Chat and Vision features.
                         </p>
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div>
                                 <label className="text-sm text-[#666] mb-2 block">OpenAI API Key</label>
                                 <input
@@ -188,14 +188,14 @@ export default function SettingsPage() {
                     </div>
 
                     {/* API Access */}
-                    <div className="app-panel p-6">
-                        <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                    <div className="app-panel p-5 sm:p-6">
+                        <h2 className="text-xl font-display mb-3 flex items-center gap-2">
                             🔐 API Access
                         </h2>
-                        <p className="text-[#666] text-sm mb-4">
+                        <p className="text-[#666] text-sm mb-3">
                             Use this key to authorize API requests tied to your account.
                         </p>
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div>
                                 <label className="text-sm text-[#666] mb-2 block">API Access Key</label>
                                 <input
@@ -224,14 +224,14 @@ export default function SettingsPage() {
                     </div>
 
                     {/* AWS Configuration */}
-                    <div className="app-panel p-6">
-                        <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                    <div className="app-panel p-5 sm:p-6">
+                        <h2 className="text-xl font-display mb-3 flex items-center gap-2">
                             ☁️ AWS Configuration
                         </h2>
-                        <p className="text-[#666] text-sm mb-4">
+                        <p className="text-[#666] text-sm mb-3">
                             Configure AWS credentials for DevOps Agent and Cloud Storage.
                         </p>
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             <div className="grid md:grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-sm text-[#666] mb-2 block">Access Key ID</label>
@@ -276,11 +276,11 @@ export default function SettingsPage() {
                     </div>
 
                     {/* Location Configuration */}
-                    <div className="app-panel p-6">
-                        <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                    <div className="app-panel p-5 sm:p-6">
+                        <h2 className="text-xl font-display mb-3 flex items-center gap-2">
                             📍 Location Configuration
                         </h2>
-                        <p className="text-[#666] text-sm mb-4">
+                        <p className="text-[#666] text-sm mb-3">
                             Optional: Add Google Maps API for better geocoding results.
                         </p>
                         <div>
@@ -303,16 +303,16 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                     <button
                         onClick={handleSave}
-                        className="btn-primary flex-1 py-4 text-base"
+                        className="btn-primary flex-1 py-3.5 text-base"
                     >
                         {saved ? "✓ Saved!" : "💾 Save All Settings"}
                     </button>
                     <button
                         onClick={handleClear}
-                        className="btn-secondary sm:flex-none sm:px-6 py-4 text-base border-red-500/40 text-red-600 hover:border-red-600"
+                        className="btn-secondary sm:flex-none sm:px-6 py-3.5 text-base border-red-500/40 text-red-600 hover:border-red-600"
                     >
                         Clear All
                     </button>

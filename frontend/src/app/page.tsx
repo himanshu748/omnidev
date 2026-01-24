@@ -79,13 +79,13 @@ export default function Home() {
         </nav>
 
         {/* Dashboard Content */}
-        <div className="pt-28 pb-16 px-6">
+        <div className="pt-24 pb-12 px-6">
           <div className="max-w-6xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: reduceMotion ? 0 : 0.4 }}
-              className="mb-12"
+              className="mb-8"
             >
               <span className="section-label mb-6 block">Dashboard</span>
               <h1 className="text-4xl md:text-5xl font-display mb-4">Welcome back</h1>
@@ -158,18 +158,18 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-32 sm:pt-40 pb-18 sm:pb-24 px-4 sm:px-6 min-h-[88vh] flex items-center">
+      <section className="pt-28 sm:pt-36 pb-16 sm:pb-20 px-4 sm:px-6 min-h-[84vh] flex items-center">
         <div className="max-w-7xl mx-auto w-full">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
             {/* Left - Text Content */}
             <motion.div
               initial={{ opacity: 0, y: reduceMotion ? 0 : 32 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: reduceMotion ? 0 : 0.6 }}
             >
-              <span className="section-label mb-6 sm:mb-8 block">All-in-one</span>
+              <span className="section-label mb-5 sm:mb-6 block">All-in-one</span>
               
-              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display mb-6 sm:mb-8 leading-[0.95]">
+              <h1 className="text-5xl sm:text-6xl lg:text-7xl font-display mb-5 sm:mb-6 leading-[0.95]">
                 Build, ship,<br />
                 automate —<br />
                 in one place.
@@ -178,7 +178,7 @@ export default function Home() {
               <p className="text-lg sm:text-xl text-[#666] leading-relaxed max-w-xl mb-4 sm:mb-5">
                 A clean, opinionated workspace that combines AI chat, vision, scraping, and cloud tooling — without context switching.
               </p>
-              <p className="text-base sm:text-lg text-[#666] leading-relaxed max-w-xl mb-10 sm:mb-12">
+              <p className="text-base sm:text-lg text-[#666] leading-relaxed max-w-xl mb-8 sm:mb-10">
                 Designed for demos, prototypes, and real workflows. Fast UI, simple auth, and a backend you can deploy anywhere.
               </p>
 
@@ -203,7 +203,7 @@ export default function Home() {
                 </Link>
               </div>
 
-              <div className="mt-10 sm:mt-12 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-[#666]">
+              <div className="mt-8 sm:mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-[#666]">
                 <div className="flex items-center gap-2">
                   <span className="w-2 h-2 rounded-full bg-[#e55c1c]" />
                   <span className="font-mono">FastAPI + Next.js</span>
@@ -378,7 +378,7 @@ export default function Home() {
       </section>
 
       {/* Tech Stack Marquee */}
-      <section className="py-16 sm:py-20 border-y border-[#d4d4c8]">
+      <section className="py-14 sm:py-16 border-y border-[#d4d4c8]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center gap-8 sm:gap-12">
             <span className="section-label whitespace-nowrap flex-shrink-0">Built With</span>
@@ -396,15 +396,15 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-24 sm:py-32 px-4 sm:px-6">
+      <section id="features" className="py-16 sm:py-20 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           <motion.div
-            className="mb-16 sm:mb-20"
+            className="mb-10 sm:mb-12"
             initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <span className="section-label mb-6 sm:mb-8 block">Features</span>
+            <span className="section-label mb-4 sm:mb-5 block">Features</span>
             <h2 className="text-4xl md:text-5xl font-display mb-6 sm:mb-8 max-w-2xl">
               The core tools you’ll demo.
             </h2>
@@ -413,7 +413,7 @@ export default function Home() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5">
             {features.map((feature, i) => (
               <motion.div
                 key={feature.id}
@@ -423,11 +423,11 @@ export default function Home() {
                 viewport={{ once: true }}
                 transition={{ delay: reduceMotion ? 0 : i * 0.08 }}
               >
-                <div className="flex items-start justify-between mb-5">
+                <div className="flex items-start justify-between mb-4">
                   <span className="text-3xl">{feature.icon}</span>
                   <span className="text-xs text-[#999] font-mono uppercase tracking-wider">0{i + 1}</span>
                 </div>
-                <h3 className="text-xl font-semibold mb-3 group-hover:text-[#e55c1c] transition-colors">
+                <h3 className="text-xl font-semibold mb-2 group-hover:text-[#e55c1c] transition-colors">
                   {feature.title}
                 </h3>
                 <p className="text-[#666] font-mono text-sm leading-relaxed">{feature.description}</p>
@@ -438,18 +438,18 @@ export default function Home() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24 sm:py-32 px-4 sm:px-6">
+      <section className="py-16 sm:py-20 px-4 sm:px-6">
         <motion.div
           className="max-w-4xl mx-auto text-center"
           initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <span className="section-label justify-center mb-6 sm:mb-8 block">Get Started</span>
-          <h2 className="text-4xl md:text-5xl font-display mb-8 sm:mb-10 leading-tight">
+          <span className="section-label justify-center mb-4 sm:mb-5 block">Get Started</span>
+          <h2 className="text-4xl md:text-5xl font-display mb-5 sm:mb-6 leading-tight">
             Ready to build the<br />software of the future?
           </h2>
-          <p className="text-lg sm:text-xl text-[#666] mb-12 sm:mb-14 max-w-lg mx-auto leading-relaxed">
+          <p className="text-lg sm:text-xl text-[#666] mb-8 sm:mb-10 max-w-lg mx-auto leading-relaxed">
             Free forever for personal use. Start building today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -474,18 +474,18 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-20 sm:py-24 px-4 sm:px-6 border-t border-[#d4d4c8] bg-gradient-to-b from-white to-[#fafaf5]">
+      <footer className="py-14 sm:py-16 px-4 sm:px-6 border-t border-[#d4d4c8] bg-gradient-to-b from-white to-[#fafaf5]">
         <div className="max-w-7xl mx-auto">
-          <div className="grid md:grid-cols-4 gap-12 sm:gap-16 mb-16 sm:mb-20">
+          <div className="grid md:grid-cols-4 gap-8 sm:gap-10 mb-10 sm:mb-12">
             {/* Brand */}
             <div className="md:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 bg-[#0a0a0a] rounded-xl flex items-center justify-center shadow-sm">
                   <span className="text-[#f5f5f0] font-bold text-base">O</span>
                 </div>
                 <span className="font-bold text-xl tracking-tight">OmniDev</span>
               </div>
-              <p className="text-[#666] text-sm sm:text-base leading-relaxed mb-8 max-w-sm">
+              <p className="text-[#666] text-sm sm:text-base leading-relaxed mb-5 max-w-sm">
                 AI-powered developer platform. Build faster, automate smarter. 
                 All your development tools in one unified interface.
               </p>
@@ -526,7 +526,7 @@ export default function Home() {
 
             {/* Product Links */}
             <div>
-              <h4 className="font-semibold mb-6 text-sm uppercase tracking-wider text-[#0a0a0a]">Product</h4>
+              <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-[#0a0a0a]">Product</h4>
               <div className="flex flex-col gap-3 sm:gap-4">
                 <Link href="/auth/signup" className="text-[#666] hover:text-[#0a0a0a] text-sm transition-colors">
                   Get Started
@@ -542,7 +542,7 @@ export default function Home() {
 
             {/* Resources */}
             <div>
-              <h4 className="font-semibold mb-6 text-sm uppercase tracking-wider text-[#0a0a0a]">Resources</h4>
+              <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-[#0a0a0a]">Resources</h4>
               <div className="flex flex-col gap-3 sm:gap-4">
                 <a 
                   href="https://github.com/himanshu748/omnidev" 
@@ -571,7 +571,7 @@ export default function Home() {
           </div>
 
           {/* Bottom Bar */}
-          <div className="pt-10 sm:pt-12 border-t border-[#d4d4c8] flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
+          <div className="pt-6 sm:pt-8 border-t border-[#d4d4c8] flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 sm:gap-3">
               <span className="text-[#999] text-sm">© 2024-2026</span>
               <span className="text-[#666] font-semibold text-sm">OmniDev</span>
