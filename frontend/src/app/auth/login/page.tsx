@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +26,7 @@ export default function LoginPage() {
       return;
     }
 
-    const redirect = searchParams.get("redirect") || "/";
+    const redirect = new URLSearchParams(window.location.search).get("redirect") || "/";
     router.push(redirect);
   };
 
