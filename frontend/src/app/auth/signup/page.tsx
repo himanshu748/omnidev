@@ -3,18 +3,22 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
   const { signUp } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess(false);
 
     if (password !== confirmPassword) {
       setError("Passwords do not match");
@@ -32,7 +36,14 @@ export default function SignupPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
+      return;
     }
+
+    setLoading(false);
+    setSuccess(true);
+    // Most Supabase projects require email confirmation by default.
+    // Redirect to login so the user can continue after confirming.
+    router.push("/auth/login?signup=success");
   };
 
   return (
@@ -61,6 +72,11 @@ export default function SignupPage() {
               {error}
             </div>
           )}
+          {success && (
+            <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl mb-6 sm:mb-8 text-sm font-mono">
+              Account created. Check your email to confirm, then sign in.
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
@@ -69,6 +85,7 @@ export default function SignupPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 className="w-full px-4 py-3 rounded-xl bg-[#f5f5f0] border border-[#d4d4c8] text-[#0a0a0a] placeholder-[#999] focus:outline-none focus:border-[#0a0a0a] focus:ring-1 focus:ring-[#0a0a0a] transition-all font-mono text-sm"
                 placeholder="you@example.com"
                 required
@@ -81,6 +98,7 @@ export default function SignupPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
                 className="w-full px-4 py-3 rounded-xl bg-[#f5f5f0] border border-[#d4d4c8] text-[#0a0a0a] placeholder-[#999] focus:outline-none focus:border-[#0a0a0a] focus:ring-1 focus:ring-[#0a0a0a] transition-all font-mono text-sm"
                 placeholder="••••••••"
                 required
@@ -93,6 +111,7 @@ export default function SignupPage() {
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
                 className="w-full px-4 py-3 rounded-xl bg-[#f5f5f0] border border-[#d4d4c8] text-[#0a0a0a] placeholder-[#999] focus:outline-none focus:border-[#0a0a0a] focus:ring-1 focus:ring-[#0a0a0a] transition-all font-mono text-sm"
                 placeholder="••••••••"
                 required

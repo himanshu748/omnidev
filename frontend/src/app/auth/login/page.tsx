@@ -3,9 +3,12 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const { signIn } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -21,7 +24,11 @@ export default function LoginPage() {
     if (error) {
       setError(error.message);
       setLoading(false);
+      return;
     }
+
+    const redirect = searchParams.get("redirect") || "/";
+    router.push(redirect);
   };
 
   return (
@@ -58,6 +65,7 @@ export default function LoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                autoComplete="email"
                 className="w-full px-4 py-3 rounded-xl bg-[#f5f5f0] border border-[#d4d4c8] text-[#0a0a0a] placeholder-[#999] focus:outline-none focus:border-[#0a0a0a] focus:ring-1 focus:ring-[#0a0a0a] transition-all font-mono text-sm"
                 placeholder="you@example.com"
                 required
@@ -70,6 +78,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 className="w-full px-4 py-3 rounded-xl bg-[#f5f5f0] border border-[#d4d4c8] text-[#0a0a0a] placeholder-[#999] focus:outline-none focus:border-[#0a0a0a] focus:ring-1 focus:ring-[#0a0a0a] transition-all font-mono text-sm"
                 placeholder="••••••••"
                 required
