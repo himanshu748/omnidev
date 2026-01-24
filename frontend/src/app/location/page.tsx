@@ -177,20 +177,20 @@ export default function LocationPage() {
 
     const LocationCard = ({ title, location, icon, canSave = false }: { title: string; location: Location | null; icon: string; canSave?: boolean }) => (
         <motion.div
-            className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6"
+            className="app-panel p-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
         >
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                <span className="w-8 h-8 rounded-lg bg-[#39ff14]/20 flex items-center justify-center text-sm">{icon}</span>
+                <span className="w-8 h-8 rounded-lg bg-[#0a0a0a] text-[#f5f5f0] flex items-center justify-center text-sm">{icon}</span>
                 {title}
                 {location?.source && (
                     <span className={`text-xs px-2 py-1 rounded-full ml-auto ${location.source === "browser"
-                        ? "bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14]/30"
+                        ? "border border-[#0a0a0a] bg-white text-[#0a0a0a]"
                         : location.source === "ip"
-                            ? "bg-blue-500/20 text-blue-400 border border-blue-500/30"
-                            : "bg-purple-500/20 text-purple-400 border border-purple-500/30"
+                            ? "border border-[#d4d4c8] bg-white text-[#666]"
+                            : "border border-[#d4d4c8] bg-white text-[#666]"
                         }`}>
                         {location.source === "browser" ? "📍 GPS" : location.source === "ip" ? "🌐 IP" : "🔍 Search"}
                     </span>
@@ -201,35 +201,35 @@ export default function LocationPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <div className="text-xs text-gray-500 mb-1">Latitude</div>
-                            <div className="font-mono text-[#39ff14]">{location.latitude?.toFixed(6)}</div>
+                            <div className="font-mono text-[#0a0a0a]">{location.latitude?.toFixed(6)}</div>
                         </div>
                         <div>
                             <div className="text-xs text-gray-500 mb-1">Longitude</div>
-                            <div className="font-mono text-[#39ff14]">{location.longitude?.toFixed(6)}</div>
+                            <div className="font-mono text-[#0a0a0a]">{location.longitude?.toFixed(6)}</div>
                         </div>
                     </div>
                     {location.accuracy && (
                         <div>
                             <div className="text-xs text-gray-500 mb-1">Accuracy</div>
-                            <div className="text-[#39ff14]">± {location.accuracy}m</div>
+                            <div className="text-[#666]">± {location.accuracy}m</div>
                         </div>
                     )}
                     <div>
                         <div className="text-xs text-gray-500 mb-1">City</div>
-                        <div className="text-white">{location.city || "Unknown"}</div>
+                        <div className="text-[#0a0a0a]">{location.city || "Unknown"}</div>
                     </div>
                     <div>
                         <div className="text-xs text-gray-500 mb-1">State / Region</div>
-                        <div className="text-white">{location.state || "Unknown"}</div>
+                        <div className="text-[#0a0a0a]">{location.state || "Unknown"}</div>
                     </div>
                     <div>
                         <div className="text-xs text-gray-500 mb-1">Country</div>
-                        <div className="text-white">{location.country || "Unknown"}</div>
+                        <div className="text-[#0a0a0a]">{location.country || "Unknown"}</div>
                     </div>
                     {location.address && (
                         <div>
                             <div className="text-xs text-gray-500 mb-1">Full Address</div>
-                            <div className="text-gray-300 text-sm">{location.address}</div>
+                            <div className="text-[#666] text-sm">{location.address}</div>
                         </div>
                     )}
                     {location.latitude && location.longitude && (
@@ -238,7 +238,7 @@ export default function LocationPage() {
                                 href={`https://www.google.com/maps?q=${location.latitude},${location.longitude}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#39ff14]/30 text-sm hover:border-[#39ff14] hover:text-[#39ff14] transition-all"
+                                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-[#d4d4c8] bg-white text-sm hover:border-[#0a0a0a] transition-all"
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                             >
@@ -247,7 +247,7 @@ export default function LocationPage() {
                             {canSave && (
                                 <motion.button
                                     onClick={() => saveAsMyLocation(location)}
-                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#39ff14]/10 border border-[#39ff14]/50 text-[#39ff14] text-sm hover:bg-[#39ff14]/20 transition-all"
+                                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#0a0a0a] border border-[#0a0a0a] text-[#f5f5f0] text-sm hover:opacity-90 transition-all"
                                     whileHover={{ scale: 1.02 }}
                                     whileTap={{ scale: 0.98 }}
                                 >
@@ -258,26 +258,23 @@ export default function LocationPage() {
                     )}
                 </div>
             ) : (
-                <div className="text-gray-500 text-center py-8">No location data</div>
+                <div className="text-[#666] text-center py-8">No location data</div>
             )}
         </motion.div>
     );
 
     return (
         <AuthGuard>
-            <main className="min-h-screen bg-[#050505] text-white">
-                {/* Background Grid */}
-                <div className="fixed inset-0 pointer-events-none">
-                    <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
-                </div>
+            <main className="min-h-screen bg-[#f5f5f0] text-[#0a0a0a]">
+                <div className="fixed inset-0 grid-pattern pointer-events-none" />
 
-                <header className="backdrop-blur-xl bg-black/40 border-b border-[#39ff14]/10 sticky top-0 z-50">
-                    <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+                <header className="sticky top-0 z-50 bg-[#f5f5f0]/90 backdrop-blur-md border-b border-[#d4d4c8]">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
                         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                            <span className="text-xl">←</span>
-                            <span className="text-xl font-bold text-[#39ff14]">
-                                OmniDev
-                            </span>
+                            <div className="w-8 h-8 bg-[#0a0a0a] rounded-lg flex items-center justify-center">
+                                <span className="text-[#f5f5f0] font-bold text-sm">O</span>
+                            </div>
+                            <span className="font-semibold text-lg tracking-tight">OmniDev</span>
                         </Link>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2">
@@ -286,7 +283,7 @@ export default function LocationPage() {
                             </div>
                             <motion.button
                                 onClick={() => setShowSettings(true)}
-                                className="p-2 rounded-lg border border-[#39ff14]/30 hover:border-[#39ff14] hover:text-[#39ff14] transition-all"
+                                className="p-2 rounded-lg border border-[#d4d4c8] bg-white hover:border-[#0a0a0a] transition-all"
                                 title="Settings"
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
@@ -301,22 +298,22 @@ export default function LocationPage() {
                 <AnimatePresence>
                     {showSettings && (
                         <motion.div
-                            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+                            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                         >
                             <motion.div
-                                className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 max-w-md w-full"
+                                className="app-panel p-6 max-w-md w-full"
                                 initial={{ scale: 0.9, opacity: 0 }}
                                 animate={{ scale: 1, opacity: 1 }}
                                 exit={{ scale: 0.9, opacity: 0 }}
                             >
                                 <div className="flex items-center justify-between mb-6">
-                                    <h2 className="text-xl font-bold text-[#39ff14]">Location Settings</h2>
+                                    <h2 className="text-xl font-display">Location Settings</h2>
                                     <button
                                         onClick={() => setShowSettings(false)}
-                                        className="text-gray-400 hover:text-white text-2xl"
+                                        className="text-[#666] hover:text-[#0a0a0a] text-2xl"
                                     >
                                         ×
                                     </button>
@@ -325,13 +322,13 @@ export default function LocationPage() {
                                 <div className="space-y-6">
                                     {/* Location Method */}
                                     <div>
-                                        <label className="text-sm text-gray-400 mb-2 block">Location Method</label>
+                                        <label className="text-sm text-[#666] mb-2 block">Location Method</label>
                                         <div className="grid grid-cols-2 gap-3">
                                             <motion.button
                                                 onClick={() => saveSettings({ locationMethod: "ip" })}
                                                 className={`p-3 rounded-lg border text-sm transition-all ${settings.locationMethod === "ip"
-                                                    ? "border-[#39ff14] bg-[#39ff14]/20 text-[#39ff14]"
-                                                    : "border-[#39ff14]/20 hover:border-[#39ff14]/50"
+                                                    ? "border-[#0a0a0a] bg-[#0a0a0a] text-[#f5f5f0]"
+                                                    : "border-[#d4d4c8] bg-white hover:border-[#0a0a0a]"
                                                     }`}
                                                 whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
@@ -341,8 +338,8 @@ export default function LocationPage() {
                                             <motion.button
                                                 onClick={() => saveSettings({ locationMethod: "browser" })}
                                                 className={`p-3 rounded-lg border text-sm transition-all ${settings.locationMethod === "browser"
-                                                    ? "border-[#39ff14] bg-[#39ff14]/20 text-[#39ff14]"
-                                                    : "border-[#39ff14]/20 hover:border-[#39ff14]/50"
+                                                    ? "border-[#0a0a0a] bg-[#0a0a0a] text-[#f5f5f0]"
+                                                    : "border-[#d4d4c8] bg-white hover:border-[#0a0a0a]"
                                                     }`}
                                                 whileHover={{ scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
@@ -350,7 +347,7 @@ export default function LocationPage() {
                                                 📍 GPS (Precise)
                                             </motion.button>
                                         </div>
-                                        <p className="text-xs text-gray-500 mt-2">
+                                        <p className="text-xs text-[#666] mt-2">
                                             {settings.locationMethod === "browser"
                                                 ? "Uses device GPS for precise location (requires permission)"
                                                 : "Uses IP address for approximate location"}
@@ -359,7 +356,7 @@ export default function LocationPage() {
 
                                     {/* Google Maps API Key */}
                                     <div>
-                                        <label className="text-sm text-gray-400 mb-2 block">
+                                        <label className="text-sm text-[#666] mb-2 block">
                                             Google Maps API Key (Optional)
                                         </label>
                                         <input
@@ -367,15 +364,15 @@ export default function LocationPage() {
                                             value={tempApiKey}
                                             onChange={(e) => setTempApiKey(e.target.value)}
                                             placeholder="AIza..."
-                                            className="w-full bg-[#050505] border border-[#39ff14]/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[#39ff14] transition-colors text-sm"
+                                            className="app-input text-sm font-mono"
                                         />
-                                        <p className="text-xs text-gray-500 mt-2">
+                                        <p className="text-xs text-[#666] mt-2">
                                             Provides better geocoding results. Get one from{" "}
                                             <a
                                                 href="https://console.cloud.google.com/apis/credentials"
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="text-[#39ff14] hover:underline"
+                                                className="text-[#e55c1c] hover:underline"
                                             >
                                                 Google Cloud Console
                                             </a>
@@ -385,7 +382,7 @@ export default function LocationPage() {
                                     <div className="flex gap-3">
                                         <motion.button
                                             onClick={saveApiSettings}
-                                            className="flex-1 bg-[#39ff14] text-black font-semibold px-6 py-3 rounded-xl"
+                                            className="flex-1 bg-[#0a0a0a] text-[#f5f5f0] font-semibold px-6 py-3 rounded-xl"
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                         >
@@ -396,7 +393,7 @@ export default function LocationPage() {
                                                 setTempApiKey("");
                                                 saveSettings({ googleMapsApiKey: "" });
                                             }}
-                                            className="px-4 py-2 rounded-lg border border-[#39ff14]/20 hover:border-red-500 hover:text-red-400 transition-all text-sm"
+                                            className="px-4 py-2 rounded-lg border border-[#d4d4c8] bg-white hover:border-red-600 hover:text-red-600 transition-all text-sm"
                                             whileHover={{ scale: 1.02 }}
                                             whileTap={{ scale: 0.98 }}
                                         >
@@ -409,7 +406,7 @@ export default function LocationPage() {
                     )}
                 </AnimatePresence>
 
-                <div className="max-w-6xl mx-auto px-6 py-8">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
                     {/* Action Buttons */}
                     <motion.div
                         className="flex flex-wrap gap-3 mb-6"
@@ -419,24 +416,24 @@ export default function LocationPage() {
                         <motion.button
                             onClick={getBrowserLocation}
                             disabled={gettingBrowserLocation}
-                            className="bg-[#39ff14] text-black font-semibold px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50 rounded-xl"
+                            className="bg-[#0a0a0a] text-[#f5f5f0] font-semibold px-4 py-2 text-sm flex items-center gap-2 disabled:opacity-50 rounded-xl"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >
-                            {gettingBrowserLocation ? <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : "📍"}
+                            {gettingBrowserLocation ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "📍"}
                             Use Precise Location
                         </motion.button>
                         <motion.button
                             onClick={fetchCurrentLocation}
                             disabled={loading}
-                            className="px-4 py-2 rounded-xl border border-[#39ff14]/30 text-sm hover:border-[#39ff14] hover:text-[#39ff14] transition-all disabled:opacity-50"
+                            className="px-4 py-2 rounded-xl border border-[#d4d4c8] bg-white text-sm hover:border-[#0a0a0a] transition-all disabled:opacity-50"
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                         >
                             🌐 Use IP Location
                         </motion.button>
                         {settings.googleMapsApiKey && (
-                            <span className="px-3 py-2 rounded-full text-xs bg-[#39ff14]/20 text-[#39ff14] border border-[#39ff14]/30 flex items-center gap-1">
+                            <span className="px-3 py-2 rounded-full text-xs bg-white text-[#0a0a0a] border border-[#d4d4c8] flex items-center gap-1">
                                 ✓ Google API Connected
                             </span>
                         )}
@@ -444,13 +441,13 @@ export default function LocationPage() {
 
                     {/* Search Bar */}
                     <motion.div
-                        className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 mb-8"
+                        className="app-panel p-6 mb-8"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
                     >
                         <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                            <span className="w-8 h-8 rounded-lg bg-[#39ff14]/20 flex items-center justify-center text-sm">🔍</span>
+                            <span className="w-8 h-8 rounded-lg bg-[#0a0a0a] text-[#f5f5f0] flex items-center justify-center text-sm">🔍</span>
                             Search Location
                         </h2>
                         <form onSubmit={searchLocation} className="flex gap-3">
@@ -459,16 +456,16 @@ export default function LocationPage() {
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Enter city, address, or place name..."
-                                className="flex-1 bg-[#050505] border border-[#39ff14]/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[#39ff14] transition-colors"
+                                className="app-input flex-1"
                             />
                             <motion.button
                                 type="submit"
                                 disabled={searching || !searchQuery.trim()}
-                                className="bg-[#39ff14] text-black font-semibold px-6 py-3 rounded-xl disabled:opacity-50"
+                                className="bg-[#0a0a0a] text-[#f5f5f0] font-semibold px-6 py-3 rounded-xl disabled:opacity-50"
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                             >
-                                {searching ? <div className="w-5 h-5 border-2 border-black/30 border-t-black rounded-full animate-spin" /> : "Search"}
+                                {searching ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : "Search"}
                             </motion.button>
                         </form>
                     </motion.div>
@@ -476,8 +473,8 @@ export default function LocationPage() {
                     {/* Location Cards */}
                     <div className="grid md:grid-cols-2 gap-6">
                         {loading ? (
-                            <div className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-2xl p-6 flex items-center justify-center">
-                                <div className="w-8 h-8 border-2 border-[#39ff14]/30 border-t-[#39ff14] rounded-full animate-spin" />
+                            <div className="app-panel p-6 flex items-center justify-center">
+                                <div className="w-8 h-8 border-2 border-[#0a0a0a]/20 border-t-[#0a0a0a] rounded-full animate-spin" />
                             </div>
                         ) : (
                             <LocationCard title="Your Current Location" location={currentLocation} icon="📍" />
@@ -503,15 +500,15 @@ export default function LocationPage() {
                         ].map((feature, i) => (
                             <motion.div
                                 key={feature.title}
-                                className="bg-[#0a0a0f] border border-[#39ff14]/20 rounded-xl p-4 text-center"
+                                className="feature-card text-center !p-5"
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.4 + i * 0.1 }}
-                                whileHover={{ scale: 1.05, borderColor: "rgba(57, 255, 20, 0.5)" }}
+                                whileHover={{ scale: 1.03 }}
                             >
                                 <div className="text-3xl mb-2">{feature.icon}</div>
                                 <h3 className="font-medium mb-1">{feature.title}</h3>
-                                <p className="text-xs text-gray-400">{feature.desc}</p>
+                                <p className="text-xs text-[#666]">{feature.desc}</p>
                             </motion.div>
                         ))}
                     </motion.div>

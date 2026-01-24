@@ -105,7 +105,7 @@ export default function SettingsPage() {
             <div className="fixed inset-0 grid-pattern pointer-events-none" />
 
             <header className="sticky top-0 z-50 bg-[#f5f5f0]/90 backdrop-blur-md border-b border-[#d4d4c8]">
-                <div className="max-w-4xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
                     <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                         <div className="w-8 h-8 bg-[#0a0a0a] rounded-lg flex items-center justify-center">
                             <span className="text-[#f5f5f0] font-bold text-sm">O</span>
@@ -119,7 +119,7 @@ export default function SettingsPage() {
                 </div>
             </header>
 
-            <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
                 {/* Status Overview */}
                 <div className="app-panel p-6">
                     <h2 className="text-xl font-display mb-4 flex items-center gap-2">
@@ -157,144 +157,148 @@ export default function SettingsPage() {
                     </div>
                 </div>
 
-                {/* AI Configuration */}
-                <div className="app-panel p-6">
-                    <h2 className="text-xl font-display mb-4 flex items-center gap-2">
-                        🤖 AI Configuration
-                    </h2>
-                    <p className="text-[#666] text-sm mb-4">
-                        Configure your OpenAI API key for AI Chat and Vision features.
-                    </p>
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-sm text-[#666] mb-2 block">OpenAI API Key</label>
-                            <input
-                                type="password"
-                                value={openaiKey}
-                                onChange={(e) => setOpenaiKey(e.target.value)}
-                                placeholder="sk-..."
-                                className="app-input font-mono text-sm"
-                            />
-                            <p className="text-xs text-[#666] mt-2">
-                                Get your key from{" "}
-                                <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[#e55c1c] hover:underline">
-                                    OpenAI Platform
+                {/* Main Settings (desktop gets 2 columns) */}
+                <div className="grid lg:grid-cols-2 gap-6">
+                    {/* AI Configuration */}
+                    <div className="app-panel p-6">
+                        <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                            🤖 AI Configuration
+                        </h2>
+                        <p className="text-[#666] text-sm mb-4">
+                            Configure your OpenAI API key for AI Chat and Vision features.
+                        </p>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-sm text-[#666] mb-2 block">OpenAI API Key</label>
+                                <input
+                                    type="password"
+                                    value={openaiKey}
+                                    onChange={(e) => setOpenaiKey(e.target.value)}
+                                    placeholder="sk-..."
+                                    className="app-input font-mono text-sm"
+                                />
+                                <p className="text-xs text-[#666] mt-2">
+                                    Get your key from{" "}
+                                    <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-[#e55c1c] hover:underline">
+                                        OpenAI Platform
+                                    </a>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* API Access */}
+                    <div className="app-panel p-6">
+                        <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                            🔐 API Access
+                        </h2>
+                        <p className="text-[#666] text-sm mb-4">
+                            Use this key to authorize API requests tied to your account.
+                        </p>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="text-sm text-[#666] mb-2 block">API Access Key</label>
+                                <input
+                                    type="password"
+                                    value={apiAccessKey}
+                                    onChange={(e) => setApiAccessKey(e.target.value)}
+                                    placeholder="Generate or paste your key"
+                                    className="app-input font-mono text-sm"
+                                />
+                            </div>
+                            <div className="flex flex-wrap items-center gap-3">
+                                <button
+                                    onClick={generateApiKey}
+                                    className="btn-secondary text-sm px-4 py-2"
+                                >
+                                    {apiKeyStatus === "saving" ? "Generating..." : "Generate API Key"}
+                                </button>
+                                {apiKeyStatus === "success" && (
+                                    <span className="text-xs text-[#0a0a0a]">Saved</span>
+                                )}
+                                {apiKeyStatus === "error" && (
+                                    <span className="text-xs text-red-600">Failed</span>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* AWS Configuration */}
+                    <div className="app-panel p-6">
+                        <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                            ☁️ AWS Configuration
+                        </h2>
+                        <p className="text-[#666] text-sm mb-4">
+                            Configure AWS credentials for DevOps Agent and Cloud Storage.
+                        </p>
+                        <div className="space-y-4">
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-sm text-[#666] mb-2 block">Access Key ID</label>
+                                    <input
+                                        type="text"
+                                        value={awsAccessKey}
+                                        onChange={(e) => setAwsAccessKey(e.target.value)}
+                                        placeholder="AKIA..."
+                                        className="app-input font-mono text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-sm text-[#666] mb-2 block">Secret Access Key</label>
+                                    <input
+                                        type="password"
+                                        value={awsSecretKey}
+                                        onChange={(e) => setAwsSecretKey(e.target.value)}
+                                        placeholder="Your secret key..."
+                                        className="app-input font-mono text-sm"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-sm text-[#666] mb-2 block">Region</label>
+                                <select
+                                    value={awsRegion}
+                                    onChange={(e) => setAwsRegion(e.target.value)}
+                                    className="app-input"
+                                >
+                                    {awsRegions.map(region => (
+                                        <option key={region} value={region}>{region}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <p className="text-xs text-[#666]">
+                                Create credentials in{" "}
+                                <a href="https://console.aws.amazon.com/iam/" target="_blank" rel="noopener noreferrer" className="text-[#e55c1c] hover:underline">
+                                    AWS IAM Console
                                 </a>
                             </p>
                         </div>
                     </div>
-                </div>
 
-                <div className="app-panel p-6">
-                    <h2 className="text-xl font-display mb-4 flex items-center gap-2">
-                        🔐 API Access
-                    </h2>
-                    <p className="text-[#666] text-sm mb-4">
-                        Use this key to authorize API requests tied to your account.
-                    </p>
-                    <div className="space-y-4">
+                    {/* Location Configuration */}
+                    <div className="app-panel p-6">
+                        <h2 className="text-xl font-display mb-4 flex items-center gap-2">
+                            📍 Location Configuration
+                        </h2>
+                        <p className="text-[#666] text-sm mb-4">
+                            Optional: Add Google Maps API for better geocoding results.
+                        </p>
                         <div>
-                            <label className="text-sm text-[#666] mb-2 block">API Access Key</label>
+                            <label className="text-sm text-[#666] mb-2 block">Google Maps API Key</label>
                             <input
                                 type="password"
-                                value={apiAccessKey}
-                                onChange={(e) => setApiAccessKey(e.target.value)}
-                                placeholder="Generate or paste your key"
+                                value={googleKey}
+                                onChange={(e) => setGoogleKey(e.target.value)}
+                                placeholder="AIza..."
                                 className="app-input font-mono text-sm"
                             />
+                            <p className="text-xs text-[#666] mt-2">
+                                Get key from{" "}
+                                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-[#e55c1c] hover:underline">
+                                    Google Cloud Console
+                                </a>
+                            </p>
                         </div>
-                        <div className="flex items-center gap-3">
-                            <button
-                                onClick={generateApiKey}
-                                className="btn-secondary text-sm px-4 py-2"
-                            >
-                                {apiKeyStatus === "saving" ? "Generating..." : "Generate API Key"}
-                            </button>
-                            {apiKeyStatus === "success" && (
-                                <span className="text-xs text-[#0a0a0a]">Saved</span>
-                            )}
-                            {apiKeyStatus === "error" && (
-                                <span className="text-xs text-red-600">Failed</span>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                {/* AWS Configuration */}
-                <div className="app-panel p-6">
-                    <h2 className="text-xl font-display mb-4 flex items-center gap-2">
-                        ☁️ AWS Configuration
-                    </h2>
-                    <p className="text-[#666] text-sm mb-4">
-                        Configure AWS credentials for DevOps Agent and Cloud Storage.
-                    </p>
-                    <div className="space-y-4">
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-sm text-[#666] mb-2 block">Access Key ID</label>
-                                <input
-                                    type="text"
-                                    value={awsAccessKey}
-                                    onChange={(e) => setAwsAccessKey(e.target.value)}
-                                    placeholder="AKIA..."
-                                    className="app-input font-mono text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-sm text-[#666] mb-2 block">Secret Access Key</label>
-                                <input
-                                    type="password"
-                                    value={awsSecretKey}
-                                    onChange={(e) => setAwsSecretKey(e.target.value)}
-                                    placeholder="Your secret key..."
-                                    className="app-input font-mono text-sm"
-                                />
-                            </div>
-                        </div>
-                        <div>
-                            <label className="text-sm text-[#666] mb-2 block">Region</label>
-                            <select
-                                value={awsRegion}
-                                onChange={(e) => setAwsRegion(e.target.value)}
-                                className="app-input"
-                            >
-                                {awsRegions.map(region => (
-                                    <option key={region} value={region}>{region}</option>
-                                ))}
-                            </select>
-                        </div>
-                        <p className="text-xs text-[#666]">
-                            Create credentials in{" "}
-                            <a href="https://console.aws.amazon.com/iam/" target="_blank" rel="noopener noreferrer" className="text-[#e55c1c] hover:underline">
-                                AWS IAM Console
-                            </a>
-                        </p>
-                    </div>
-                </div>
-
-                {/* Google Maps Configuration */}
-                <div className="app-panel p-6">
-                    <h2 className="text-xl font-display mb-4 flex items-center gap-2">
-                        📍 Location Configuration
-                    </h2>
-                    <p className="text-[#666] text-sm mb-4">
-                        Optional: Add Google Maps API for better geocoding results.
-                    </p>
-                    <div>
-                        <label className="text-sm text-[#666] mb-2 block">Google Maps API Key</label>
-                        <input
-                            type="password"
-                            value={googleKey}
-                            onChange={(e) => setGoogleKey(e.target.value)}
-                            placeholder="AIza..."
-                            className="app-input font-mono text-sm"
-                        />
-                        <p className="text-xs text-[#666] mt-2">
-                            Get key from{" "}
-                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" className="text-[#e55c1c] hover:underline">
-                                Google Cloud Console
-                            </a>
-                        </p>
                     </div>
                 </div>
 

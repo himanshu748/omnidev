@@ -115,16 +115,16 @@ export default function DevOpsPage() {
 
     return (
         <AuthGuard>
-            <main className="min-h-screen flex">
-                <div className="animated-bg" />
+            <main className="min-h-screen flex bg-[#f5f5f0] text-[#0a0a0a]">
+                <div className="fixed inset-0 grid-pattern pointer-events-none" />
 
                 {/* Sidebar */}
-                <aside className="w-72 glass-card border-r border-[--border] p-6 hidden lg:block">
-                    <Link href="/" className="flex items-center gap-2 mb-8 hover:opacity-80 transition-opacity">
-                        <span>←</span>
-                        <span className="font-bold bg-gradient-to-r from-violet-500 to-cyan-500 bg-clip-text text-transparent">
-                            OmniDev
-                        </span>
+                <aside className="w-72 bg-white border-r border-[#d4d4c8] p-6 hidden lg:block">
+                    <Link href="/" className="flex items-center gap-3 mb-8 hover:opacity-80 transition-opacity">
+                        <div className="w-8 h-8 bg-[#0a0a0a] rounded-lg flex items-center justify-center">
+                            <span className="text-[#f5f5f0] font-bold text-sm">O</span>
+                        </div>
+                        <span className="font-semibold text-lg tracking-tight">OmniDev</span>
                     </Link>
 
                     <div className="mb-8">
@@ -134,22 +134,22 @@ export default function DevOpsPage() {
                         {capabilities && (
                             <div className="space-y-3 text-sm">
                                 <div className="flex items-center gap-2">
-                                    <span className={`status-badge ${capabilities.ai_enabled ? 'success' : 'warning'}`}>
-                                        AI: {capabilities.ai_enabled ? 'Active' : 'Inactive'}
+                                    <span className={`px-3 py-1 rounded-full text-xs border ${capabilities.ai_enabled ? "border-[#0a0a0a] bg-[#fafaf5]" : "border-[#d4d4c8] bg-white text-[#666]"}`}>
+                                        AI: {capabilities.ai_enabled ? "Active" : "Inactive"}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
-                                    <span className={`status-badge ${capabilities.aws_configured ? 'success' : 'warning'}`}>
-                                        AWS: {capabilities.aws_configured ? 'Connected' : 'Not configured'}
+                                    <span className={`px-3 py-1 rounded-full text-xs border ${capabilities.aws_configured ? "border-[#0a0a0a] bg-[#fafaf5]" : "border-[#d4d4c8] bg-white text-[#666]"}`}>
+                                        AWS: {capabilities.aws_configured ? "Connected" : "Not configured"}
                                     </span>
                                 </div>
-                                <p className="text-gray-400">Region: {capabilities.region}</p>
+                                <p className="text-[#666]">Region: <span className="font-mono">{capabilities.region}</span></p>
                             </div>
                         )}
 
                         <button
                             onClick={() => setShowAwsGuide(true)}
-                            className="mt-4 w-full py-2 px-3 rounded-lg border border-violet-500/30 text-violet-400 text-sm hover:bg-violet-500/10 hover:border-violet-500 transition-all flex items-center justify-center gap-2"
+                            className="mt-4 w-full py-2 px-3 rounded-lg border border-[#d4d4c8] bg-white text-sm hover:border-[#0a0a0a] transition-all flex items-center justify-center gap-2"
                         >
                             <span>🔑</span> Get AWS API Keys
                         </button>
@@ -157,12 +157,12 @@ export default function DevOpsPage() {
                     </div>
 
                     <div>
-                        <h4 className="text-sm font-medium text-gray-400 mb-3">Capabilities</h4>
+                        <h4 className="text-sm font-medium text-[#666] mb-3">Capabilities</h4>
                         <div className="space-y-4">
                             {capabilities?.capabilities.map((cap) => (
                                 <div key={cap.category}>
-                                    <h5 className="text-sm font-medium text-violet-400 mb-1">{cap.category}</h5>
-                                    <ul className="text-xs text-gray-500 space-y-1">
+                                    <h5 className="text-sm font-medium mb-1">{cap.category}</h5>
+                                    <ul className="text-xs text-[#666] space-y-1">
                                         {cap.actions.map((action) => (
                                             <li key={action}>• {action}</li>
                                         ))}
@@ -176,32 +176,34 @@ export default function DevOpsPage() {
                 {/* Main Content */}
                 <div className="flex-1 flex flex-col">
                     {/* Header (Mobile) */}
-                    <header className="glass-card border-b border-[--border] lg:hidden">
-                        <div className="px-6 py-4 flex items-center justify-between">
-                            <Link href="/" className="flex items-center gap-2">
-                                <span>←</span>
-                                <span className="font-bold text-violet-400">Back</span>
+                    <header className="lg:hidden sticky top-0 z-50 bg-[#f5f5f0]/90 backdrop-blur-md border-b border-[#d4d4c8]">
+                        <div className="px-4 py-4 flex items-center justify-between">
+                            <Link href="/" className="flex items-center gap-3">
+                                <div className="w-8 h-8 bg-[#0a0a0a] rounded-lg flex items-center justify-center">
+                                    <span className="text-[#f5f5f0] font-bold text-sm">O</span>
+                                </div>
+                                <span className="font-semibold">OmniDev</span>
                             </Link>
                             <span className="font-semibold">🛠️ DevOps Agent</span>
                         </div>
                     </header>
 
                     {/* Terminal */}
-                    <div className="flex-1 p-6 flex flex-col">
-                        <div className="terminal flex-1 flex flex-col">
-                            <div className="terminal-header">
-                                <div className="terminal-dot bg-red-500"></div>
-                                <div className="terminal-dot bg-yellow-500"></div>
-                                <div className="terminal-dot bg-green-500"></div>
-                                <span className="text-sm text-gray-400 ml-2">DevOps Agent Terminal</span>
+                    <div className="flex-1 p-4 sm:p-6 flex flex-col">
+                        <div className="app-panel flex-1 flex flex-col overflow-hidden">
+                            <div className="px-4 py-3 border-b border-[#d4d4c8] bg-white flex items-center gap-2">
+                                <div className="w-3 h-3 rounded-full bg-red-500" />
+                                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                                <div className="w-3 h-3 rounded-full bg-green-500" />
+                                <span className="text-sm text-[#666] ml-2">DevOps Agent</span>
                             </div>
 
-                            <div className="terminal-body flex-1 overflow-y-auto">
+                            <div className="flex-1 overflow-y-auto bg-[#0a0a0a] text-[#f5f5f0]">
                                 {messages.length === 0 ? (
                                     <div className="text-center py-10">
                                         <div className="text-5xl mb-4">🤖</div>
-                                        <h2 className="text-xl font-bold mb-2">Smart DevOps Agent</h2>
-                                        <p className="text-gray-400 text-sm max-w-md mx-auto mb-6">
+                                        <h2 className="text-xl font-semibold mb-2">Smart DevOps Agent</h2>
+                                        <p className="text-[#f5f5f0]/70 text-sm max-w-md mx-auto mb-6">
                                             I&apos;m your AI-powered cloud assistant. Ask me to manage your EC2 instances,
                                             S3 buckets, check costs, or troubleshoot issues.
                                         </p>
@@ -210,7 +212,7 @@ export default function DevOpsPage() {
                                                 <button
                                                     key={cmd}
                                                     onClick={() => setInput(cmd)}
-                                                    className="px-3 py-1.5 rounded-lg text-xs border border-[--border] text-gray-400 hover:border-cyan-500 hover:text-cyan-400 transition-all"
+                                                    className="px-3 py-1.5 rounded-lg text-xs border border-white/15 text-[#f5f5f0]/80 hover:border-white/40 transition-all"
                                                 >
                                                     {cmd}
                                                 </button>
@@ -218,18 +220,18 @@ export default function DevOpsPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="space-y-4">
+                                    <div className="space-y-4 p-4">
                                         {messages.map((message) => (
                                             <div key={message.id}>
                                                 {message.role === "user" ? (
                                                     <div className="flex items-start gap-2">
-                                                        <span className="text-cyan-400">$</span>
-                                                        <span className="text-white">{message.content}</span>
+                                                        <span className="text-[#e55c1c] font-mono">$</span>
+                                                        <span className="text-[#f5f5f0]">{message.content}</span>
                                                     </div>
                                                 ) : (
-                                                    <div className="pl-4 border-l-2 border-violet-500/30">
-                                                        <div className="text-gray-300 whitespace-pre-wrap">{message.content}</div>
-                                                        <div className="text-xs text-gray-500 mt-1">
+                                                    <div className="pl-4 border-l-2 border-white/15">
+                                                        <div className="text-[#f5f5f0]/90 whitespace-pre-wrap">{message.content}</div>
+                                                        <div className="text-xs text-[#f5f5f0]/60 mt-1">
                                                             {message.timestamp.toLocaleTimeString()}
                                                         </div>
                                                     </div>
@@ -238,8 +240,8 @@ export default function DevOpsPage() {
                                         ))}
 
                                         {isLoading && (
-                                            <div className="flex items-center gap-2 text-gray-400">
-                                                <div className="spinner" />
+                                            <div className="flex items-center gap-2 text-[#f5f5f0]/70">
+                                                <div className="w-4 h-4 border-2 border-white/25 border-t-white rounded-full animate-spin" />
                                                 <span>Processing command...</span>
                                             </div>
                                         )}
@@ -253,8 +255,8 @@ export default function DevOpsPage() {
                         {/* Input */}
                         <form onSubmit={sendCommand} className="mt-4">
                             <div className="flex gap-3">
-                                <div className="flex-1 flex items-center gap-2 bg-[--card] border border-[--border] rounded-xl px-4">
-                                    <span className="text-cyan-400">$</span>
+                                <div className="flex-1 flex items-center gap-2 bg-white border border-[#d4d4c8] rounded-xl px-4">
+                                    <span className="text-[#e55c1c] font-mono">$</span>
                                     <input
                                         type="text"
                                         value={input}
@@ -267,7 +269,7 @@ export default function DevOpsPage() {
                                 <button
                                     type="submit"
                                     disabled={isLoading || !input.trim()}
-                                    className="glow-button text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="btn-primary px-6 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     Execute
                                 </button>

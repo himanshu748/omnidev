@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Outfit, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
+import "./theme.css";
 import { AuthProvider } from "./context/AuthContext";
 
 const outfit = Outfit({

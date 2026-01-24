@@ -125,35 +125,35 @@ export default function StoragePage() {
 
     return (
         <AuthGuard>
-            <main className="min-h-screen">
-                <div className="animated-bg" />
+            <main className="min-h-screen bg-[#f5f5f0] text-[#0a0a0a]">
+                <div className="fixed inset-0 grid-pattern pointer-events-none" />
 
-                <header className="glass-card border-b border-[--border] sticky top-0 z-50">
-                    <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+                <header className="sticky top-0 z-50 bg-[#f5f5f0]/90 backdrop-blur-md border-b border-[#d4d4c8]">
+                    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
                         <Link href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-                            <span className="text-xl">←</span>
-                            <span className="text-xl font-bold bg-gradient-to-r from-violet-500 to-cyan-500 bg-clip-text text-transparent">
-                                OmniDev
-                            </span>
+                            <div className="w-8 h-8 bg-[#0a0a0a] rounded-lg flex items-center justify-center">
+                                <span className="text-[#f5f5f0] font-bold text-sm">O</span>
+                            </div>
+                            <span className="font-semibold text-lg tracking-tight">OmniDev</span>
                         </Link>
                         <div className="flex items-center gap-2">
-                            <span className="text-2xl">📦</span>
+                            <span className="text-xl">📦</span>
                             <span className="font-semibold">Cloud Storage</span>
                         </div>
                     </div>
                 </header>
 
-                <div className="max-w-6xl mx-auto px-6 py-8">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
                     <div className="grid lg:grid-cols-3 gap-6">
                         {/* Buckets List */}
-                        <div className="glass-card p-6">
+                        <div className="app-panel p-6">
                             <h2 className="text-lg font-semibold mb-4">S3 Buckets</h2>
                             {loading && !selectedBucket ? (
                                 <div className="flex items-center justify-center py-8">
-                                    <div className="spinner" />
+                                    <div className="w-6 h-6 border-2 border-[#0a0a0a]/20 border-t-[#0a0a0a] rounded-full animate-spin" />
                                 </div>
                             ) : buckets.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">
+                                <div className="text-center py-8 text-[#666]">
                                     <p>No buckets found</p>
                                     <p className="text-xs mt-2">Configure AWS credentials</p>
                                 </div>
@@ -164,12 +164,12 @@ export default function StoragePage() {
                                             key={bucket.name}
                                             onClick={() => fetchObjects(bucket.name)}
                                             className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${selectedBucket === bucket.name
-                                                ? "border-violet-500 bg-violet-500/10"
-                                                : "border-[--border] hover:border-violet-500/50"
+                                                ? "border-[#0a0a0a] bg-[#fafaf5]"
+                                                : "border-[#d4d4c8] bg-white hover:border-[#0a0a0a]"
                                                 }`}
                                         >
                                             <div className="font-medium">{bucket.name}</div>
-                                            <div className="text-xs text-gray-500 mt-1">
+                                            <div className="text-xs text-[#666] mt-1">
                                                 Created: {new Date(bucket.created).toLocaleDateString()}
                                             </div>
                                         </button>
@@ -179,7 +179,7 @@ export default function StoragePage() {
                         </div>
 
                         {/* Objects List */}
-                        <div className="lg:col-span-2 glass-card p-6">
+                        <div className="lg:col-span-2 app-panel p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-lg font-semibold">
                                     {selectedBucket ? `Files in ${selectedBucket}` : "Select a Bucket"}
@@ -188,7 +188,7 @@ export default function StoragePage() {
                                     <button
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading}
-                                        className="glow-button text-white px-4 py-2 text-sm disabled:opacity-50"
+                                        className="btn-primary px-4 py-2 text-sm disabled:opacity-50"
                                     >
                                         {uploading ? "Uploading..." : "Upload File"}
                                     </button>
@@ -203,16 +203,16 @@ export default function StoragePage() {
                             />
 
                             {!selectedBucket ? (
-                                <div className="text-center py-12 text-gray-500">
+                                <div className="text-center py-12 text-[#666]">
                                     <div className="text-5xl mb-4">📂</div>
                                     <p>Select a bucket to view files</p>
                                 </div>
                             ) : loading ? (
                                 <div className="flex items-center justify-center py-12">
-                                    <div className="spinner" />
+                                    <div className="w-6 h-6 border-2 border-[#0a0a0a]/20 border-t-[#0a0a0a] rounded-full animate-spin" />
                                 </div>
                             ) : objects.length === 0 ? (
-                                <div className="text-center py-12 text-gray-500">
+                                <div className="text-center py-12 text-[#666]">
                                     <p>No files in this bucket</p>
                                 </div>
                             ) : (
@@ -220,13 +220,13 @@ export default function StoragePage() {
                                     {objects.map((obj) => (
                                         <div
                                             key={obj.key}
-                                            className="flex items-center justify-between px-4 py-3 rounded-xl border border-[--border] hover:border-violet-500/30 transition-all"
+                                            className="flex items-center justify-between px-4 py-3 rounded-xl border border-[#d4d4c8] bg-white hover:border-[#0a0a0a] transition-all"
                                         >
                                             <div className="flex items-center gap-3">
                                                 <span className="text-xl">📄</span>
                                                 <div>
                                                     <div className="font-medium">{obj.key}</div>
-                                                    <div className="text-xs text-gray-500">
+                                                    <div className="text-xs text-[#666]">
                                                         {formatSize(obj.size)} • {new Date(obj.last_modified).toLocaleString()}
                                                     </div>
                                                 </div>
@@ -234,13 +234,13 @@ export default function StoragePage() {
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleDownload(obj.key)}
-                                                    className="px-3 py-1 rounded-lg text-sm border border-[--border] hover:border-cyan-500 hover:text-cyan-400 transition-all"
+                                                    className="px-3 py-1 rounded-lg text-sm border border-[#d4d4c8] bg-white hover:border-[#0a0a0a] transition-all"
                                                 >
                                                     Download
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(obj.key)}
-                                                    className="px-3 py-1 rounded-lg text-sm border border-[--border] hover:border-red-500 hover:text-red-400 transition-all"
+                                                    className="px-3 py-1 rounded-lg text-sm border border-[#d4d4c8] bg-white hover:border-red-600 hover:text-red-600 transition-all"
                                                 >
                                                     Delete
                                                 </button>
