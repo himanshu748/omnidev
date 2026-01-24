@@ -125,29 +125,29 @@ export default function SettingsPage() {
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                         🔌 Connection Status
                     </h2>
-                    <div className="grid grid-cols-4 gap-4">
-                        <div className={`p-4 rounded-xl border ${isAiConfigured ? "border-neon-cyan bg-neon-cyan/10" : "border-[--border]"}`}>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                        <div className={`p-3 sm:p-4 rounded-xl border ${isAiConfigured ? "border-neon-cyan bg-neon-cyan/10" : "border-[--border]"}`}>
                             <div className="text-2xl mb-2">🤖</div>
                             <div className="font-medium">AI (OpenAI)</div>
                             <div className={`text-sm ${isAiConfigured ? "text-neon-cyan" : "text-gray-500"}`}>
                                 {isAiConfigured ? "✓ Configured" : "Not set"}
                             </div>
                         </div>
-                        <div className={`p-4 rounded-xl border ${isAwsConfigured ? "border-neon-magenta bg-neon-magenta/10" : "border-[--border]"}`}>
+                        <div className={`p-3 sm:p-4 rounded-xl border ${isAwsConfigured ? "border-neon-magenta bg-neon-magenta/10" : "border-[--border]"}`}>
                             <div className="text-2xl mb-2">☁️</div>
                             <div className="font-medium">AWS</div>
                             <div className={`text-sm ${isAwsConfigured ? "text-neon-magenta" : "text-gray-500"}`}>
                                 {isAwsConfigured ? "✓ Configured" : "Not set"}
                             </div>
                         </div>
-                        <div className={`p-4 rounded-xl border ${isLocationConfigured ? "border-emerald-500 bg-emerald-500/10" : "border-[--border]"}`}>
+                        <div className={`p-3 sm:p-4 rounded-xl border ${isLocationConfigured ? "border-emerald-500 bg-emerald-500/10" : "border-[--border]"}`}>
                             <div className="text-2xl mb-2">📍</div>
                             <div className="font-medium">Location</div>
                             <div className={`text-sm ${isLocationConfigured ? "text-emerald-400" : "text-gray-500"}`}>
                                 {isLocationConfigured ? "✓ Google API" : "Using free API"}
                             </div>
                         </div>
-                        <div className={`p-4 rounded-xl border ${isApiKeyConfigured ? "border-blue-500 bg-blue-500/10" : "border-[--border]"}`}>
+                        <div className={`p-3 sm:p-4 rounded-xl border ${isApiKeyConfigured ? "border-blue-500 bg-blue-500/10" : "border-[--border]"}`}>
                             <div className="text-2xl mb-2">🔐</div>
                             <div className="font-medium">API Key</div>
                             <div className={`text-sm ${isApiKeyConfigured ? "text-blue-400" : "text-gray-500"}`}>
@@ -299,7 +299,7 @@ export default function SettingsPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-4">
+                <div className="flex flex-col sm:flex-row gap-4">
                     <button
                         onClick={handleSave}
                         className="flex-1 glow-button text-white py-4 text-lg font-semibold"
@@ -308,7 +308,7 @@ export default function SettingsPage() {
                     </button>
                     <button
                         onClick={handleClear}
-                        className="px-6 py-4 rounded-xl border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-all"
+                        className="sm:flex-none sm:px-6 py-4 rounded-xl border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-all"
                     >
                         Clear All
                     </button>
