@@ -1,0 +1,10 @@
+fastapi>=0.128.0
+uvicorn[standard]
+pydantic-settings
+openai
+boto3
+playwright
+playwright-stealth
+httpx
+ipinfo
+python-multipart

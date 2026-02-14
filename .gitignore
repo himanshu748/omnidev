@@ -1,0 +1,65 @@
+# ================================================================
+# OmniDev — .gitignore
+# ================================================================
+
+# ── Python ──────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# ── Node.js ─────────────────────────────────────────────────────
+node_modules/
+.next/
+out/
+.turbo/
+*.tsbuildinfo
+next-env.d.ts
+
+# ── Environment & Secrets ──────────────────────────────────────
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# ── IDE & Editor ────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── Playwright ──────────────────────────────────────────────────
+.playwright-mcp/
+test-results/
+playwright-report/
+
+# ── Misc ────────────────────────────────────────────────────────
+*.log
+*.pid
+*.seed
+coverage/
+.nyc_output/
+.cache/
+tmp/
+temp/
+
+# ── Gemini / Antigravity (IDE agent data) ───────────────────────
+.gemini/
+.antigravity/
+.agent/
