@@ -74,7 +74,9 @@ export default function StoragePage() {
     clearMsg();
     setLoadingFiles(true);
     try {
-      const url = api(`/api/storage/files/${bucket}`) + (prefix ? `?prefix=${encodeURIComponent(prefix)}` : "");
+      const params = new URLSearchParams({ bucket });
+      if (prefix) params.set("prefix", prefix);
+      const url = api(`/api/storage/files?${params.toString()}`);
       const res = await fetch(url);
       const data = await res.json();
       if (!res.ok) { setError(data.detail ?? "Failed to load files"); return; }
@@ -114,10 +116,10 @@ export default function StoragePage() {
   async function handleDownload(bucket: string, key: string) {
     clearMsg();
     try {
-      const res = await fetch(api(`/api/storage/download/${bucket}/${key}`));
+      const res = await fetch(api(`/api/storage/download?bucket=${encodeURIComponent(bucket)}&key=${encodeURIComponent(key)}`));
       const data = await res.json();
       if (!res.ok) { setError(data.detail ?? "Download failed"); return; }
-      setDownloadLinks(prev => ({ ...prev, [`${bucket}/${key}`]: data.download_url }));
+      setDownloadLinks(prev => ({ ...prev, [`${bucket}/${key}`]: data.presigned_url }));
     } catch { setError("Failed to generate download link"); }
   }
 
@@ -125,7 +127,7 @@ export default function StoragePage() {
     if (!confirm(`Delete ${key} from ${bucket}?`)) return;
     clearMsg();
     try {
-      const res = await fetch(api(`/api/storage/delete/${bucket}/${key}`), { method: "DELETE" });
+      const res = await fetch(api(`/api/storage/files?bucket=${encodeURIComponent(bucket)}&key=${encodeURIComponent(key)}`), { method: "DELETE" });
       if (!res.ok) { const d = await res.json(); setError(d.detail ?? "Delete failed"); return; }
       setMessage(`🗑️ Deleted ${key}`);
       if (bucket === selectedBucket) loadFiles(bucket);
@@ -139,9 +141,10 @@ export default function StoragePage() {
       icon="📦"
       endpoints={[
         { method: "GET", path: "/api/storage/buckets" },
-        { method: "GET", path: "/api/storage/files/{bucket}" },
+        { method: "GET", path: "/api/storage/files?bucket=&prefix=" },
         { method: "POST", path: "/api/storage/upload" },
-        { method: "DELETE", path: "/api/storage/delete/{bucket}/{key}" },
+        { method: "GET", path: "/api/storage/download?bucket=&key=" },
+        { method: "DELETE", path: "/api/storage/files?bucket=&key=" },
       ]}
     >
       {error && <div className="featureResult featureError" style={{ marginBottom: 16 }}><strong>⚠</strong> {error}</div>}
