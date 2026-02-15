@@ -1,266 +1,207 @@
-# 🎨 OmniDev — Design System & Stitch Prototypes
+# 🎨 Design System
 
-> Frontend design documentation, Stitch screen references, and design tokens.
+> OmniDev's frontend design is built on a premium dark theme with glassmorphism, micro-animations, and the **Space Grotesk** typeface — designed in [Stitch by Google](https://stitch.withgoogle.com).
 
----
+<br />
 
-## Table of Contents
-
-1. [Design Philosophy](#design-philosophy)
-2. [Stitch Prototypes](#stitch-prototypes)
-3. [Design Tokens](#design-tokens)
-4. [Typography](#typography)
-5. [Color Palette](#color-palette)
-6. [Component Library](#component-library)
-7. [Responsive Breakpoints](#responsive-breakpoints)
-8. [Animations](#animations)
-
----
-
-## Design Philosophy
-
-OmniDev follows a **premium dark SaaS** aesthetic — inspired by tools like Linear, Vercel, and Raycast. Key principles:
-
-| Principle | Description |
-|-----------|-------------|
-| **Dark-first** | Deep navy/black backgrounds reduce eye strain for developers |
-| **Glassmorphism** | Semi-transparent cards with backdrop blur create depth |
-| **Gradient accents** | Indigo → purple gradients add energy without overwhelming |
-| **Monospace for code** | JetBrains Mono for all technical content |
-| **Micro-animations** | Subtle motion creates polish without distraction |
-| **Consistent spacing** | 8px grid system throughout |
-
----
-
-## Stitch Prototypes
-
-All UI designs were created in **Google Stitch** and can be accessed from the project:
+## Stitch Project
 
 **Project ID:** `5072531539344186758`  
-**Project URL:** [Open in Stitch](https://stitch.google.com/projects/5072531539344186758)
+**Title:** OmniDev - AI Developer Platform
 
-### Screen Index
+### Generated Screens
 
-| # | Screen | Screen ID | Dimensions |
+| # | Screen | Screen ID | Resolution |
 |---|--------|-----------|------------|
-| 1 | **Landing Page** | `be0b6d05018747dbbb2cf39c26b8c9ec` | 2560 × 7824 |
-| 2 | **Web Scraper Dashboard** | `6bb1251aa33e401a84ece73b6a68308f` | 2560 × 3144 |
-| 3 | **DevOps Agent Dashboard** | `bcc0f3477e5b4755a98ca5acc7ea2270` | 2560 × 2880 |
-| 4 | **Vision Lab Dashboard** | `4976d0a12a5249ff84d90887c47a2d67` | 2560 × 2734 |
-| 5 | **Cloud Storage Manager** | `a08369346c6f44d889716860c7c5eee4` | 2560 × 2478 |
-| 6 | **Location Services Hub** | `df86930c88034c4b8b0931719689fabb` | 2560 × 3174 |
+| 1 | **Landing Page** — Hero, features, code demo, pricing | `be0b6d05018747dbbb2cf39c26b8c9ec` | 2560×7824 |
+| 2 | **Web Scraper Dashboard** — URL input, modes, results | `6bb1251aa33e401a84ece73b6a68308f` | 2560×3144 |
+| 3 | **DevOps Agent Dashboard** — NLU command, suggestions | `bcc0f3477e5b4755a98ca5acc7ea2270` | 2560×2880 |
+| 4 | **Vision Lab Dashboard** — Upload, analysis modes | `4976d0a12a5249ff84d90887c47a2d67` | 2560×2734 |
+| 5 | **Cloud Storage Manager** — Bucket browser, upload | `a08369346c6f44d889716860c7c5eee4` | 2560×2478 |
+| 6 | **Location Services Hub** — Tabs, maps, geocoding | `df86930c88034c4b8b0931719689fabb` | 2560×3174 |
 
-### Design Highlights from Stitch
-
-**Landing Page:**
-- Full-page layout with 8 sections: Nav → Hero → Features → Code Demo → Testimonials → Pricing → FAQ → Footer
-- "Complete Toolset" section header above feature grid
-- 3×2 feature card grid with glassmorphism + Material Icons
-- Split-layout code demo with syntax-highlighted Python example
-- 3-tier pricing cards with gradient border highlight on recommended plan
-
-**Feature Dashboards (Scraper, DevOps, Vision, Storage, Location):**
-- Split-panel layout: input form on left, output console on right (DevOps)
-- Structured JSON result rendering with syntax highlighting
-- Status indicators (green dot = success, red = error)
-- Pill-shaped active tab navigation
-- Recent operations history (DevOps)
-- System notification panel with warnings
-
----
-
-## Design Tokens
-
-### CSS Custom Properties
-
-```css
-:root {
-  /* Backgrounds */
-  --bg:            #06090f;
-  --bg-soft:       #0c1322;
-  --bg-card:       rgba(14, 21, 38, 0.65);
-  --bg-card-hover: rgba(20, 30, 52, 0.85);
-
-  /* Text */
-  --text:          #e8edf6;
-  --text-dim:      #8b9bc0;
-  --text-muted:    #5c6d94;
-
-  /* Accents */
-  --accent:        #6366f1;    /* Indigo */
-  --accent-strong: #4f46e5;    /* Deep indigo */
-  --accent-soft:   rgba(99, 102, 241, 0.12);
-  --accent-glow:   rgba(99, 102, 241, 0.25);
-  --accent2:       #06b6d4;    /* Cyan */
-  --accent3:       #a78bfa;    /* Purple */
-
-  /* Status */
-  --emerald:       #34d399;    /* Success */
-  --rose:          #f87171;    /* Error */
-  --amber:         #fbbf24;    /* Warning */
-
-  /* Borders & Glass */
-  --border:        rgba(42, 62, 102, 0.4);
-  --border-hover:  rgba(99, 102, 241, 0.45);
-  --glass:         rgba(10, 16, 30, 0.72);
-  --glass-strong:  rgba(10, 16, 30, 0.88);
-
-  /* Radius */
-  --radius:        16px;
-  --radius-sm:     10px;
-  --radius-xs:     8px;
-
-  /* Shadows */
-  --shadow-glow:   0 0 60px -12px rgba(99, 102, 241, 0.3);
-  --shadow-lg:     0 20px 60px -15px rgba(0,0,0,0.5);
-}
-```
-
----
+<br />
 
 ## Typography
 
-| Element | Font | Weight | Size |
-|---------|------|--------|------|
-| Body text | Inter | 400 | 16px (1rem) |
-| Headings | Inter | 700–800 | 1.25–3.5rem |
-| Code / mono | JetBrains Mono | 400–500 | 0.85–0.9rem |
-| Labels | Inter | 600 | 0.72–0.85rem |
-| Nav links | Inter | 500 | 0.88rem |
+### Primary: Space Grotesk
 
-### Heading Scale
+```
+Font: Space Grotesk
+Weights: 300 (Light), 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold)
+Source: Google Fonts
+Usage: All headings, body text, navigation, buttons, labels
+```
 
-| Level | Size | Weight | Usage |
-|-------|------|--------|-------|
-| H1 | `clamp(2.2rem, 5vw, 3.5rem)` | 800 | Hero headlines |
-| H2 | `clamp(1.8rem, 4vw, 3rem)` | 700 | Section titles |
-| H3 | `1.25rem` | 600 | Card titles |
-| H4 | `1rem` | 600 | Sub-sections |
+**Why Space Grotesk?** It's a geometric sans-serif designed for modern interfaces. Its open apertures and proportional spacing give OmniDev a clean, technical, and premium feel that aligns with the developer-tool aesthetic.
 
----
+### Monospace: JetBrains Mono
+
+```
+Font: JetBrains Mono
+Weights: 400, 500, 600
+Usage: Code blocks, API endpoints, JSON responses, terminal output, technical values
+```
+
+### Font Scale
+
+| Element | Size | Weight | Tracking |
+|---------|------|--------|----------|
+| Hero Headline | `clamp(2.8rem, 6vw, 4.5rem)` | 700 | `-0.03em` |
+| Section Title | `clamp(1.8rem, 4vw, 3rem)` | 700 | `-0.02em` |
+| Section Lead | `1.05rem` | 400 | normal |
+| Card Title | `1.2rem` | 600 | normal |
+| Body Text | `0.95rem` | 400 | normal |
+| Label | `0.72rem` | 600 | `0.14em` |
+| Code/Mono | `0.85rem` | 400 | normal |
+
+<br />
 
 ## Color Palette
 
-### Primary Palette
+### Core Colors
 
-| Color | Hex | Usage |
-|-------|-----|-------|
-| ![#06090f](https://via.placeholder.com/12/06090f/06090f.png) | `#06090f` | Page background |
-| ![#0c1322](https://via.placeholder.com/12/0c1322/0c1322.png) | `#0c1322` | Soft background |
-| ![#6366f1](https://via.placeholder.com/12/6366f1/6366f1.png) | `#6366f1` | Primary accent |
-| ![#4f46e5](https://via.placeholder.com/12/4f46e5/4f46e5.png) | `#4f46e5` | Dark accent |
-| ![#a78bfa](https://via.placeholder.com/12/a78bfa/a78bfa.png) | `#a78bfa` | Light purple |
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--bg` | `#06090f` | Page background |
+| `--bg-soft` | `#0c1322` | Elevated surfaces |
+| `--bg-card` | `rgba(14, 21, 38, 0.65)` | Card backgrounds |
+| `--accent` | `#6366f1` | Primary indigo |
+| `--accent-strong` | `#4f46e5` | Hover/active indigo |
+| `--accent3` | `#a78bfa` | Secondary purple |
+| `--text` | `#e8edf6` | Primary text |
+| `--text-dim` | `#8b9bc0` | Secondary text |
+| `--text-muted` | `#5c6d94` | Muted/placeholder |
 
-### Status Colors
+### Stitch Reference Colors
 
-| Color | Hex | Usage |
-|-------|-----|-------|
-| ![#34d399](https://via.placeholder.com/12/34d399/34d399.png) | `#34d399` | Success / Online |
-| ![#f87171](https://via.placeholder.com/12/f87171/f87171.png) | `#f87171` | Error / Danger |
-| ![#fbbf24](https://via.placeholder.com/12/fbbf24/fbbf24.png) | `#fbbf24` | Warning |
-| ![#06b6d4](https://via.placeholder.com/12/06b6d4/06b6d4.png) | `#06b6d4` | Info / Cyan |
+| Hex | Name | Context |
+|-----|------|---------|
+| `#06090f` | Deep Navy | Background |
+| `#0f111a` | Card Navy | Elevated glass panels |
+| `#2d2b55` | Code Purple | Code block gradient start |
+| `#6567f1` | Primary Indigo | Buttons, accents, focus rings |
+| `#a78bfa` | Soft Purple | Gradient endpoints, highlights |
 
----
-
-## Component Library
-
-### Cards (Glassmorphism)
+### Gradients
 
 ```css
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  backdrop-filter: blur(12px);
-  transition: all 0.35s ease;
-}
+/* Hero text gradient */
+background: linear-gradient(to right, #a78bfa, #6567f1);
 
-.card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-hover);
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-glow);
+/* Code block background */
+background: linear-gradient(135deg, #2d2b55 0%, #06090f 100%);
+
+/* Button gradient */
+background: linear-gradient(135deg, #6366f1, #4f46e5);
+```
+
+<br />
+
+## Glassmorphism
+
+### Glass Panel (Cards)
+
+```css
+.glass-panel {
+  background: rgba(16, 17, 34, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+```
+
+### Glass Navigation
+
+```css
+.glass-nav {
+  background: rgba(6, 9, 15, 0.8);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+```
+
+### Input Glass
+
+```css
+.input-glass {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.input-glass:focus {
+  border-color: #6467f2;
+  box-shadow: 0 0 0 2px rgba(100, 103, 242, 0.2);
+}
+```
+
+<br />
+
+## Components
+
+### Section Label (Badge)
+
+```css
+.sectionLabel {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  background: rgba(99, 102, 241, 0.06);
+  border-radius: 999px;
+  padding: 6px 16px;
 }
 ```
 
 ### Buttons
 
-| Variant | Style | Usage |
-|---------|-------|-------|
-| **Primary** | Indigo gradient fill | Main CTAs |
-| **Ghost** | Transparent + border | Secondary actions |
-| **Block** | Full-width | Form submits |
-| **Pill** | Small, rounded | Quick actions, chips |
+| Class | Style |
+|-------|-------|
+| `.btnPrimary` | Indigo gradient + glow shadow |
+| `.btnGhost` | Transparent + border + blur |
+| `.btnBlock` | Full-width variant |
 
-### Form Inputs
+### Feature Cards
 
-```css
-.input {
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-xs);
-  color: var(--text);
-  padding: 12px 16px;
-  font-family: 'JetBrains Mono', monospace;
-}
-```
+- Glassmorphism background with 1px white/8% border
+- Emoji icon in colored background pill
+- `translateY(-6px)` + glow on hover
+- `transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1)`
 
-### Badges / Pills
-
-```css
-.badge {
-  display: inline-flex;
-  padding: 5px 14px;
-  font-size: 0.75rem;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-```
-
----
-
-## Responsive Breakpoints
-
-| Breakpoint | Width | Behavior |
-|-----------|-------|----------|
-| **Mobile** | `< 640px` | Single column, stacked cards |
-| **Tablet** | `640–1024px` | 2-column grids |
-| **Desktop** | `> 1024px` | Full layout, 3-column grids |
-
----
+<br />
 
 ## Animations
 
-### Framer Motion Patterns
+### Framer Motion
+
+All page sections use stagger reveal animations:
 
 ```tsx
-// Page entrance
-initial={{ opacity: 0, y: 20 }}
-animate={{ opacity: 1, y: 0 }}
-transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
+const stagger = {
+  hidden: { opacity: 0 },
+  visible: { transition: { staggerChildren: 0.12 } },
+};
 
-// Staggered children
-variants={{
-  visible: { transition: { staggerChildren: 0.1 } }
-}}
-
-// Hover lift
-whileHover={{ y: -4, transition: { duration: 0.2 } }}
+const fadeUp = {
+  hidden: { opacity: 0, y: 30 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
+};
 ```
 
 ### CSS Animations
 
-| Animation | Duration | Usage |
-|-----------|----------|-------|
-| `pulse` | 4–8s | Background orbs |
-| `float` | 6s | Floating elements |
-| `fadeIn` | 0.6s | Section entrance |
-| `slideUp` | 0.5s | Card reveal |
+- **Background orbs**: `animate-blob` (infinite, 7s)
+- **Hover lifts**: `translateY(-2px)` to `translateY(-6px)`
+- **Focus rings**: `box-shadow` transition on inputs
+- **Gradient shifts**: Animated gradient on hero text
 
----
+<br />
 
-<p align="center">
-  <em>For technical architecture, see <a href="ARCHITECTURE.md">ARCHITECTURE.md</a>. For contributing guidelines, see <a href="../CONTRIBUTING.md">CONTRIBUTING.md</a>.</em>
-</p>
+## Responsive Breakpoints
+
+| Breakpoint | Behavior |
+|------------|----------|
+| `< 640px` | Single column, stacked layout |
+| `640px–1024px` | 2-column grids, compact nav |
+| `> 1024px` | Full 3-column grids, wide cards |
+
+All sizes use `clamp()` and `min()` for fluid scaling.

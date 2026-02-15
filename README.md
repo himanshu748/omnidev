@@ -11,12 +11,26 @@
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
   <img src="https://img.shields.io/badge/OpenAI-GPT--4.1-412991?logo=openai&logoColor=white" alt="OpenAI" />
   <img src="https://img.shields.io/badge/License-MIT-green?logo=opensourceinitiative&logoColor=white" alt="License" />
+  <img src="https://img.shields.io/badge/Playwright-Stealth-2EAD33?logo=playwright&logoColor=white" alt="Playwright" />
+  <img src="https://img.shields.io/badge/Design-Stitch-6567f1?logo=google&logoColor=white" alt="Stitch Design" />
   <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?logo=github" alt="PRs Welcome" />
 </p>
 
 ---
 
-**OmniDev** is a full-stack AI developer platform that combines **DevOps automation**, **stealth web scraping**, **AI vision analysis**, **cloud storage management**, and **location intelligence** into a single, cohesive application. It features a **FastAPI** backend with a beautiful **Next.js 16** frontend.
+**OmniDev** is a full-stack AI developer platform that combines **DevOps automation**, **stealth web scraping**, **AI vision analysis**, **cloud storage management**, and **location intelligence** into a single, cohesive application. It features a **FastAPI** backend with a beautiful **Next.js 16** frontend designed with **Space Grotesk** typography.
+
+### 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/ARCHITECTURE.md) | System design, directory structure, design patterns |
+| [API Reference](docs/API.md) | All endpoints with request/response examples |
+| [Design System](docs/DESIGN.md) | Typography, colors, glassmorphism, Stitch screens |
+| [Deployment](docs/DEPLOYMENT.md) | Render, Docker, Vercel deployment guides |
+| [Contributing](CONTRIBUTING.md) | Branch strategy, commit conventions, code style |
+| [Changelog](CHANGELOG.md) | Version history and release notes |
+| [Code of Conduct](CODE_OF_CONDUCT.md) | Community standards |
 
 
 
@@ -59,8 +73,8 @@ omnidev/
 ├── frontend/                 # Next.js 16 (React 19)
 │   ├── app/
 │   │   ├── page.tsx          # Landing page
-│   │   ├── layout.tsx        # Root layout
-│   │   ├── globals.css       # Premium dark theme
+│   │   ├── layout.tsx        # Root layout (Space Grotesk + JetBrains Mono)
+│   │   ├── globals.css       # Premium dark theme + Stitch design system
 │   │   ├── components/       # Shared components
 │   │   ├── devops/page.tsx   # DevOps Agent UI
 │   │   ├── scraper/page.tsx  # Web Scraper UI
@@ -69,6 +83,16 @@ omnidev/
 │   │   └── location/page.tsx # Location Services UI
 │   ├── lib/api.ts            # API base URL config
 │   └── package.json
+├── docs/                     # Documentation
+│   ├── ARCHITECTURE.md       # System design & patterns
+│   ├── API.md                # Full API reference
+│   ├── DESIGN.md             # Design system & Stitch screens
+│   └── DEPLOYMENT.md         # Deployment guides
+├── CONTRIBUTING.md           # Contribution guidelines
+├── CHANGELOG.md              # Version history
+├── CODE_OF_CONDUCT.md        # Community standards
+├── LICENSE                   # MIT License
+├── .gitignore
 └── README.md                 # ← You are here
 ```
 

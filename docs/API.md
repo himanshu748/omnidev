@@ -1,26 +1,12 @@
-# 📡 OmniDev — API Reference
+# 📡 API Reference
 
-> Complete REST API documentation for the OmniDev backend.
+> OmniDev Backend — FastAPI REST API  
+> Base URL: `http://localhost:8000`  
+> Interactive Docs: [Swagger UI](http://localhost:8000/docs) | [ReDoc](http://localhost:8000/redoc)
 
-**Base URL:** `http://localhost:8000`  
-**Interactive Docs:** `http://localhost:8000/docs` (Swagger UI)  
-**OpenAPI Spec:** `http://localhost:8000/openapi.json`
+<br />
 
----
-
-## Table of Contents
-
-1. [System](#system)
-2. [DevOps Agent](#devops-agent)
-3. [Web Scraper](#web-scraper)
-4. [Vision Lab](#vision-lab)
-5. [Cloud Storage](#cloud-storage)
-6. [Location Services](#location-services)
-7. [Error Handling](#error-handling)
-
----
-
-## System
+## 🏥 System
 
 ### Health Check
 
@@ -38,9 +24,9 @@ GET /health
 
 ---
 
-## DevOps Agent
+## 🤖 DevOps Agent
 
-### Execute Command
+### Run Command
 
 ```http
 POST /api/devops/command
@@ -48,45 +34,30 @@ Content-Type: application/json
 ```
 
 **Request Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `command` | `string` | ✅ | Natural language AWS command |
-| `confirm` | `boolean` | ❌ | Required `true` for destructive actions |
-
-**Example Request:**
 ```json
 {
   "command": "List my EC2 instances",
-  "confirm": false
+  "confirm_destructive": false
 }
 ```
 
-**Example Response:**
+**Response:**
 ```json
 {
   "action": "list_ec2",
-  "parameters": { "region": "us-east-1" },
-  "summary": "Found 3 running EC2 instances in us-east-1.",
-  "raw_output": { ... },
-  "requires_confirmation": false
+  "parameters": {},
+  "summary": "You have 3 running EC2 instances...",
+  "raw": { ... }
 }
 ```
 
-**Supported Commands:**
-
-| Intent | Action | Confirmation |
-|--------|--------|:------------:|
-| List EC2 instances | `list_ec2` | ❌ |
-| Launch instance | `launch_ec2` | ✅ |
-| Stop instance | `stop_ec2` | ✅ |
-| Terminate instance | `terminate_ec2` | ✅ |
-| List S3 buckets | `list_s3` | ❌ |
-| Show security groups | `list_security_groups` | ❌ |
+**Notes:**
+- Set `confirm_destructive: true` for actions like `stop`, `terminate`
+- The AI agent parses natural language into specific boto3 operations
 
 ---
 
-## Web Scraper
+## 🕷️ Web Scraper
 
 ### Scrape URL
 
@@ -96,56 +67,48 @@ Content-Type: application/json
 ```
 
 **Request Body:**
-
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `url` | `string` | ✅ | — | Target URL to scrape |
-| `extract` | `string` | ❌ | `"text"` | `"text"`, `"html"`, or `"screenshot"` |
-| `stealth` | `boolean` | ❌ | `true` | Enable anti-detection patches |
-| `wait_for` | `string` | ❌ | `null` | CSS selector to wait for |
-| `wait_after_load` | `integer` | ❌ | `0` | Seconds to wait after page load |
-| `custom_js` | `string` | ❌ | `null` | JavaScript to execute on page |
-
-**Example Request:**
 ```json
 {
   "url": "https://example.com",
-  "extract": "text",
+  "mode": "text",
   "stealth": true,
-  "wait_after_load": 2
+  "wait_for": null,
+  "custom_js": null,
+  "wait_after_load": 0
 }
 ```
 
-**Example Response (text/html):**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `url` | `string` | *required* | Target URL to scrape |
+| `mode` | `string` | `"text"` | `"text"`, `"html"`, or `"screenshot"` |
+| `stealth` | `bool` | `true` | Enable anti-detection fingerprinting |
+| `wait_for` | `string?` | `null` | CSS selector to wait for before extraction |
+| `custom_js` | `string?` | `null` | JavaScript to execute on the page |
+| `wait_after_load` | `int` | `0` | Seconds to wait after page load (0–30) |
+
+**Response (text/html mode):**
 ```json
 {
-  "success": true,
-  "url": "https://example.com",
+  "status": "success",
   "status_code": 200,
   "title": "Example Domain",
-  "content": "This domain is for use in illustrative examples...",
-  "timestamp": "2026-02-14T12:00:00Z",
-  "load_time_ms": 842,
-  "content_length": 1256
+  "url": "https://example.com",
+  "text": "..."
 }
 ```
 
-**Example Response (screenshot):**
+**Response (screenshot mode):**
 ```json
 {
-  "success": true,
-  "url": "https://example.com",
-  "status_code": 200,
-  "title": "Example Domain",
-  "screenshot_url": "https://s3.amazonaws.com/...",
-  "timestamp": "2026-02-14T12:00:00Z",
-  "load_time_ms": 1203
+  "status": "success",
+  "screenshot_base64": "iVBORw0KGgo..."
 }
 ```
 
 ---
 
-## Vision Lab
+## 🖼️ Vision Lab
 
 ### Analyze Image
 
@@ -154,34 +117,25 @@ POST /api/vision/analyze
 Content-Type: multipart/form-data
 ```
 
-**Form Fields:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `file` | `file` | Image file (PNG, JPG, GIF, WebP) |
+| `mode` | `string` | `"analyze"`, `"ocr"`, or `"custom"` |
+| `prompt` | `string?` | Custom prompt (when mode = `"custom"`) |
 
-| Field | Type | Required | Default | Description |
-|-------|------|----------|---------|-------------|
-| `file` | `file` | ✅ | — | Image file (PNG, JPG, WEBP) |
-| `mode` | `string` | ❌ | `"analyze"` | `"analyze"`, `"ocr"`, or `"custom"` |
-| `prompt` | `string` | ❌ | `null` | Custom prompt (required if mode=`"custom"`) |
-
-**Example (cURL):**
-```bash
-curl -X POST http://localhost:8000/api/vision/analyze \
-  -F "file=@photo.jpg" \
-  -F "mode=analyze"
-```
-
-**Example Response:**
+**Response:**
 ```json
 {
   "mode": "analyze",
   "model": "gpt-4.1-mini",
-  "tokens_used": 512,
-  "result": "The image shows a modern office workspace with dual monitors displaying code editors..."
+  "tokens": 512,
+  "result": "This image shows a modern office workspace with..."
 }
 ```
 
 ---
 
-## Cloud Storage
+## 📦 Cloud Storage
 
 ### List Buckets
 
@@ -192,34 +146,30 @@ GET /api/storage/buckets
 **Response:**
 ```json
 {
-  "buckets": [
-    { "name": "my-app-assets", "created": "2025-06-15T10:00:00Z" },
-    { "name": "ml-datasets", "created": "2025-09-01T14:30:00Z" }
-  ]
+  "buckets": ["my-assets", "my-backups", "my-logs"]
 }
 ```
 
 ### List Files
 
 ```http
-GET /api/storage/files/{bucket}?prefix={prefix}
+GET /api/storage/files/{bucket}?prefix=folder/
 ```
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `bucket` | `string` (path) | ✅ | S3 bucket name |
-| `prefix` | `string` (query) | ❌ | Filter by key prefix |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `bucket` | `string` | S3 bucket name (path) |
+| `prefix` | `string?` | Filter by key prefix (query) |
 
 **Response:**
 ```json
 {
-  "bucket": "my-app-assets",
-  "prefix": "images/",
+  "bucket": "my-assets",
   "files": [
     {
       "key": "images/logo.png",
       "size": 24576,
-      "last_modified": "2026-01-10T08:00:00Z"
+      "last_modified": "2026-01-10T12:00:00Z"
     }
   ]
 }
@@ -232,44 +182,29 @@ POST /api/storage/upload
 Content-Type: multipart/form-data
 ```
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `file` | `file` | ✅ | File to upload |
-| `bucket` | `string` | ✅ | Target S3 bucket |
-| `key` | `string` | ❌ | Custom S3 key (default: filename) |
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `file` | `file` | File to upload |
+| `bucket` | `string` | Target bucket name |
+| `key` | `string?` | Custom S3 key (defaults to filename) |
 
-### Download File (Presigned URL)
+### Download File
 
 ```http
 GET /api/storage/download/{bucket}/{key}
 ```
 
-**Response:**
-```json
-{
-  "download_url": "https://my-app-assets.s3.amazonaws.com/...",
-  "expires_in": 3600
-}
-```
+Returns a **presigned URL** for direct download.
 
 ### Delete File
 
 ```http
-DELETE /api/storage/files/{bucket}/{key}
-```
-
-**Response:**
-```json
-{
-  "deleted": true,
-  "bucket": "my-app-assets",
-  "key": "images/old-logo.png"
-}
+DELETE /api/storage/delete/{bucket}/{key}
 ```
 
 ---
 
-## Location Services
+## 📍 Location Services
 
 ### Detect My Location
 
@@ -277,12 +212,12 @@ DELETE /api/storage/files/{bucket}/{key}
 GET /api/location/me
 ```
 
-> Uses client's IP from `X-Forwarded-For` header for accurate geolocation.
+Returns location based on the request's IP address.
 
 **Response:**
 ```json
 {
-  "ip": "203.0.113.42",
+  "ip": "49.36.148.92",
   "city": "Mumbai",
   "region": "Maharashtra",
   "country": "IN",
@@ -298,95 +233,48 @@ GET /api/location/me
 GET /api/location/ip/{ip_address}
 ```
 
-**Example:** `GET /api/location/ip/8.8.8.8`
-
-**Response:**
-```json
-{
-  "ip": "8.8.8.8",
-  "city": "Mountain View",
-  "region": "California",
-  "country": "US",
-  "loc": "37.4056,-122.0775",
-  "org": "AS15169 Google LLC",
-  "timezone": "America/Los_Angeles"
-}
-```
-
 ### Reverse Geocode
 
 ```http
-GET /api/location/reverse?lat={lat}&lon={lon}
-```
-
-**Example:** `GET /api/location/reverse?lat=40.7128&lon=-74.0060`
-
-**Response:**
-```json
-{
-  "address": "New York City Hall, 260 Broadway, New York, NY 10007, USA",
-  "lat": "40.7128",
-  "lon": "-74.0060",
-  "type": "administrative"
-}
+GET /api/location/reverse?lat=40.7128&lon=-74.0060
 ```
 
 ### Forward Geocode (Address Search)
 
 ```http
-GET /api/location/geocode?q={query}
+GET /api/location/geocode?q=Times+Square
 ```
-
-**Example:** `GET /api/location/geocode?q=Eiffel Tower`
 
 **Response:**
 ```json
-{
-  "results": [
-    {
-      "display_name": "Eiffel Tower, 5 Avenue Anatole France, 75007 Paris, France",
-      "lat": "48.8584",
-      "lon": "2.2945",
-      "type": "tourism"
-    }
-  ]
-}
+[
+  {
+    "display_name": "Times Square, Manhattan, New York...",
+    "lat": "40.7580",
+    "lon": "-73.9855",
+    "type": "tourism"
+  }
+]
 ```
 
 ---
 
-## Error Handling
+## 🔐 Authentication
 
-All errors follow a consistent format:
+Currently, OmniDev uses **API key authentication** via environment variables. All external service keys (`OPENAI_API_KEY`, `AWS_*`) are configured server-side and never exposed to the frontend.
+
+## ⚠️ Error Handling
+
+All endpoints return errors in a consistent format:
 
 ```json
 {
-  "detail": "Human-readable error message"
+  "detail": "Description of what went wrong"
 }
 ```
 
-### HTTP Status Codes
-
-| Code | Meaning |
-|------|---------|
-| `200` | Success |
-| `400` | Bad request / validation error |
-| `404` | Resource not found |
-| `422` | Unprocessable entity (Pydantic validation) |
-| `500` | Internal server error |
-
-### Common Errors
-
-| Scenario | Status | Message |
-|----------|--------|---------|
-| Missing API key | `500` | `"OpenAI API key not configured"` |
-| Invalid URL | `400` | `"Invalid URL format"` |
-| AWS credentials missing | `500` | `"AWS credentials not configured"` |
-| Destructive action without confirm | `400` | `"Destructive action requires confirmation"` |
-| Scraping timeout | `500` | `"Page load timed out after 30s"` |
-
----
-
-<p align="center">
-  <em>For architecture overview, see <a href="ARCHITECTURE.md">ARCHITECTURE.md</a>. For deployment, see <a href="DEPLOYMENT.md">DEPLOYMENT.md</a>.</em>
-</p>
+HTTP status codes follow REST conventions:
+- `200` — Success
+- `400` — Bad request / invalid input
+- `422` — Validation error (Pydantic)
+- `500` — Internal server error

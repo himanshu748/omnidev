@@ -1,101 +1,94 @@
-# 🚀 OmniDev — Deployment Guide
+# 🚀 Deployment Guide
 
-> How to deploy OmniDev to production environments.
+> Deploy OmniDev to production using various hosting providers.
 
----
-
-## Table of Contents
-
-1. [Prerequisites](#prerequisites)
-2. [Local Development](#local-development)
-3. [Docker Deployment](#docker-deployment)
-4. [Render Deployment](#render-deployment)
-5. [Vercel + Render Split](#vercel--render-split)
-6. [Environment Variables](#environment-variables)
-7. [Post-Deploy Checklist](#post-deploy-checklist)
-
----
+<br />
 
 ## Prerequisites
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Python | 3.11+ | Backend runtime |
-| Node.js | 18+ | Frontend build |
-| npm | 9+ | Package management |
-| Git | 2.30+ | Version control |
-| Docker *(optional)* | 24+ | Container deployment |
+- Python 3.11+ and Node.js 18+
+- All environment variables configured (see [Configuration](#configuration))
+- Playwright Chromium browser installed
 
----
+<br />
 
-## Local Development
+## Configuration
+
+### Required Environment Variables
+
+Create a `.env` file in the `backend/` directory:
+
+```env
+# AI
+OPENAI_API_KEY=sk-...
+
+# AWS (for DevOps Agent + Cloud Storage)
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+AWS_DEFAULT_REGION=us-east-1
+
+# Geolocation (optional — falls back to free tier)
+IPINFO_TOKEN=...
+
+# CORS (comma-separated origins for production)
+CORS_ORIGINS=https://your-domain.com,https://www.your-domain.com
+```
+
+### Frontend Environment
+
+Create `.env.local` in the `frontend/` directory:
+
+```env
+NEXT_PUBLIC_API_URL=https://api.your-domain.com
+```
+
+<br />
+
+## Option 1: Render (Recommended)
 
 ### Backend
 
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate  # macOS/Linux
-# .venv\Scripts\activate   # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install Playwright browser
-playwright install chromium
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your API keys
-
-# Start server
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-```
+1. Create a **Web Service** on [render.com](https://render.com)
+2. Connect your GitHub repo
+3. Configure:
+   - **Root Directory**: `backend`
+   - **Build Command**: `pip install -r requirements.txt && playwright install chromium && playwright install-deps`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Environment**: Python 3
+4. Add all environment variables in the Render dashboard
 
 ### Frontend
 
-```bash
-cd frontend
+1. Create a **Static Site** on Render
+2. Configure:
+   - **Root Directory**: `frontend`
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `frontend/out` (or use Next.js standalone)
+3. Set `NEXT_PUBLIC_API_URL` to your backend URL
 
-# Install dependencies
-npm install
+<br />
 
-# Start dev server
-npm run dev
-```
-
-**Access:**
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- Swagger Docs: http://localhost:8000/docs
-
----
-
-## Docker Deployment
+## Option 2: Docker
 
 ### Backend Dockerfile
 
 ```dockerfile
-# backend/Dockerfile
 FROM python:3.13-slim
 
 WORKDIR /app
 
-# System deps for Playwright
+# Install system deps for Playwright
 RUN apt-get update && apt-get install -y \
-    libglib2.0-0 libnss3 libnspr4 libdbus-1-3 \
-    libatk1.0-0 libatk-bridge2.0-0 libcups2 \
-    libdrm2 libxkbcommon0 libatspi2.0-0 libxcomposite1 \
-    libxdamage1 libxfixes3 libxrandr2 libgbm1 libpango-1.0-0 \
-    libcairo2 libasound2 && rm -rf /var/lib/apt/lists/*
+    libnss3 libnspr4 libatk-bridge2.0-0 libdrm2 libxcomposite1 \
+    libxdamage1 libxrandr2 libgbm1 libpango-1.0-0 libcairo2 \
+    libasound2 libatspi2.0-0 libxshmfence1 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 RUN playwright install chromium
 
-COPY app/ ./app/
+COPY app/ app/
 
 EXPOSE 8000
 
@@ -105,7 +98,6 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ### Frontend Dockerfile
 
 ```dockerfile
-# frontend/Dockerfile
 FROM node:22-alpine AS builder
 
 WORKDIR /app
@@ -116,27 +108,25 @@ RUN npm run build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next .next
+COPY --from=builder /app/public public
+COPY --from=builder /app/node_modules node_modules
+COPY --from=builder /app/package.json package.json
 
 EXPOSE 3000
-CMD ["node", "server.js"]
+CMD ["npm", "start"]
 ```
 
 ### Docker Compose
 
 ```yaml
-# docker-compose.yml
 version: "3.9"
-
 services:
   backend:
     build: ./backend
     ports:
       - "8000:8000"
-    env_file:
-      - ./backend/.env
+    env_file: ./backend/.env
     restart: unless-stopped
 
   frontend:
@@ -150,124 +140,53 @@ services:
     restart: unless-stopped
 ```
 
-```bash
-# Build and run
-docker compose up --build -d
+<br />
 
-# View logs
-docker compose logs -f
-
-# Stop
-docker compose down
-```
-
----
-
-## Render Deployment
-
-### Backend (Web Service)
-
-1. **Create** a new **Web Service** on [Render](https://render.com)
-2. **Connect** your GitHub repository
-3. **Configure:**
-
-   | Setting | Value |
-   |---------|-------|
-   | **Root Directory** | `backend` |
-   | **Runtime** | Python 3 |
-   | **Build Command** | `pip install -r requirements.txt && playwright install chromium --with-deps` |
-   | **Start Command** | `uvicorn app.main:app --host 0.0.0.0 --port $PORT` |
-
-4. **Add Environment Variables:**
-   - `OPENAI_API_KEY`
-   - `AWS_ACCESS_KEY_ID`
-   - `AWS_SECRET_ACCESS_KEY`
-   - `AWS_DEFAULT_REGION`
-   - `CORS_ORIGINS` = `https://your-frontend.vercel.app`
-   - `IPINFO_TOKEN` *(optional)*
-
-### Frontend (Static Site)
-
-1. **Create** a new **Static Site** on Render
-2. **Configure:**
-
-   | Setting | Value |
-   |---------|-------|
-   | **Root Directory** | `frontend` |
-   | **Build Command** | `npm install && npm run build` |
-   | **Publish Directory** | `out` |
-
-3. **Add Environment Variable:**
-   - `NEXT_PUBLIC_API_URL` = `https://your-backend.onrender.com`
-
----
-
-## Vercel + Render Split
-
-For optimal performance, deploy frontend on **Vercel** and backend on **Render**:
+## Option 3: Vercel (Frontend) + Railway (Backend)
 
 ### Frontend on Vercel
 
-1. Import the repo on [Vercel](https://vercel.com)
-2. Set **Root Directory** to `frontend`
-3. Add env var: `NEXT_PUBLIC_API_URL` = `https://your-backend.onrender.com`
-4. Deploy
-
-### Backend on Render
-
-Follow the [Render Backend](#backend-web-service) steps above.
-
-### CORS Configuration
-
-Update `.env` in backend:
-
-```env
-CORS_ORIGINS=https://your-app.vercel.app,https://your-custom-domain.com
+```bash
+npm i -g vercel
+cd frontend
+vercel --prod
 ```
 
----
+Set `NEXT_PUBLIC_API_URL` in Vercel project settings.
 
-## Environment Variables
+### Backend on Railway
 
-### Backend (Required)
+1. Push to GitHub
+2. Create a Railway project → Deploy from repo
+3. Set root directory to `backend`
+4. Add environment variables
+5. Railway auto-detects Python and deploys
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | OpenAI API key | `sk-proj-...` |
-| `AWS_ACCESS_KEY_ID` | AWS access key | `AKIA...` |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key | `wJalr...` |
+<br />
 
-### Backend (Optional)
+## Production Checklist
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `AWS_DEFAULT_REGION` | AWS region | `us-east-1` |
-| `CORS_ORIGINS` | Allowed origins (comma-separated) | `http://localhost:3000` |
-| `IPINFO_TOKEN` | IPInfo API token | — |
+- [ ] All environment variables set
+- [ ] `CORS_ORIGINS` configured for your domain (not `*`)
+- [ ] Playwright Chromium installed in backend container
+- [ ] `NEXT_PUBLIC_API_URL` points to production backend
+- [ ] HTTPS enabled on both frontend and backend
+- [ ] Rate limiting configured (consider adding middleware)
+- [ ] Error monitoring set up (e.g., Sentry)
+- [ ] Health check endpoint (`/health`) monitored
 
-### Frontend
+<br />
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_API_URL` | Backend API base URL | `http://localhost:8000` |
+## Monitoring
 
----
+### Health Check
 
-## Post-Deploy Checklist
+```bash
+curl https://api.your-domain.com/health
+# {"status":"ok","service":"omnidev"}
+```
 
-- [ ] **Health check**: `GET /health` returns `{"status": "ok"}`
-- [ ] **CORS**: Frontend can reach backend without CORS errors
-- [ ] **Scraper**: Test a simple URL scrape
-- [ ] **Vision**: Upload an image and verify analysis
-- [ ] **DevOps**: Run "List my EC2 instances"
-- [ ] **Storage**: List S3 buckets
-- [ ] **Location**: Detect location works with correct IP
-- [ ] **SSL**: Both frontend and backend serve over HTTPS
-- [ ] **Env vars**: No secrets in client-side code
-- [ ] **Monitoring**: Set up uptime checks on `/health`
+### API Docs
 
----
-
-<p align="center">
-  <em>For architecture details, see <a href="ARCHITECTURE.md">ARCHITECTURE.md</a>. For API reference, see <a href="API.md">API.md</a>.</em>
-</p>
+- Swagger UI: `https://api.your-domain.com/docs`
+- ReDoc: `https://api.your-domain.com/redoc`
