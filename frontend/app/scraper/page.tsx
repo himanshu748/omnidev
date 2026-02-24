@@ -4,12 +4,38 @@ import { useState } from "react";
 import FeatureLayout from "../components/FeatureLayout";
 import { api } from "@/lib/api";
 
+type LinkItem = {
+  href: string;
+  text: string;
+  is_external: boolean;
+};
+
+type PageMetadata = {
+  title: string;
+  description: string;
+  og_title: string;
+  og_description: string;
+  og_image: string;
+  canonical: string;
+  language: string;
+  favicon: string;
+  h1_tags: string[];
+  meta_tags: Record<string, string>;
+  word_count: number;
+  load_time_ms: number;
+};
+
 type ScrapeResult = {
   url: string;
   title: string;
   status_code: number | null;
   content: string;
   screenshot_b64: string | null;
+  pdf_b64: string | null;
+  links: LinkItem[] | null;
+  metadata: PageMetadata | null;
+  word_count: number | null;
+  elapsed_ms: number | null;
 };
 
 const DEMO_URLS = [
@@ -39,7 +65,7 @@ function syntaxHighlight(json: string): string {
 
 export default function ScraperPage() {
   const [url, setUrl] = useState("https://example.com");
-  const [extract, setExtract] = useState<"text" | "html" | "screenshot">("text");
+  const [extract, setExtract] = useState<"text" | "html" | "screenshot" | "links" | "metadata" | "pdf">("text");
   const [stealth, setStealth] = useState(true);
   const [waitFor, setWaitFor] = useState("");
   const [javascript, setJavascript] = useState("");
@@ -103,7 +129,7 @@ export default function ScraperPage() {
           </h2>
         </div>
         <p className="featureCardSubtitle">
-          Enter any URL to extract text, HTML, or a full-page screenshot. Stealth mode uses anti-detection patterns.
+          Extract text, HTML, screenshots, links, SEO metadata, or PDF from any URL. Stealth mode uses anti-detection patterns.
         </p>
 
         <form className="featureForm" onSubmit={handleSubmit}>
@@ -142,14 +168,14 @@ export default function ScraperPage() {
             <div>
               <label>Output Format</label>
               <div className="modePills">
-                {(["text", "html", "screenshot"] as const).map((mode) => (
+                {(["text", "html", "screenshot", "links", "metadata", "pdf"] as const).map((mode) => (
                   <button
                     key={mode}
                     type="button"
                     className={`modePill ${extract === mode ? "active" : ""}`}
                     onClick={() => setExtract(mode)}
                   >
-                    {mode === "text" ? "📄 Text" : mode === "html" ? "🌐 HTML" : "📸 Screenshot"}
+                    {mode === "text" ? "📄 Text" : mode === "html" ? "🌐 HTML" : mode === "screenshot" ? "📸 Screenshot" : mode === "links" ? "🔗 Links" : mode === "metadata" ? "📊 Meta" : "📑 PDF"}
                   </button>
                 ))}
               </div>
@@ -275,69 +301,144 @@ export default function ScraperPage() {
 
           {/* Content Body */}
           <div className="scraperResultBody">
-            {result.screenshot_b64 ? (
+            {/* Screenshot */}
+            {result.screenshot_b64 && (
               <div className="screenshotWrap">
                 <img
                   src={`data:image/png;base64,${result.screenshot_b64}`}
                   alt="Full page screenshot"
                 />
               </div>
-            ) : (
-              <>
-                {/* Extracted content preview */}
-                {result.content && (
-                  <div className="consoleCard" style={{ border: "none" }}>
-                    <div className="consoleHeader">
-                      <div className="consoleDots">
-                        <span className="dot red" />
-                        <span className="dot yellow" />
-                        <span className="dot green" />
-                      </div>
-                      <span className="consoleTitle">result.json</span>
-                      <button
-                        type="button"
-                        className="consoleToggle"
-                        onClick={() => setShowRaw(!showRaw)}
-                      >
-                        {showRaw ? "Copy" : "📋 Download"}
-                      </button>
-                    </div>
-                    <div className="consoleBody">
-                      {showRaw ? (
-                        <pre className="consoleJson">
-                          {result.content.slice(0, 20000)}
-                          {result.content.length > 20000 ? "\n… (truncated)" : ""}
-                        </pre>
-                      ) : (
-                        <pre
-                          className="consoleJson"
-                          dangerouslySetInnerHTML={{
-                            __html: syntaxHighlight(
-                              JSON.stringify(
-                                {
-                                  status: "success",
-                                  timestamp: new Date().toISOString(),
-                                  url: result.url,
-                                  title: result.title,
-                                  meta_description: null,
-                                  text_content: result.content.slice(0, 500),
-                                  "...": result.content.length > 500 ? `${result.content.length} chars total` : undefined,
-                                  performance: {
-                                    load_time_ms: elapsed,
-                                    content_loaded_ms: elapsed ? Math.round(elapsed * 0.7) : null,
-                                  },
-                                },
-                                null,
-                                2
-                              )
-                            ),
-                          }}
-                        />
-                      )}
-                    </div>
+            )}
+
+            {/* PDF */}
+            {result.pdf_b64 && (
+              <div style={{ padding: 24, textAlign: "center" }}>
+                <p style={{ color: "var(--text-dim)", marginBottom: 16 }}>📑 PDF generated successfully</p>
+                <a
+                  href={`data:application/pdf;base64,${result.pdf_b64}`}
+                  download={`${result.title || "page"}.pdf`}
+                  className="featureBtn featureBtnPrimary"
+                  style={{ display: "inline-flex", textDecoration: "none" }}
+                >
+                  📥 Download PDF
+                </a>
+              </div>
+            )}
+
+            {/* Links */}
+            {result.links && (
+              <div className="consoleCard" style={{ border: "none" }}>
+                <div className="consoleHeader">
+                  <div className="consoleDots">
+                    <span className="dot red" />
+                    <span className="dot yellow" />
+                    <span className="dot green" />
                   </div>
-                )}
-              </>
+                  <span className="consoleTitle">{result.links.length} links found</span>
+                </div>
+                <div className="consoleBody" style={{ maxHeight: 500 }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.8rem" }}>
+                    <thead>
+                      <tr style={{ borderBottom: "1px solid var(--border)", textAlign: "left" }}>
+                        <th style={{ padding: "8px 12px", color: "var(--accent)" }}>Text</th>
+                        <th style={{ padding: "8px 12px", color: "var(--accent)" }}>URL</th>
+                        <th style={{ padding: "8px 12px", color: "var(--accent)" }}>Type</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {result.links.map((link, i) => (
+                        <tr key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
+                          <td style={{ padding: "6px 12px", color: "var(--text-dim)", maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{link.text || "—"}</td>
+                          <td style={{ padding: "6px 12px", fontFamily: "'JetBrains Mono', monospace", fontSize: "0.72rem", color: "var(--text-muted)", maxWidth: 350, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <a href={link.href} target="_blank" rel="noopener noreferrer" style={{ color: "inherit" }}>{link.href}</a>
+                          </td>
+                          <td style={{ padding: "6px 12px" }}>
+                            <span style={{ fontSize: "0.68rem", padding: "2px 8px", borderRadius: 4, background: link.is_external ? "rgba(251,191,36,0.1)" : "rgba(52,211,153,0.1)", color: link.is_external ? "var(--amber)" : "var(--emerald)", border: `1px solid ${link.is_external ? "rgba(251,191,36,0.2)" : "rgba(52,211,153,0.2)"}` }}>
+                              {link.is_external ? "External" : "Internal"}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Metadata */}
+            {result.metadata && (
+              <div className="consoleCard" style={{ border: "none" }}>
+                <div className="consoleHeader">
+                  <div className="consoleDots">
+                    <span className="dot red" />
+                    <span className="dot yellow" />
+                    <span className="dot green" />
+                  </div>
+                  <span className="consoleTitle">SEO & Page Metadata</span>
+                </div>
+                <div className="consoleBody">
+                  <pre
+                    className="consoleJson"
+                    dangerouslySetInnerHTML={{
+                      __html: syntaxHighlight(JSON.stringify(result.metadata, null, 2)),
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Text / HTML content */}
+            {result.content && !result.screenshot_b64 && !result.pdf_b64 && !result.links && !result.metadata && (
+              <div className="consoleCard" style={{ border: "none" }}>
+                <div className="consoleHeader">
+                  <div className="consoleDots">
+                    <span className="dot red" />
+                    <span className="dot yellow" />
+                    <span className="dot green" />
+                  </div>
+                  <span className="consoleTitle">result.json{result.word_count ? ` · ${result.word_count} words` : ""}</span>
+                  <button
+                    type="button"
+                    className="consoleToggle"
+                    onClick={() => setShowRaw(!showRaw)}
+                  >
+                    {showRaw ? "Formatted" : "📋 Raw"}
+                  </button>
+                </div>
+                <div className="consoleBody">
+                  {showRaw ? (
+                    <pre className="consoleJson">
+                      {result.content.slice(0, 20000)}
+                      {result.content.length > 20000 ? "\n… (truncated)" : ""}
+                    </pre>
+                  ) : (
+                    <pre
+                      className="consoleJson"
+                      dangerouslySetInnerHTML={{
+                        __html: syntaxHighlight(
+                          JSON.stringify(
+                            {
+                              status: "success",
+                              timestamp: new Date().toISOString(),
+                              url: result.url,
+                              title: result.title,
+                              word_count: result.word_count,
+                              text_content: result.content.slice(0, 500),
+                              "...": result.content.length > 500 ? `${result.content.length} chars total` : undefined,
+                              performance: {
+                                elapsed_ms: result.elapsed_ms ?? elapsed,
+                              },
+                            },
+                            null,
+                            2
+                          )
+                        ),
+                      }}
+                    />
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>

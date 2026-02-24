@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 
 const FEATURE_LINKS = [
   { label: "DevOps Agent", href: "/devops", emoji: "🤖" },
+  { label: "Code Gen", href: "/codegen", emoji: "⚡" },
+  { label: "RAG Chat", href: "/rag", emoji: "💬" },
   { label: "Web Scraper", href: "/scraper", emoji: "🕷️" },
   { label: "Vision Lab", href: "/vision", emoji: "🖼️" },
   { label: "Cloud Storage", href: "/storage", emoji: "📦" },

@@ -20,6 +20,14 @@ const FEATURES = [
     title: "DevOps Agent",
     href: "/devops",
     desc: 'Manage AWS infrastructure with natural language — "List my EC2 instances", "Launch a t2.micro", "Show security groups".',
+    flagship: true,
+  },
+  {
+    emoji: "⚡",
+    title: "Code Gen",
+    href: "/codegen",
+    desc: "Generate websites with Streamlit, React, Node, Python, or any framework. Context7 docs built-in; run in Vercel Sandbox. Site Review shows what the Code Gen UI looks like.",
+    star: true,
   },
   {
     emoji: "🕷️",
@@ -261,6 +269,25 @@ export default function HomePage() {
           <div className="heroOrb heroOrb1" />
           <div className="heroOrb heroOrb2" />
           <div className="heroOrb heroOrb3" />
+          <div className="heroShapes" aria-hidden>
+            <svg viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="heroLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="var(--accent)" stopOpacity="0" />
+                  <stop offset="50%" stopColor="var(--accent)" stopOpacity="0.15" />
+                  <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+                </linearGradient>
+                <radialGradient id="heroDotGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <circle cx="150" cy="120" r="120" fill="url(#heroDotGrad)" />
+              <circle cx="1050" cy="650" r="180" fill="url(#heroDotGrad)" />
+              <line x1="0" y1="400" x2="1200" y2="400" stroke="url(#heroLineGrad)" strokeWidth="1" opacity="0.6" />
+              <line x1="600" y1="0" x2="600" y2="800" stroke="url(#heroLineGrad)" strokeWidth="1" opacity="0.4" />
+            </svg>
+          </div>
 
           <div className="heroContent container">
             <motion.div
@@ -288,9 +315,8 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.25 }}
             >
-              All-in-One AI Developer Platform combining DevOps automation,
-              stealth scraping, vision analysis, cloud storage, and location
-              intelligence — powered by a single FastAPI backend.
+              One platform to manage AWS in plain English, generate full-stack apps
+              with live docs, scrape the web, analyze images, and more — open source and built for makers.
             </motion.p>
 
             <motion.div
@@ -299,11 +325,11 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <a href="#features" className="btn btnPrimary">
-                Explore Features
+              <a href="/devops" className="btn btnPrimary">
+                Try DevOps Agent
               </a>
-              <a href="#pricing" className="btn btnGhost">
-                View Plans
+              <a href="#features" className="btn btnGhost">
+                Explore Features
               </a>
             </motion.div>
 
@@ -387,7 +413,15 @@ export default function HomePage() {
                   style={{ textDecoration: "none", color: "inherit" }}
                 >
                   <div className="cardEmoji">{f.emoji}</div>
-                  <h3>{f.title}</h3>
+                  <h3>
+                    {f.title}
+                    {"flagship" in f && (f as { flagship?: boolean }).flagship && (
+                      <span className="featureFlagshipBadge">Flagship</span>
+                    )}
+                    {"star" in f && (f as { star?: boolean }).star && (
+                      <span className="featureStarBadge">★ Star</span>
+                    )}
+                  </h3>
                   <p>{f.desc}</p>
                 </motion.a>
               ))}

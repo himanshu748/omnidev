@@ -1,4 +1,4 @@
-"""Web Scraper router — Playwright stealth scraping."""
+"""Web Scraper router — Playwright stealth scraping v2."""
 
 from __future__ import annotations
 
@@ -15,7 +15,15 @@ async def scrape_url(body: ScrapeRequest, request: Request):
     """
     Scrape a URL with optional stealth mode.
 
-    Supports text extraction, full HTML, or full-page screenshot.
+    Extraction modes:
+    - **text**: Plain text from the page body
+    - **html**: Full page HTML
+    - **screenshot**: Full-page PNG screenshot (base64)
+    - **pdf**: Full-page PDF document (base64)
+    - **links**: All hyperlinks with text, href, and external flag
+    - **metadata**: SEO metadata (title, description, OG tags, h1s, etc.)
+
+    Extra features: cookie injection, proxy support, resource blocking.
     """
     browser = request.app.state.browser
     try:
@@ -26,9 +34,14 @@ async def scrape_url(body: ScrapeRequest, request: Request):
             extract=body.extract,
             stealth=body.stealth,
             headers=body.headers,
+            cookies=body.cookies,
             javascript=body.javascript,
             timeout_ms=body.timeout_ms,
             wait_seconds=body.wait_seconds,
+            proxy=body.proxy,
+            viewport_width=body.viewport_width,
+            viewport_height=body.viewport_height,
+            block_resources=body.block_resources,
         )
         return ScrapeResponse(**result)
     except Exception as exc:

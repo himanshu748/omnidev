@@ -8,3 +8,4 @@ playwright-stealth
 httpx
 ipinfo
 python-multipart
+pypdf

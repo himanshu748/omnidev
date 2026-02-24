@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright, Playwright, Browser
 
 from app.config import settings
-from app.routers import devops, scraper, vision, storage, location
+from app.routers import codegen, devops, location, preview, rag, scraper, storage, vision
 
 
 # ── Lifespan ────────────────────────────────────────────────
@@ -52,6 +52,9 @@ app.include_router(scraper.router, prefix="/api/scraper", tags=["Web Scraper"])
 app.include_router(vision.router, prefix="/api/vision", tags=["Vision Lab"])
 app.include_router(storage.router, prefix="/api/storage", tags=["Cloud Storage"])
 app.include_router(location.router, prefix="/api/location", tags=["Location Services"])
+app.include_router(rag.router, prefix="/api/rag", tags=["RAG Chatbot"])
+app.include_router(codegen.router, prefix="/api/codegen", tags=["Code Gen"])
+app.include_router(preview.router, prefix="/api/preview", tags=["Site Preview"])
 
 
 # ── Health ──────────────────────────────────────────────────

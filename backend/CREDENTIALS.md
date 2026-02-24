@@ -4,7 +4,21 @@ This guide walks you through getting each API key or credential used by the back
 
 ---
 
-## 1. OpenAI API Key (required for DevOps Agent + Vision Lab)
+## API key matrix (at a glance)
+
+| Module           | OpenAI | AWS | IPInfo | Context7 | Notes |
+|-----------------|--------|-----|--------|----------|--------|
+| **DevOps Agent**| ✅ Required | ✅ Required | — | — | Natural language → boto3 |
+| **Code Gen**    | ✅ Required | — | — | Optional | Without Context7: no live docs. Generate-image uses DALL-E. |
+| **RAG Chatbot** | ✅ Required | — | — | — | Ingest + chat |
+| **Vision Lab**  | ✅ Required | — | — | — | Image analysis / OCR |
+| **Web Scraper** | — | — | — | — | No keys (Playwright) |
+| **Cloud Storage**| — | ✅ Required | — | — | S3 only |
+| **Location**    | — | — | Optional | — | Works without token (rate limited) |
+
+---
+
+## 1. OpenAI API Key (required for DevOps Agent, Code Gen, RAG, Vision Lab)
 
 You already have one. If you need another or a new one:
 
@@ -83,10 +97,24 @@ Location endpoints work without a token (free tier). For higher limits and more 
 
 ---
 
+## 4. Context7 API Key (optional for Code Gen)
+
+Code Gen uses Context7 to inject up-to-date library docs (React, Next.js, Streamlit, etc.) into generated code. Without it, generation still works using model knowledge.
+
+1. Go to **https://context7.com/dashboard**
+2. Sign up and create an API key.
+3. In `backend/.env` set:
+   ```bash
+   CONTEXT7_API_KEY=ctx7sk-...
+   ```
+   Or leave empty: `CONTEXT7_API_KEY=`.
+
+---
+
 ## Quick reference: `.env` template
 
 ```bash
-# OpenAI (required for DevOps + Vision)
+# OpenAI (required for DevOps, Code Gen, RAG, Vision)
 OPENAI_API_KEY=sk-proj-...
 OPENAI_MODEL=gpt-4.1-mini
 
@@ -95,11 +123,33 @@ AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=...
 AWS_DEFAULT_REGION=us-east-1
 
-# IPInfo (optional)
+# IPInfo (optional for Location)
 IPINFO_TOKEN=
+
+# Context7 (optional for Code Gen live docs)
+CONTEXT7_API_KEY=
 
 # CORS
 CORS_ORIGINS=http://localhost:3000
 ```
 
 After editing `.env`, restart the backend: `uvicorn app.main:app --reload`.
+
+---
+
+## Verify each API key end-to-end
+
+Run the backend (`cd backend && uv run uvicorn app.main:app --reload`) and frontend (`cd frontend && npm run dev`), then:
+
+| Check | How |
+|-------|-----|
+| **Health** | `curl http://localhost:8000/health` → `{"status":"ok"}` |
+| **Scraper** (no key) | Open http://localhost:3000/scraper → paste URL → Start Scraping. Should return content. |
+| **Location** (optional key) | Open http://localhost:3000/location → Detect Location. Should show IP + city. |
+| **DevOps** (OpenAI + AWS) | Open http://localhost:3000/devops → e.g. "List my EC2 instances" → Run. Should return summary (or 500 if keys missing). |
+| **Code Gen** (OpenAI) | Open http://localhost:3000/codegen → prompt e.g. "A hello world page", framework React → Generate. Should return files. |
+| **RAG** (OpenAI) | Open http://localhost:3000/rag → Add some text → Ask a question. Should reply from docs or say add documents. |
+| **Vision** (OpenAI) | Open http://localhost:3000/vision → Upload image → Analyze. Needs valid `OPENAI_API_KEY`. |
+| **Storage** (AWS) | Open http://localhost:3000/storage → List buckets. Should list buckets or `[]` (500 if AWS keys missing). |
+
+If any endpoint returns **500** with a message like "Invalid API key" or "Credentials not found", add or fix that key in `backend/.env`.

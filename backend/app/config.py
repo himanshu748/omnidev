@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     # ── IPInfo ──────────────────────────────────────────────
     ipinfo_token: str = ""
 
+    # ── Context7 (docs for codegen) ─────────────────────────
+    context7_api_key: str = ""
+
     # ── CORS ────────────────────────────────────────────────
     cors_origins: str = "http://localhost:3000"
 
