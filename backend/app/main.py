@@ -25,8 +25,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     app.state.playwright = pw
     app.state.browser = browser
     yield
-    await browser.close()
-    await pw.stop()
+    # During dev shutdown, transports can already be closed; ignore cleanup races.
+    try:
+        await browser.close()
+    except Exception:
+        pass
+    try:
+        await pw.stop()
+    except Exception:
+        pass
 
 
 # ── App ─────────────────────────────────────────────────────

@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import sdk from "@stackblitz/sdk";
 import JSZip from "jszip";
 import FeatureLayout from "../components/FeatureLayout";
@@ -116,13 +115,6 @@ export default function CodeGenPage() {
       icon="⚡"
       endpoints={[{ method: "POST", path: "/api/codegen/generate" }]}
     >
-      <div className="codegenSubNav">
-        <span className="codegenSubNavCurrent">Generate</span>
-        <Link href="/codegen/review" className="codegenSubNavLink">
-          👁️ Site Review
-        </Link>
-      </div>
-
       <div className="codegenHero">
         <h1 className="codegenHeroTitle">Build apps in seconds</h1>
         <p className="codegenHeroSubtitle">

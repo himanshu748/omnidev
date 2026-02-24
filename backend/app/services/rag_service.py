@@ -10,8 +10,12 @@ import math
 from typing import Any
 
 from openai import AsyncOpenAI
-from pypdf import PdfReader
 from io import BytesIO
+
+try:
+    from pypdf import PdfReader
+except ModuleNotFoundError:  # Optional at runtime; only needed for PDF ingest
+    PdfReader = None  # type: ignore[assignment]
 
 from app.config import settings
 
@@ -72,6 +76,8 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
 
 def extract_text_from_pdf(data: bytes) -> str:
     """Extract plain text from a PDF file."""
+    if PdfReader is None:
+        raise RuntimeError("PDF ingestion requires pypdf. Install it with `pip install pypdf`.")
     reader = PdfReader(BytesIO(data))
     parts = []
     for page in reader.pages:

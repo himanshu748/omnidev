@@ -35,7 +35,15 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        configured = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        local_defaults = [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3001",
+            "http://127.0.0.1:3001",
+        ]
+        # Keep configured values first, then add missing local dev origins.
+        return list(dict.fromkeys([*configured, *local_defaults]))
 
 
 settings = Settings()

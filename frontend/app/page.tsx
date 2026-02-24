@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
+  { label: "RAG Chatbot", href: "/rag" },
   { label: "Process", href: "#process" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
@@ -26,8 +27,14 @@ const FEATURES = [
     emoji: "⚡",
     title: "Code Gen",
     href: "/codegen",
-    desc: "Generate websites with Streamlit, React, Node, Python, or any framework. Context7 docs built-in; run in Vercel Sandbox. Site Review shows what the Code Gen UI looks like.",
+    desc: "Generate websites with Streamlit, React, Node, Python, or any framework. Context7 docs built-in; run in Vercel Sandbox.",
     star: true,
+  },
+  {
+    emoji: "📚",
+    title: "RAG Chatbot",
+    href: "/rag",
+    desc: "Build retrieval-augmented chat assistants that answer from your own docs with source-grounded responses.",
   },
   {
     emoji: "🕷️",
@@ -54,6 +61,9 @@ const FEATURES = [
     desc: "IP geolocation, GPS reverse geocoding, and public IP detection — all through clean REST endpoints.",
   },
 ];
+
+const MODULE_COUNT = FEATURES.length;
+const HERO_PARTICLES = Array.from({ length: 12 }, (_, i) => i);
 
 const STEPS = [
   {
@@ -104,7 +114,7 @@ const PRICING = [
     yearlyPrice: 0,
     sub: "Free forever",
     features: [
-      "All 5 backend modules",
+      `All ${MODULE_COUNT} backend modules`,
       "Single-user local setup",
       "Interactive OpenAPI docs",
       "Community support",
@@ -177,7 +187,7 @@ const STACK_ITEMS = [
 ];
 
 const COMPARISON_OURS = [
-  "One unified backend for 5 AI/cloud services",
+  `One unified backend for ${MODULE_COUNT} AI/cloud services`,
   "Natural language AWS management via GPT",
   "Stealth scraping with Cloudflare bypass",
   "Vision AI + OCR built in",
@@ -221,6 +231,7 @@ const stagger = {
 
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [yearly, setYearly] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -233,6 +244,23 @@ export default function HomePage() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
+  useEffect(() => {
+    const onResize = () => {
+      if (window.innerWidth > 640) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileMenuOpen]);
+
   /* Glow-card mouse tracking */
   const handleCardMouse = (e: React.MouseEvent<HTMLElement>, idx: number) => {
     const el = cardRefs.current[idx];
@@ -241,6 +269,8 @@ export default function HomePage() {
     el.style.setProperty("--mouse-x", `${e.clientX - rect.left}px`);
     el.style.setProperty("--mouse-y", `${e.clientY - rect.top}px`);
   };
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
 
   return (
     <>
@@ -257,18 +287,69 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
-          <a href="http://localhost:8000/docs" className="btn btnPrimary navCta">
-            Open API Docs
-          </a>
+          <div className="navActions">
+            <a href="http://localhost:8000/docs" className="btn btnPrimary navCta">
+              Open API Docs
+            </a>
+            <button
+              type="button"
+              className={`mobileMenuBtn ${mobileMenuOpen ? "open" : ""}`}
+              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu-panel"
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
         </div>
       </nav>
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            id="mobile-menu-panel"
+            className="mobileMenuPanel"
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            transition={{ duration: 0.2 }}
+          >
+            {NAV_LINKS.map((l) => (
+              <a key={l.href} href={l.href} onClick={closeMobileMenu}>
+                {l.label}
+              </a>
+            ))}
+            <a href="http://localhost:8000/docs" className="btn btnPrimary" onClick={closeMobileMenu}>
+              Open API Docs
+            </a>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main>
         {/* ── Hero ──────────────────────────────────────── */}
         <section className="hero section">
+          <div className="heroImageLayer" aria-hidden>
+            <img src="/images/omni-hero-bg.svg" alt="" />
+          </div>
           <div className="heroOrb heroOrb1" />
           <div className="heroOrb heroOrb2" />
           <div className="heroOrb heroOrb3" />
+          <div className="heroParticles" aria-hidden>
+            {HERO_PARTICLES.map((i) => (
+              <span
+                key={i}
+                style={{
+                  left: `${8 + (i % 6) * 16}%`,
+                  top: `${12 + Math.floor(i / 6) * 34}%`,
+                  animationDelay: `${i * 0.55}s`,
+                  animationDuration: `${8 + (i % 4) * 1.8}s`,
+                }}
+              />
+            ))}
+          </div>
           <div className="heroShapes" aria-hidden>
             <svg viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
@@ -316,7 +397,8 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.25 }}
             >
               One platform to manage AWS in plain English, generate full-stack apps
-              with live docs, scrape the web, analyze images, and more — open source and built for makers.
+              with live docs, launch the RAG Chatbot module for source-grounded answers,
+              scrape the web, analyze images, and more — open source and built for makers.
             </motion.p>
 
             <motion.div
@@ -327,6 +409,9 @@ export default function HomePage() {
             >
               <a href="/devops" className="btn btnPrimary">
                 Try DevOps Agent
+              </a>
+              <a href="/rag" className="btn btnGhost">
+                Open RAG Chatbot
               </a>
               <a href="#features" className="btn btnGhost">
                 Explore Features
@@ -874,6 +959,7 @@ export default function HomePage() {
               <h4>Modules</h4>
               <ul>
                 <li><a href="/devops">DevOps Agent</a></li>
+                <li><a href="/rag">RAG Chatbot</a></li>
                 <li><a href="/scraper">Web Scraper</a></li>
                 <li><a href="/vision">Vision Lab</a></li>
                 <li><a href="/storage">Cloud Storage</a></li>
