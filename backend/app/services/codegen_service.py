@@ -1,5 +1,5 @@
 """
-Code Gen service — generate website/project code using OpenAI with Context7 docs.
+Code Gen service — generate website/project code with Context7 docs.
 Frameworks: Streamlit, React, Next.js, Node/Express, Python/FastAPI, etc.
 Output is meant to be run in Vercel Sandbox (instructions returned to user).
 """
@@ -9,12 +9,15 @@ from __future__ import annotations
 import json
 from typing import Any
 
-from openai import AsyncOpenAI
-
 from app.config import settings
-from app.services.context7_service import get_context, search_library
+from app.services.anthropic_service import (
+    extract_text_from_message,
+    extract_tool_input,
+    get_claude_client,
+)
+from app.services.context7_service import get_context
 
-_openai = AsyncOpenAI(api_key=settings.openai_api_key)
+_claude = get_claude_client()
 
 # Map our framework key to Context7 library search names and IDs (fallback if no API key)
 FRAMEWORK_CONTEXT7: dict[str, list[tuple[str, str]]] = {
@@ -28,6 +31,31 @@ FRAMEWORK_CONTEXT7: dict[str, list[tuple[str, str]]] = {
     "fastapi": [("fastapi", "/tiangolo/fastapi")],
     "vue": [("vue", "/vuejs/core")],
     "svelte": [("svelte", "/sveltejs/svelte")],
+}
+
+PROJECT_TOOL = {
+    "name": "return_project",
+    "description": "Return the generated project files and run instructions.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "files": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string"},
+                        "content": {"type": "string"},
+                    },
+                    "required": ["path", "content"],
+                    "additionalProperties": False,
+                },
+            },
+            "instructions": {"type": "string"},
+        },
+        "required": ["files", "instructions"],
+        "additionalProperties": False,
+    },
 }
 
 
@@ -57,58 +85,41 @@ async def generate_project(prompt: str, framework: str) -> dict[str, Any]:
     system = """You are an expert full-stack developer. Generate a complete, runnable project based on the user's request and the framework they chose.
 
 Rules:
-- Output ONLY valid JSON: { "files": [ { "path": "relative/file/path", "content": "full file content" } ], "instructions": "Short steps to run this (e.g. npm install, npm run dev or streamlit run app.py). Mention Vercel Sandbox for live preview and git init / add to GitHub." }
 - Create all necessary files (package.json, main entry, components, etc.) for the chosen framework.
 - ALWAYS include a .gitignore file appropriate for the framework (node_modules, .env, dist, __pycache__, etc.) so the project is Git-ready.
-- If the user's request suggests a hero section, landing page, or background imagery, include a placeholder (e.g. CSS gradient, commented image tag, or a simple SVG/placeholder) that they can replace with a generated image later.
+- If the user's request suggests a hero section, landing page, or background imagery, include a placeholder (e.g. CSS gradient, commented image tag, or a simple SVG/placeholder) that they can replace later.
 - Use the provided documentation excerpts when present to follow best practices and correct APIs.
-- No markdown, no explanation outside JSON. The response must be parseable as JSON only."""
+- Return the result by calling the provided tool. Do not answer in plain text."""
     user = f"Framework: {framework}\n\nUser request: {prompt}\n\n"
     if docs_block:
         user += f"Relevant documentation (use for correct APIs and patterns):\n\n{docs_block}\n\n"
-    user += "Generate the project JSON now."
+    user += "Generate the project now."
 
-    resp = await _openai.chat.completions.create(
-        model=settings.openai_model,
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ],
-        max_tokens=4096,
+    resp = await _claude.messages.create(
+        model=settings.anthropic_model,
+        system=system,
+        messages=[{"role": "user", "content": user}],
+        max_tokens=8192,
+        tools=[PROJECT_TOOL],
+        tool_choice={"type": "tool", "name": PROJECT_TOOL["name"]},
     )
-    raw = (resp.choices[0].message.content or "").strip()
-    # Strip possible markdown code fence
-    if raw.startswith("```"):
-        raw = raw.split("```")[1]
-        if raw.startswith("json"):
-            raw = raw[4:]
-    raw = raw.strip()
+
     try:
-        data = json.loads(raw)
-    except json.JSONDecodeError:
+        data = extract_tool_input(resp, PROJECT_TOOL["name"])
+    except ValueError:
+        raw = extract_text_from_message(resp)
+        try:
+            data = json.loads(raw)
+        except json.JSONDecodeError:
+            return {
+                "files": [{"path": "README.md", "content": f"# Generated for: {prompt}\n\nParse error. Raw model output:\n\n```\n{raw[:2000]}\n```"}],
+                "instructions": "Fix the generation or try again.",
+            }
+    if not isinstance(data, dict):
         return {
-            "files": [{"path": "README.md", "content": f"# Generated for: {prompt}\n\nParse error. Raw model output:\n\n```\n{raw[:2000]}\n```"}],
+            "files": [{"path": "README.md", "content": f"# Generated for: {prompt}\n\nClaude returned an unexpected payload shape."}],
             "instructions": "Fix the generation or try again.",
         }
     files = data.get("files") or []
     instructions = data.get("instructions") or "Run the project with the usual commands for your framework (e.g. npm install && npm run dev, or streamlit run app.py). You can use Vercel Sandbox for a live preview: https://vercel.com/docs/vercel-sandbox"
     return {"files": files, "instructions": instructions}
-
-
-async def generate_background_image(prompt: str) -> str:
-    """
-    Generate a hero/background image via DALL-E.
-    Returns base64-encoded PNG.
-    """
-    import base64
-
-    resp = await _openai.images.generate(
-        model="dall-e-3",
-        prompt=f"Abstract, modern hero or background image for a website. {prompt}. Clean, professional, suitable for web use. No text.",
-        size="1792x1024",
-        quality="standard",
-        response_format="b64_json",
-        n=1,
-    )
-    b64 = resp.data[0].b64_json
-    return b64 or ""

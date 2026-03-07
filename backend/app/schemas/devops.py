@@ -16,7 +16,7 @@ class DevOpsCommandRequest(BaseModel):
     )
 
 
-# ── Internal: OpenAI parsed intent ─────────────────────────
+# ── Internal: Claude-parsed intent ─────────────────────────
 class ParsedIntent(BaseModel):
     action: str = Field(..., description="One of the supported action names")
     params: dict[str, Any] = Field(default_factory=dict)

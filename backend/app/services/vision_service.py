@@ -1,18 +1,17 @@
 """
 Vision Lab service.
-Sends images to OpenAI's vision-capable model for analysis / OCR.
+Sends images to Claude for analysis / OCR.
 """
 
 from __future__ import annotations
 
 import base64
 
-from openai import AsyncOpenAI
-
 from app.config import settings
 from app.schemas.vision import VisionMode
+from app.services.anthropic_service import extract_text_from_message, get_claude_client, total_tokens_used
 
-_openai = AsyncOpenAI(api_key=settings.openai_api_key)
+_claude = get_claude_client()
 
 MODE_PROMPTS = {
     VisionMode.analyze: (
@@ -33,7 +32,7 @@ async def analyze_image(
     custom_prompt: str | None = None,
 ) -> dict:
     """
-    Send an image to OpenAI vision and return the result.
+    Send an image to Claude and return the result.
 
     Args:
         image_bytes: raw file bytes
@@ -42,36 +41,35 @@ async def analyze_image(
         custom_prompt: required when mode == "custom"
     """
     b64 = base64.b64encode(image_bytes).decode()
-    data_uri = f"data:{content_type};base64,{b64}"
-
     if mode == VisionMode.custom:
         prompt = custom_prompt or "What do you see in this image?"
     else:
         prompt = MODE_PROMPTS[mode]
 
-    resp = await _openai.chat.completions.create(
-        model=settings.openai_model,
+    resp = await _claude.messages.create(
+        model=settings.anthropic_model,
+        max_tokens=2048,
         messages=[
             {
                 "role": "user",
                 "content": [
                     {"type": "text", "text": prompt},
                     {
-                        "type": "image_url",
-                        "image_url": {"url": data_uri, "detail": "high"},
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": content_type,
+                            "data": b64,
+                        },
                     },
                 ],
             }
         ],
-        max_tokens=2048,
     )
-
-    choice = resp.choices[0]
-    usage = resp.usage
 
     return {
         "mode": mode,
-        "result": choice.message.content or "",
+        "result": extract_text_from_message(resp),
         "model": resp.model,
-        "tokens_used": usage.total_tokens if usage else None,
+        "tokens_used": total_tokens_used(resp),
     }

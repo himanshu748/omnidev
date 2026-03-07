@@ -39,8 +39,10 @@
 | Module | Description | Tech |
 |--------|-------------|------|
 | 🤖 **DevOps Agent** | Manage AWS infrastructure with natural language commands — list EC2 instances, launch servers, manage security groups | OpenAI + boto3 |
+| ⚡ **Code Gen** | Generate full-stack projects (React, Next.js, Streamlit, Node, Python, Vue, Svelte) using live docs from Context7; instructions are ready for Vercel Sandbox | OpenAI + Context7 |
 | 🕷️ **Web Scraper** | Playwright-powered stealth scraping with anti-detection, Cloudflare bypass, full-page screenshots, and custom JS execution | Playwright + Stealth |
 | 🖼️ **Vision Lab** | AI-powered image analysis, OCR text extraction, and custom visual Q&A | OpenAI Vision |
+| 💬 **RAG Chatbot** | Ingest PDFs/TXT and chat with your documents only — paste text or upload files, get grounded answers with source snippets | OpenAI |
 | 📦 **Cloud Storage** | Full S3 file manager — browse buckets, upload/download files, generate presigned URLs, delete objects | boto3 S3 |
 | 📍 **Location Services** | IP geolocation, forward & reverse geocoding, public IP detection | IPInfo + Nominatim |
 
@@ -56,13 +58,20 @@ omnidev/
 │   │   ├── config.py         # Pydantic settings (env vars)
 │   │   ├── routers/          # API endpoint definitions
 │   │   │   ├── devops.py     # POST /api/devops/command
+│   │   │   ├── codegen.py    # POST /api/codegen/generate
+│   │   │   ├── rag.py        # POST /api/rag/* (ingest + chat)
 │   │   │   ├── scraper.py    # POST /api/scraper/scrape
+│   │   │   ├── preview.py    # POST /api/preview/check
 │   │   │   ├── vision.py     # POST /api/vision/analyze
 │   │   │   ├── storage.py    # GET/POST/DELETE /api/storage/*
 │   │   │   └── location.py   # GET /api/location/*
 │   │   ├── services/         # Business logic
 │   │   │   ├── devops_agent.py
+│   │   │   ├── codegen_service.py
+│   │   │   ├── context7_service.py
+│   │   │   ├── rag_service.py
 │   │   │   ├── scraper_service.py
+│   │   │   ├── preview_service.py
 │   │   │   ├── vision_service.py
 │   │   │   ├── storage_service.py
 │   │   │   └── location_service.py
@@ -72,12 +81,15 @@ omnidev/
 │   └── CREDENTIALS.md        # Step-by-step credential setup guide
 ├── frontend/                 # Next.js 16 (React 19)
 │   ├── app/
-│   │   ├── page.tsx          # Landing page
-│   │   ├── layout.tsx        # Root layout (Space Grotesk + JetBrains Mono)
-│   │   ├── globals.css       # Premium dark theme + Stitch design system
+│   │   ├── page.tsx          # Landing page (OmniDev hero, features, pricing)
+│   │   ├── layout.tsx        # Root layout (Syne + DM Sans + JetBrains Mono)
+│   │   ├── globals.css       # Premium dark theme + industrial/AI styling
 │   │   ├── components/       # Shared components
 │   │   ├── devops/page.tsx   # DevOps Agent UI
+│   │   ├── codegen/page.tsx  # Code Gen UI (generate + live preview)
+│   │   ├── codegen/review/   # Code Gen · Site Review (UI overview)
 │   │   ├── scraper/page.tsx  # Web Scraper UI
+│   │   ├── rag/page.tsx      # RAG Chatbot UI (ingest + chat)
 │   │   ├── vision/page.tsx   # Vision Lab UI
 │   │   ├── storage/page.tsx  # Cloud Storage UI
 │   │   └── location/page.tsx # Location Services UI
@@ -101,8 +113,8 @@ omnidev/
 | Layer | Technology |
 |-------|-----------|
 | **Backend** | Python 3.13, FastAPI, Pydantic Settings, Uvicorn |
-| **Frontend** | Next.js 16, React 19, Framer Motion, TypeScript |
-| **AI** | OpenAI GPT-4.1, Vision API |
+| **Frontend** | Next.js 16, React 19, Framer Motion, TypeScript, StackBlitz SDK (live previews) |
+| **AI** | OpenAI GPT-4.1, Vision API, DALL·E, Context7 (code docs) |
 | **Cloud** | AWS (EC2, S3) via boto3 |
 | **Scraping** | Playwright (Chromium), playwright-stealth |
 | **Geolocation** | IPInfo, OpenStreetMap Nominatim, ipify |
@@ -184,6 +196,9 @@ Create a `backend/.env` file based on `backend/.env.example`:
 OPENAI_API_KEY=sk-proj-...
 OPENAI_MODEL=gpt-4.1-mini
 
+# Context7 (optional, recommended for Code Gen)
+CONTEXT7_API_KEY=ctx7_...
+
 # AWS (required for DevOps Agent + Cloud Storage)
 AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=...
@@ -203,8 +218,10 @@ CORS_ORIGINS=http://localhost:3000
 | Feature | OpenAI | AWS | IPInfo |
 |---------|--------|-----|--------|
 | DevOps Agent | ✅ Required | ✅ Required | — |
+| Code Gen | ✅ Required | — | — |
 | Web Scraper | — | — | — |
 | Vision Lab | ✅ Required | — | — |
+| RAG Chatbot | ✅ Required | — | — |
 | Cloud Storage | — | ✅ Required | — |
 | Location Services | — | — | Optional |
 
@@ -310,6 +327,74 @@ GET /health
 
 ---
 
+### ⚡ Code Gen
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/codegen/generate` | Generate a full project for the requested framework |
+
+**Request Body:**
+```json
+{
+  "prompt": "A todo app with dark mode and local storage",
+  "framework": "react"
+}
+```
+
+**Response (simplified):**
+```json
+{
+  "files": [
+    { "path": "package.json", "content": "{...}" },
+    { "path": "src/main.tsx", "content": "..." }
+  ],
+  "instructions": "npm install && npm run dev (or run in Vercel Sandbox)"
+}
+```
+
+> The frontend Code Gen page lets you pick a framework, view generated files, copy code, download a ZIP, and open a live preview via StackBlitz.
+
+---
+
+### 💬 RAG Chatbot
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/rag/ingest` | Ingest raw text into the RAG index |
+| `POST` | `/api/rag/ingest/file` | Ingest a file (PDF/TXT) |
+| `POST` | `/api/rag/chat` | Ask questions grounded only in ingested documents |
+
+**Ingest (text):**
+```json
+{
+  "document_id": "getting-started",
+  "text": "OmniDev is a full-stack AI developer platform..."
+}
+```
+
+**Chat:**
+```json
+{
+  "document_ids": ["getting-started"],
+  "question": "What is OmniDev?",
+  "max_tokens": 512
+}
+```
+
+**Chat Response (simplified):**
+```json
+{
+  "answer": "OmniDev is a full-stack AI developer platform...",
+  "sources": [
+    { "document_id": "getting-started", "snippet": "OmniDev is a full-stack..." }
+  ]
+}
+```
+
+> The frontend RAG page lets you paste text or upload files, then chat with your documents with source citations.
+
+---
+
 ### 📦 Cloud Storage
 
 | Method | Endpoint | Description |
@@ -339,8 +424,10 @@ The frontend provides a **premium dark-themed dashboard** for each service:
 
 - **🏠 Landing Page** — Hero section, feature cards, tech stack, process walkthrough, testimonials, pricing, FAQ
 - **🤖 DevOps** — Natural language command input with suggestion chips, structured result display, destructive action safeguards
+- **⚡ Code Gen** — Prompt + framework selector, generated file tree + code viewer, one-click copy, ZIP download, and live StackBlitz preview
 - **🕷️ Scraper** — URL input with demo suggestions, extraction mode toggles (text/HTML/screenshot), stealth toggle, elapsed time
 - **🖼️ Vision** — Drag-and-drop image upload with preview, mode pills (Analyze/OCR/Custom), token & model info
+- **💬 RAG Chatbot** — Text + file ingest (PDF/TXT), document-only chat interface with source snippets
 - **📦 Storage** — Bucket chip selector, file browser with icons/sizes/dates, prefix filter, upload form, download links
 - **📍 Location** — Tabbed interface (My Location / IP Lookup / Reverse Geocode / Address Search), suggestion chips, Google Maps links
 

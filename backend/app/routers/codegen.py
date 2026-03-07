@@ -5,25 +5,9 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 
 from app.schemas.codegen import CodeGenRequest, CodeGenResponse, FileEntry
-from app.services.codegen_service import generate_project, generate_background_image
+from app.services.codegen_service import generate_project
 
 router = APIRouter()
-
-
-@router.post("/generate-image")
-async def codegen_generate_image(body: dict):
-    """
-    Generate a hero/background image when needed (e.g. for landing pages).
-    Returns base64 PNG. Uses OpenAI DALL-E.
-    """
-    prompt = body.get("prompt", "").strip()
-    if not prompt:
-        raise HTTPException(status_code=400, detail="prompt required")
-    try:
-        b64 = await generate_background_image(prompt)
-        return {"image_b64": b64}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.post("/generate", response_model=CodeGenResponse)

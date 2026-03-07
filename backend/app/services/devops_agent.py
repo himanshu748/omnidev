@@ -1,8 +1,8 @@
 """
 DevOps Agent service — v2.
-1. Parse natural-language command via OpenAI → structured intent
+1. Parse natural-language command via Claude → structured intent
 2. Dispatch to the matching boto3 AWS call
-3. Summarise the result with OpenAI
+3. Summarise the result with Claude
 
 Supported AWS services: EC2, S3, VPC, IAM, RDS, CloudWatch, Lambda.
 """
@@ -14,13 +14,13 @@ import json
 from typing import Any
 
 import boto3
-from openai import AsyncOpenAI
 
 from app.config import settings
 from app.schemas.devops import ParsedIntent
+from app.services.anthropic_service import extract_text_from_message, extract_tool_input, get_claude_client
 
-# ── OpenAI client ───────────────────────────────────────────
-_openai = AsyncOpenAI(api_key=settings.openai_api_key)
+# ── Claude client ───────────────────────────────────────────
+_claude = get_claude_client()
 
 # ── Supported actions ───────────────────────────────────────
 SUPPORTED_ACTIONS = [
@@ -60,7 +60,7 @@ SYSTEM_PROMPT = f"""\
 You are an AWS DevOps assistant. The user gives you a natural-language command
 about AWS resources. Your job is to extract a structured intent.
 
-Respond ONLY with a JSON object — no markdown, no explanation:
+Return the extracted intent by calling the provided tool. Use these fields:
 {{
   "action": "<one of {SUPPORTED_ACTIONS}>",
   "params": {{...}},
@@ -98,24 +98,44 @@ CloudWatch:
 Lambda:
 - list_lambda_functions  → {{}}
 
-If the user's request doesn't map to a supported action, respond with:
+If the user's request doesn't map to a supported action, use:
 {{"action": "unsupported", "params": {{}}, "is_destructive": false}}
 """
+
+INTENT_TOOL = {
+    "name": "return_intent",
+    "description": "Extract a supported AWS action, params, and destructive flag from the user's request.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "action": {
+                "type": "string",
+                "enum": [*SUPPORTED_ACTIONS, "unsupported"],
+            },
+            "params": {
+                "type": "object",
+                "additionalProperties": True,
+            },
+            "is_destructive": {"type": "boolean"},
+        },
+        "required": ["action", "params", "is_destructive"],
+        "additionalProperties": False,
+    },
+}
 
 
 # ── Intent parsing ──────────────────────────────────────────
 async def parse_intent(message: str) -> ParsedIntent:
-    resp = await _openai.chat.completions.create(
-        model=settings.openai_model,
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": message},
-        ],
+    resp = await _claude.messages.create(
+        model=settings.anthropic_model,
+        system=SYSTEM_PROMPT,
+        messages=[{"role": "user", "content": message}],
+        max_tokens=1024,
         temperature=0,
-        response_format={"type": "json_object"},
+        tools=[INTENT_TOOL],
+        tool_choice={"type": "tool", "name": INTENT_TOOL["name"]},
     )
-    raw = resp.choices[0].message.content or "{}"
-    data = json.loads(raw)
+    data = extract_tool_input(resp, INTENT_TOOL["name"])
     return ParsedIntent(**data)
 
 
@@ -469,17 +489,14 @@ async def _dispatch(intent: ParsedIntent) -> Any:
 
 # ── Summarise ───────────────────────────────────────────────
 async def summarise(action: str, raw_result: Any) -> str:
-    resp = await _openai.chat.completions.create(
-        model=settings.openai_model,
+    resp = await _claude.messages.create(
+        model=settings.anthropic_model,
+        system=(
+            "You are a DevOps expert. Summarise the following AWS API result "
+            "in a clear, concise, human-friendly way. Include counts, key data, "
+            "and any noteworthy details. Use plain text, no markdown."
+        ),
         messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are a DevOps expert. Summarise the following AWS API result "
-                    "in a clear, concise, human-friendly way. Include counts, key data, "
-                    "and any noteworthy details. Use plain text, no markdown."
-                ),
-            },
             {
                 "role": "user",
                 "content": f"Action: {action}\nResult:\n{json.dumps(raw_result, default=str)}",
@@ -488,7 +505,7 @@ async def summarise(action: str, raw_result: Any) -> str:
         temperature=0.3,
         max_tokens=512,
     )
-    return resp.choices[0].message.content or ""
+    return extract_text_from_message(resp)
 
 
 # ── Public orchestrator ─────────────────────────────────────
