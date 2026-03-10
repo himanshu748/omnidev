@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const NAV_LINKS = [
   { label: "Features", href: "#features" },
-  { label: "RAG Chatbot", href: "/rag" },
   { label: "Process", href: "#process" },
   { label: "Pricing", href: "#pricing" },
   { label: "FAQ", href: "#faq" },
@@ -29,12 +28,6 @@ const FEATURES = [
     href: "/codegen",
     desc: "Generate websites with Streamlit, React, Node, Python, or any framework. Context7 docs built-in; run in Vercel Sandbox.",
     star: true,
-  },
-  {
-    emoji: "📚",
-    title: "RAG Chatbot",
-    href: "/rag",
-    desc: "Build retrieval-augmented chat assistants that answer from your own docs with source-grounded responses.",
   },
   {
     emoji: "🕷️",
@@ -397,8 +390,8 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.25 }}
             >
               One platform to manage AWS in plain English, generate full-stack apps
-              with live docs, launch the RAG Chatbot module for source-grounded answers,
-              scrape the web, analyze images, and more — open source and built for makers.
+              with live docs, scrape the web, analyze images, manage storage,
+              and more — open source and built for makers.
             </motion.p>
 
             <motion.div
@@ -410,8 +403,8 @@ export default function HomePage() {
               <a href="/devops" className="btn btnPrimary">
                 Try DevOps Agent
               </a>
-              <a href="/rag" className="btn btnGhost">
-                Open RAG Chatbot
+              <a href="/codegen" className="btn btnGhost">
+                Open Code Gen
               </a>
               <a href="#features" className="btn btnGhost">
                 Explore Features
@@ -959,7 +952,7 @@ export default function HomePage() {
               <h4>Modules</h4>
               <ul>
                 <li><a href="/devops">DevOps Agent</a></li>
-                <li><a href="/rag">RAG Chatbot</a></li>
+                <li><a href="/codegen">Code Gen</a></li>
                 <li><a href="/scraper">Web Scraper</a></li>
                 <li><a href="/vision">Vision Lab</a></li>
                 <li><a href="/storage">Cloud Storage</a></li>

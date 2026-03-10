@@ -8,3 +8,6 @@ playwright-stealth
 httpx
 ipinfo
 python-multipart
+pytest
+pytest-asyncio
+moto

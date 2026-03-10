@@ -42,7 +42,6 @@
 | ⚡ **Code Gen** | Generate full-stack projects (React, Next.js, Streamlit, Node, Python, Vue, Svelte) using live docs from Context7; instructions are ready for Vercel Sandbox | OpenAI + Context7 |
 | 🕷️ **Web Scraper** | Playwright-powered stealth scraping with anti-detection, Cloudflare bypass, full-page screenshots, and custom JS execution | Playwright + Stealth |
 | 🖼️ **Vision Lab** | AI-powered image analysis, OCR text extraction, and custom visual Q&A | OpenAI Vision |
-| 💬 **RAG Chatbot** | Ingest PDFs/TXT and chat with your documents only — paste text or upload files, get grounded answers with source snippets | OpenAI |
 | 📦 **Cloud Storage** | Full S3 file manager — browse buckets, upload/download files, generate presigned URLs, delete objects | boto3 S3 |
 | 📍 **Location Services** | IP geolocation, forward & reverse geocoding, public IP detection | IPInfo + Nominatim |
 
@@ -59,7 +58,6 @@ omnidev/
 │   │   ├── routers/          # API endpoint definitions
 │   │   │   ├── devops.py     # POST /api/devops/command
 │   │   │   ├── codegen.py    # POST /api/codegen/generate
-│   │   │   ├── rag.py        # POST /api/rag/* (ingest + chat)
 │   │   │   ├── scraper.py    # POST /api/scraper/scrape
 │   │   │   ├── preview.py    # POST /api/preview/check
 │   │   │   ├── vision.py     # POST /api/vision/analyze
@@ -69,7 +67,6 @@ omnidev/
 │   │   │   ├── devops_agent.py
 │   │   │   ├── codegen_service.py
 │   │   │   ├── context7_service.py
-│   │   │   ├── rag_service.py
 │   │   │   ├── scraper_service.py
 │   │   │   ├── preview_service.py
 │   │   │   ├── vision_service.py
@@ -89,7 +86,6 @@ omnidev/
 │   │   ├── codegen/page.tsx  # Code Gen UI (generate + live preview)
 │   │   ├── codegen/review/   # Code Gen · Site Review (UI overview)
 │   │   ├── scraper/page.tsx  # Web Scraper UI
-│   │   ├── rag/page.tsx      # RAG Chatbot UI (ingest + chat)
 │   │   ├── vision/page.tsx   # Vision Lab UI
 │   │   ├── storage/page.tsx  # Cloud Storage UI
 │   │   └── location/page.tsx # Location Services UI
@@ -221,7 +217,6 @@ CORS_ORIGINS=http://localhost:3000
 | Code Gen | ✅ Required | — | — |
 | Web Scraper | — | — | — |
 | Vision Lab | ✅ Required | — | — |
-| RAG Chatbot | ✅ Required | — | — |
 | Cloud Storage | — | ✅ Required | — |
 | Location Services | — | — | Optional |
 
@@ -356,45 +351,6 @@ GET /health
 
 ---
 
-### 💬 RAG Chatbot
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/rag/ingest` | Ingest raw text into the RAG index |
-| `POST` | `/api/rag/ingest/file` | Ingest a file (PDF/TXT) |
-| `POST` | `/api/rag/chat` | Ask questions grounded only in ingested documents |
-
-**Ingest (text):**
-```json
-{
-  "document_id": "getting-started",
-  "text": "OmniDev is a full-stack AI developer platform..."
-}
-```
-
-**Chat:**
-```json
-{
-  "document_ids": ["getting-started"],
-  "question": "What is OmniDev?",
-  "max_tokens": 512
-}
-```
-
-**Chat Response (simplified):**
-```json
-{
-  "answer": "OmniDev is a full-stack AI developer platform...",
-  "sources": [
-    { "document_id": "getting-started", "snippet": "OmniDev is a full-stack..." }
-  ]
-}
-```
-
-> The frontend RAG page lets you paste text or upload files, then chat with your documents with source citations.
-
----
-
 ### 📦 Cloud Storage
 
 | Method | Endpoint | Description |
@@ -427,7 +383,6 @@ The frontend provides a **premium dark-themed dashboard** for each service:
 - **⚡ Code Gen** — Prompt + framework selector, generated file tree + code viewer, one-click copy, ZIP download, and live StackBlitz preview
 - **🕷️ Scraper** — URL input with demo suggestions, extraction mode toggles (text/HTML/screenshot), stealth toggle, elapsed time
 - **🖼️ Vision** — Drag-and-drop image upload with preview, mode pills (Analyze/OCR/Custom), token & model info
-- **💬 RAG Chatbot** — Text + file ingest (PDF/TXT), document-only chat interface with source snippets
 - **📦 Storage** — Bucket chip selector, file browser with icons/sizes/dates, prefix filter, upload form, download links
 - **📍 Location** — Tabbed interface (My Location / IP Lookup / Reverse Geocode / Address Search), suggestion chips, Google Maps links
 
@@ -495,4 +450,3 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 <p align="center">
   Built with ❤️ using FastAPI, Next.js, and OpenAI
 </p>
-
