@@ -198,7 +198,7 @@ export default function DevOpsPage() {
   return (
     <FeatureLayout
       title="DevOps Agent"
-      description="Autonomous AWS infrastructure management powered by OpenAI & boto3. Speak naturally to your cloud."
+      description="Autonomous AWS infrastructure management powered by AI & boto3. Speak naturally to your cloud."
       icon="🤖"
       endpoints={[{ method: "POST", path: "/api/devops/command" }]}
     >
@@ -547,7 +547,7 @@ export default function DevOpsPage() {
                 <span>{error ? "Error" : "System Online"}</span>
               </span>
               <span className="devopsFooterRight">
-                <span>GPT-4.1 · boto3</span>
+                <span>Gemini · boto3</span>
                 <span className="devopsFooterVersion">v0.2.0</span>
               </span>
             </div>

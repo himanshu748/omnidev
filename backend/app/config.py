@@ -15,9 +15,9 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ── Anthropic ───────────────────────────────────────────
-    anthropic_api_key: str = ""
-    anthropic_model: str = "claude-sonnet-4-6"
+    # ── Google Gemini (free tier) ──────────────────────────
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.0-flash"
 
     # ── AWS ─────────────────────────────────────────────────
     aws_access_key_id: str = ""

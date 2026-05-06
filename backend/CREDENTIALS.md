@@ -6,7 +6,7 @@ This guide walks you through getting each API key or credential used by the back
 
 ## API key matrix (at a glance)
 
-| Module           | Anthropic | AWS | IPInfo | Context7 | Notes |
+| Module           | Gemini | AWS | IPInfo | Context7 | Notes |
 |-----------------|--------|-----|--------|----------|--------|
 | **DevOps Agent**| ✅ Required | ✅ Required | — | — | Natural language → boto3 |
 | **Code Gen**    | ✅ Required | — | — | Optional | Without Context7: no live docs. |
@@ -17,20 +17,19 @@ This guide walks you through getting each API key or credential used by the back
 
 ---
 
-## 1. Anthropic API Key (required for DevOps Agent, Code Gen, Vision Lab)
+## 1. Google Gemini API Key (required for DevOps Agent, Code Gen, Vision Lab)
 
-You already have one. If you need another or a new one:
+OmniDev uses the **Google GenAI** SDK with a free-tier key from AI Studio:
 
-1. Go to **https://console.anthropic.com/settings/keys**
-2. Sign in or create an Anthropic account.
-3. Click **Create Key**. Name it (e.g. "OmniDev"), then copy the key immediately.
-5. In `backend/.env` set:
+1. Go to **https://aistudio.google.com/apikey**
+2. Sign in with a Google account and create an API key.
+3. In `backend/.env` set:
    ```bash
-   ANTHROPIC_API_KEY=sk-ant-...your-key...
-   ANTHROPIC_MODEL=claude-sonnet-4-6
+   GEMINI_API_KEY=your-key
+   GEMINI_MODEL=gemini-2.0-flash
    ```
 
-**Billing:** Usage is billed to your Anthropic account. Check your Anthropic Console usage page and set limits if needed.
+**Limits:** See [Google AI Studio](https://aistudio.google.com/) for current quotas and pricing beyond free tier.
 
 ---
 
@@ -112,9 +111,9 @@ Code Gen uses Context7 to inject up-to-date library docs (React, Next.js, Stream
 ## Quick reference: `.env` template
 
 ```bash
-# Anthropic (required for DevOps, Code Gen, Vision)
-ANTHROPIC_API_KEY=sk-ant-...
-ANTHROPIC_MODEL=claude-sonnet-4-6
+# Google Gemini (required for DevOps, Code Gen, Vision)
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.0-flash
 
 # AWS (required for DevOps + Storage)
 AWS_ACCESS_KEY_ID=AKIA...
@@ -144,9 +143,9 @@ Run the backend (`cd backend && uv run uvicorn app.main:app --reload`) and front
 | **Health** | `curl http://localhost:8000/health` → `{"status":"ok"}` |
 | **Scraper** (no key) | Open http://localhost:3000/scraper → paste URL → Start Scraping. Should return content. |
 | **Location** (optional key) | Open http://localhost:3000/location → Detect Location. Should show IP + city. |
-| **DevOps** (Anthropic + AWS) | Open http://localhost:3000/devops → e.g. "List my EC2 instances" → Run. Should return summary (or 500 if keys missing). |
-| **Code Gen** (Anthropic) | Open http://localhost:3000/codegen → prompt e.g. "A hello world page", framework React → Generate. Should return files. |
-| **Vision** (Anthropic) | Open http://localhost:3000/vision → Upload image → Analyze. Needs valid `ANTHROPIC_API_KEY`. |
+| **DevOps** (Gemini + AWS) | Open http://localhost:3000/devops → e.g. "List my EC2 instances" → Run. Should return summary (or 500 if keys missing). |
+| **Code Gen** (Gemini) | Open http://localhost:3000/codegen → prompt e.g. "A hello world page", framework React → Generate. Should return files. |
+| **Vision** (Gemini) | Open http://localhost:3000/vision → Upload image → Analyze. Needs valid `GEMINI_API_KEY`. |
 | **Storage** (AWS) | Open http://localhost:3000/storage → List buckets. Should list buckets or `[]` (500 if AWS keys missing). |
 
 If any endpoint returns **500** with a message like "Invalid API key" or "Credentials not found", add or fix that key in `backend/.env`.

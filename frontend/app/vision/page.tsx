@@ -70,7 +70,7 @@ export default function VisionPage() {
   return (
     <FeatureLayout
       title="Vision Lab"
-      description="Analyze images, extract text via OCR, or ask custom questions — powered by OpenAI Vision."
+      description="Analyze images, extract text via OCR, or ask custom questions — powered by AI Vision."
       icon="🖼️"
       endpoints={[{ method: "POST", path: "/api/vision/analyze" }]}
     >

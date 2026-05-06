@@ -1,8 +1,8 @@
 """
-DevOps Agent service — v2.
-1. Parse natural-language command via Claude → structured intent
+DevOps Agent service — v3 (Gemini).
+1. Parse natural-language command via Gemini -> structured intent
 2. Dispatch to the matching boto3 AWS call
-3. Summarise the result with Claude
+3. Summarise the result with Gemini
 
 Supported AWS services: EC2, S3, VPC, IAM, RDS, CloudWatch, Lambda.
 """
@@ -14,37 +14,32 @@ import json
 from typing import Any
 
 import boto3
+from google.genai import types
 
 from app.config import settings
 from app.schemas.devops import ParsedIntent
-from app.services.anthropic_service import extract_text_from_message, extract_tool_input, get_claude_client
-
-# ── Claude client ───────────────────────────────────────────
-_claude = get_claude_client()
+from app.services.ai_service import (
+    extract_function_call,
+    generate_text,
+    generate_with_tool,
+)
 
 # ── Supported actions ───────────────────────────────────────
 SUPPORTED_ACTIONS = [
-    # EC2
     "list_ec2",
     "describe_ec2_instance",
     "launch_ec2",
     "stop_ec2",
     "terminate_ec2",
     "reboot_ec2",
-    # S3
     "list_s3_buckets",
     "list_s3_objects",
     "create_s3_bucket",
-    # Networking
     "describe_security_groups",
     "list_vpcs",
-    # IAM
     "list_iam_users",
-    # RDS
     "describe_rds_instances",
-    # CloudWatch
     "list_cloudwatch_alarms",
-    # Lambda
     "list_lambda_functions",
 ]
 
@@ -60,82 +55,77 @@ SYSTEM_PROMPT = f"""\
 You are an AWS DevOps assistant. The user gives you a natural-language command
 about AWS resources. Your job is to extract a structured intent.
 
-Return the extracted intent by calling the provided tool. Use these fields:
-{{
-  "action": "<one of {SUPPORTED_ACTIONS}>",
-  "params": {{...}},
-  "is_destructive": true/false
-}}
+Return the extracted intent by calling the return_intent tool.
 
-Supported actions and expected params:
+Supported actions: {SUPPORTED_ACTIONS}
 
 EC2:
-- list_ec2              → {{}}  (optional "filters": [{{"Name":"...", "Values":["..."]}}], "region": "us-east-1")
-- describe_ec2_instance → {{"instance_id": "i-..."}}
-- launch_ec2            → {{"image_id": "ami-...", "instance_type": "t2.micro", "count": 1}}  (destructive)
-- stop_ec2              → {{"instance_ids": ["i-..."]}}  (destructive)
-- terminate_ec2         → {{"instance_ids": ["i-..."]}}  (destructive)
-- reboot_ec2            → {{"instance_ids": ["i-..."]}}  (destructive)
+- list_ec2              -> {{}}  (optional "filters", "region")
+- describe_ec2_instance -> {{"instance_id": "i-..."}}
+- launch_ec2            -> {{"image_id": "ami-...", "instance_type": "t2.micro", "count": 1}}  (destructive)
+- stop_ec2              -> {{"instance_ids": ["i-..."]}}  (destructive)
+- terminate_ec2         -> {{"instance_ids": ["i-..."]}}  (destructive)
+- reboot_ec2            -> {{"instance_ids": ["i-..."]}}  (destructive)
 
 S3:
-- list_s3_buckets       → {{}}
-- list_s3_objects        → {{"bucket": "my-bucket", "prefix": "", "max_keys": 100}}
-- create_s3_bucket      → {{"bucket_name": "new-bucket", "region": "us-east-1"}}  (destructive)
+- list_s3_buckets       -> {{}}
+- list_s3_objects        -> {{"bucket": "my-bucket", "prefix": "", "max_keys": 100}}
+- create_s3_bucket      -> {{"bucket_name": "new-bucket", "region": "us-east-1"}}  (destructive)
 
 Networking:
-- describe_security_groups → {{}}  (optional "group_ids": ["sg-..."])
-- list_vpcs             → {{}}  (optional "vpc_ids": ["vpc-..."])
+- describe_security_groups -> {{}}  (optional "group_ids")
+- list_vpcs             -> {{}}  (optional "vpc_ids")
 
 IAM:
-- list_iam_users        → {{}}  (optional "path_prefix": "/")
+- list_iam_users        -> {{}}  (optional "path_prefix")
 
 RDS:
-- describe_rds_instances → {{}}  (optional "db_instance_id": "mydb")
+- describe_rds_instances -> {{}}  (optional "db_instance_id")
 
 CloudWatch:
-- list_cloudwatch_alarms → {{}}  (optional "alarm_names": ["..."], "state": "ALARM"|"OK"|"INSUFFICIENT_DATA")
+- list_cloudwatch_alarms -> {{}}  (optional "alarm_names", "state")
 
 Lambda:
-- list_lambda_functions  → {{}}
+- list_lambda_functions  -> {{}}
 
-If the user's request doesn't map to a supported action, use:
-{{"action": "unsupported", "params": {{}}, "is_destructive": false}}
+If the user's request doesn't map to a supported action, use action="unsupported".
 """
 
-INTENT_TOOL = {
-    "name": "return_intent",
-    "description": "Extract a supported AWS action, params, and destructive flag from the user's request.",
-    "input_schema": {
-        "type": "object",
-        "properties": {
-            "action": {
-                "type": "string",
-                "enum": [*SUPPORTED_ACTIONS, "unsupported"],
-            },
-            "params": {
-                "type": "object",
-                "additionalProperties": True,
-            },
-            "is_destructive": {"type": "boolean"},
+INTENT_TOOL = types.FunctionDeclaration(
+    name="return_intent",
+    description="Extract a supported AWS action, params, and destructive flag from the user's request.",
+    parameters=types.Schema(
+        type="OBJECT",
+        properties={
+            "action": types.Schema(
+                type="STRING",
+                description="The AWS action to perform",
+                enum=[*SUPPORTED_ACTIONS, "unsupported"],
+            ),
+            "params": types.Schema(
+                type="OBJECT",
+                description="Parameters for the action as key-value pairs",
+            ),
+            "is_destructive": types.Schema(
+                type="BOOLEAN",
+                description="Whether the action is destructive",
+            ),
         },
-        "required": ["action", "params", "is_destructive"],
-        "additionalProperties": False,
-    },
-}
+        required=["action", "params", "is_destructive"],
+    ),
+)
 
 
 # ── Intent parsing ──────────────────────────────────────────
 async def parse_intent(message: str) -> ParsedIntent:
-    resp = await _claude.messages.create(
-        model=settings.anthropic_model,
+    resp = await generate_with_tool(
+        message,
         system=SYSTEM_PROMPT,
-        messages=[{"role": "user", "content": message}],
-        max_tokens=1024,
-        temperature=0,
         tools=[INTENT_TOOL],
-        tool_choice={"type": "tool", "name": INTENT_TOOL["name"]},
+        forced_function="return_intent",
+        max_tokens=1024,
     )
-    data = extract_tool_input(resp, INTENT_TOOL["name"])
+    data = extract_function_call(resp, "return_intent")
     return ParsedIntent(**data)
 
 
@@ -200,7 +190,6 @@ async def _dispatch(intent: ParsedIntent) -> Any:
     params = intent.params
 
     def _run() -> Any:
-        # ─── EC2 ───────────────────────────────────────────
         if action == "list_ec2":
             ec2 = _ec2_client(params.get("region"))
             filters = params.get("filters", [])
@@ -289,7 +278,6 @@ async def _dispatch(intent: ParsedIntent) -> Any:
             ec2.reboot_instances(InstanceIds=params["instance_ids"])
             return {"rebooted_instance_ids": params["instance_ids"]}
 
-        # ─── S3 ────────────────────────────────────────────
         if action == "list_s3_buckets":
             s3 = _s3_client()
             resp = s3.list_buckets()
@@ -337,7 +325,6 @@ async def _dispatch(intent: ParsedIntent) -> Any:
                 )
             return {"created_bucket": bucket_name, "region": region}
 
-        # ─── NETWORKING ────────────────────────────────────
         if action == "describe_security_groups":
             ec2 = _ec2_client(params.get("region"))
             kwargs = {}
@@ -392,7 +379,6 @@ async def _dispatch(intent: ParsedIntent) -> Any:
                 )
             return {"count": len(vpcs), "vpcs": vpcs}
 
-        # ─── IAM ───────────────────────────────────────────
         if action == "list_iam_users":
             iam = _iam_client()
             path = params.get("path_prefix", "/")
@@ -410,7 +396,6 @@ async def _dispatch(intent: ParsedIntent) -> Any:
                 )
             return {"count": len(users), "users": users}
 
-        # ─── RDS ───────────────────────────────────────────
         if action == "describe_rds_instances":
             rds = _rds_client(params.get("region"))
             kwargs = {}
@@ -435,7 +420,6 @@ async def _dispatch(intent: ParsedIntent) -> Any:
                 )
             return {"count": len(databases), "databases": databases}
 
-        # ─── CLOUDWATCH ────────────────────────────────────
         if action == "list_cloudwatch_alarms":
             cw = _cloudwatch_client(params.get("region"))
             kwargs = {}
@@ -461,7 +445,6 @@ async def _dispatch(intent: ParsedIntent) -> Any:
                 )
             return {"count": len(alarms), "alarms": alarms}
 
-        # ─── LAMBDA ────────────────────────────────────────
         if action == "list_lambda_functions":
             lam = _lambda_client(params.get("region"))
             resp = lam.list_functions()
@@ -489,23 +472,16 @@ async def _dispatch(intent: ParsedIntent) -> Any:
 
 # ── Summarise ───────────────────────────────────────────────
 async def summarise(action: str, raw_result: Any) -> str:
-    resp = await _claude.messages.create(
-        model=settings.anthropic_model,
+    return await generate_text(
+        f"Action: {action}\nResult:\n{json.dumps(raw_result, default=str)}",
         system=(
             "You are a DevOps expert. Summarise the following AWS API result "
             "in a clear, concise, human-friendly way. Include counts, key data, "
             "and any noteworthy details. Use plain text, no markdown."
         ),
-        messages=[
-            {
-                "role": "user",
-                "content": f"Action: {action}\nResult:\n{json.dumps(raw_result, default=str)}",
-            },
-        ],
         temperature=0.3,
         max_tokens=512,
     )
-    return extract_text_from_message(resp)
 
 
 # ── Public orchestrator ─────────────────────────────────────
@@ -524,13 +500,12 @@ async def run_command(message: str, confirm_destructive: bool = False) -> dict:
             "needs_confirmation": False,
         }
 
-    # Safety gate for destructive actions
     if intent.is_destructive and not confirm_destructive:
         return {
             "action": intent.action,
             "params": intent.params,
             "raw_result": None,
-            "summary": f"⚠️ This is a destructive action ({intent.action}). "
+            "summary": f"This is a destructive action ({intent.action}). "
             "Please enable 'Confirm destructive actions' and try again.",
             "needs_confirmation": True,
         }

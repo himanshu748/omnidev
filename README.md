@@ -8,8 +8,8 @@
   <br /><br />
   <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white" alt="Python" />
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
-  <img src="https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/OpenAI-GPT--4.1-412991?logo=openai&logoColor=white" alt="OpenAI" />
+  <img src="https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
+  <img src="https://img.shields.io/badge/Google-Gemini-4285F4?logo=google&logoColor=white" alt="Google Gemini" />
   <img src="https://img.shields.io/badge/License-MIT-green?logo=opensourceinitiative&logoColor=white" alt="License" />
   <img src="https://img.shields.io/badge/Playwright-Stealth-2EAD33?logo=playwright&logoColor=white" alt="Playwright" />
   <img src="https://img.shields.io/badge/Design-Stitch-6567f1?logo=google&logoColor=white" alt="Stitch Design" />
@@ -18,7 +18,7 @@
 
 ---
 
-**OmniDev** is a full-stack AI developer platform that combines **DevOps automation**, **stealth web scraping**, **AI vision analysis**, **cloud storage management**, and **location intelligence** into a single, cohesive application. It features a **FastAPI** backend with a beautiful **Next.js 16** frontend designed with **Space Grotesk** typography.
+**OmniDev** is a full-stack AI developer platform that combines **DevOps automation**, **stealth web scraping**, **AI vision analysis**, **cloud storage management**, and **location intelligence** into a single, cohesive application. It features a **FastAPI** backend with a **Next.js 16** frontend using **Syne**, **DM Sans**, and **JetBrains Mono**.
 
 ### 📚 Documentation
 
@@ -38,10 +38,10 @@
 
 | Module | Description | Tech |
 |--------|-------------|------|
-| 🤖 **DevOps Agent** | Manage AWS infrastructure with natural language commands — list EC2 instances, launch servers, manage security groups | OpenAI + boto3 |
-| ⚡ **Code Gen** | Generate full-stack projects (React, Next.js, Streamlit, Node, Python, Vue, Svelte) using live docs from Context7; instructions are ready for Vercel Sandbox | OpenAI + Context7 |
+| 🤖 **DevOps Agent** | Manage AWS infrastructure with natural language commands — list EC2 instances, launch servers, manage security groups | Google Gemini + boto3 |
+| ⚡ **Code Gen** | Generate full-stack projects (React, Next.js, Streamlit, Node, Python, Vue, Svelte) using live docs from Context7; instructions are ready for Vercel Sandbox | Google Gemini + Context7 |
 | 🕷️ **Web Scraper** | Playwright-powered stealth scraping with anti-detection, Cloudflare bypass, full-page screenshots, and custom JS execution | Playwright + Stealth |
-| 🖼️ **Vision Lab** | AI-powered image analysis, OCR text extraction, and custom visual Q&A | OpenAI Vision |
+| 🖼️ **Vision Lab** | AI-powered image analysis, OCR text extraction, and custom visual Q&A | Google Gemini (multimodal) |
 | 📦 **Cloud Storage** | Full S3 file manager — browse buckets, upload/download files, generate presigned URLs, delete objects | boto3 S3 |
 | 📍 **Location Services** | IP geolocation, forward & reverse geocoding, public IP detection | IPInfo + Nominatim |
 
@@ -64,6 +64,7 @@ omnidev/
 │   │   │   ├── storage.py    # GET/POST/DELETE /api/storage/*
 │   │   │   └── location.py   # GET /api/location/*
 │   │   ├── services/         # Business logic
+│   │   │   ├── ai_service.py       # Shared Gemini client (google-genai)
 │   │   │   ├── devops_agent.py
 │   │   │   ├── codegen_service.py
 │   │   │   ├── context7_service.py
@@ -75,7 +76,7 @@ omnidev/
 │   │   └── schemas/          # Pydantic request/response models
 │   ├── requirements.txt
 │   ├── .env.example
-│   └── CREDENTIALS.md        # Step-by-step credential setup guide
+│   └── CREDENTIALS.md        # Extra credential notes (Gemini: Google AI Studio)
 ├── frontend/                 # Next.js 16 (React 19)
 │   ├── app/
 │   │   ├── page.tsx          # Landing page (OmniDev hero, features, pricing)
@@ -84,7 +85,6 @@ omnidev/
 │   │   ├── components/       # Shared components
 │   │   ├── devops/page.tsx   # DevOps Agent UI
 │   │   ├── codegen/page.tsx  # Code Gen UI (generate + live preview)
-│   │   ├── codegen/review/   # Code Gen · Site Review (UI overview)
 │   │   ├── scraper/page.tsx  # Web Scraper UI
 │   │   ├── vision/page.tsx   # Vision Lab UI
 │   │   ├── storage/page.tsx  # Cloud Storage UI
@@ -110,7 +110,7 @@ omnidev/
 |-------|-----------|
 | **Backend** | Python 3.13, FastAPI, Pydantic Settings, Uvicorn |
 | **Frontend** | Next.js 16, React 19, Framer Motion, TypeScript, StackBlitz SDK (live previews) |
-| **AI** | OpenAI GPT-4.1, Vision API, DALL·E, Context7 (code docs) |
+| **AI** | Google Gemini (`google-genai`), optional Context7 for codegen docs |
 | **Cloud** | AWS (EC2, S3) via boto3 |
 | **Scraping** | Playwright (Chromium), playwright-stealth |
 | **Geolocation** | IPInfo, OpenStreetMap Nominatim, ipify |
@@ -151,7 +151,7 @@ playwright install chromium
 
 # Configure environment
 cp .env.example .env
-# Edit .env with your credentials (see CREDENTIALS.md for help)
+# Edit .env with your credentials (Gemini key: https://aistudio.google.com/apikey)
 ```
 
 ### 3. Frontend Setup
@@ -188,16 +188,17 @@ Open **http://localhost:8000/docs** for the interactive Swagger API docs.
 Create a `backend/.env` file based on `backend/.env.example`:
 
 ```bash
-# OpenAI (required for DevOps Agent + Vision Lab)
-OPENAI_API_KEY=sk-proj-...
-OPENAI_MODEL=gpt-4.1-mini
+# Google Gemini (required for DevOps Agent, Code Gen, Vision Lab)
+# Free tier: https://aistudio.google.com/apikey
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.0-flash
 
-# Context7 (optional, recommended for Code Gen)
-CONTEXT7_API_KEY=ctx7_...
+# Context7 (optional — recommended for Code Gen live docs)
+CONTEXT7_API_KEY=
 
 # AWS (required for DevOps Agent + Cloud Storage)
-AWS_ACCESS_KEY_ID=AKIA...
-AWS_SECRET_ACCESS_KEY=...
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
 AWS_DEFAULT_REGION=us-east-1
 
 # IPInfo (optional — free tier works without a token)
@@ -207,18 +208,18 @@ IPINFO_TOKEN=
 CORS_ORIGINS=http://localhost:3000
 ```
 
-> 📖 **Need help getting credentials?** See [`backend/CREDENTIALS.md`](backend/CREDENTIALS.md) for step-by-step instructions for each service.
+> 📖 **Need help getting credentials?** See [`backend/CREDENTIALS.md`](backend/CREDENTIALS.md) for AWS, IPInfo, and Context7. For Gemini, use [Google AI Studio](https://aistudio.google.com/apikey).
 
 ### Which Credentials Are Needed for Each Feature?
 
-| Feature | OpenAI | AWS | IPInfo |
-|---------|--------|-----|--------|
-| DevOps Agent | ✅ Required | ✅ Required | — |
-| Code Gen | ✅ Required | — | — |
-| Web Scraper | — | — | — |
-| Vision Lab | ✅ Required | — | — |
-| Cloud Storage | — | ✅ Required | — |
-| Location Services | — | — | Optional |
+| Feature | Gemini | AWS | IPInfo | Context7 |
+|---------|--------|-----|--------|----------|
+| DevOps Agent | ✅ Required | ✅ Required | — | — |
+| Code Gen | ✅ Required | — | — | Optional |
+| Web Scraper | — | — | — | — |
+| Vision Lab | ✅ Required | — | — | — |
+| Cloud Storage | — | ✅ Required | — | — |
+| Location Services | — | — | Optional | — |
 
 > **Web Scraper** and **Location Services** work with zero configuration!
 
@@ -315,7 +316,7 @@ GET /health
 {
   "mode": "analyze",
   "result": "This image shows...",
-  "model": "gpt-4.1-mini",
+  "model": "gemini-2.0-flash",
   "tokens_used": 1250
 }
 ```
@@ -415,7 +416,7 @@ curl http://localhost:8000/api/location/me
 # Forward geocode
 curl "http://localhost:8000/api/location/geocode?q=Eiffel+Tower&limit=3"
 
-# DevOps command (requires OpenAI + AWS keys)
+# DevOps command (requires Gemini + AWS keys)
 curl -X POST http://localhost:8000/api/devops/command \
   -H "Content-Type: application/json" \
   -d '{"message": "List my EC2 instances"}'
@@ -448,5 +449,5 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 ---
 
 <p align="center">
-  Built with ❤️ using FastAPI, Next.js, and OpenAI
+  Built with ❤️ using FastAPI, Next.js, and Google Gemini
 </p>

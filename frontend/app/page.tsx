@@ -39,7 +39,7 @@ const FEATURES = [
     emoji: "🖼️",
     title: "Vision Lab",
     href: "/vision",
-    desc: "Analyze images and extract text via OpenAI vision models. Upload a screenshot, get structured OCR or analysis back.",
+    desc: "Analyze images and extract text via AI vision models. Upload a screenshot, get structured OCR or analysis back.",
   },
   {
     emoji: "📦",
@@ -62,7 +62,7 @@ const STEPS = [
   {
     num: "01",
     title: "Configure Once",
-    body: "Add your OpenAI API key, AWS credentials, and optional IPInfo token to a single .env file. OmniDev wires everything behind one unified FastAPI backend — no boilerplate, no glue code.",
+    body: "Add your AI API key, AWS credentials, and optional IPInfo token to a single .env file. OmniDev wires everything behind one unified FastAPI backend — no boilerplate, no glue code.",
   },
   {
     num: "02",
@@ -150,7 +150,7 @@ const FAQS = [
   },
   {
     q: "What backend stack does it use?",
-    a: "Python 3.13 + FastAPI with async handlers, Pydantic schemas, OpenAI SDK, Playwright with stealth, boto3 for AWS, ipinfo for geolocation, and httpx for HTTP.",
+    a: "Python 3.13 + FastAPI with async handlers, Pydantic schemas, Google Gemini SDK, Playwright with stealth, boto3 for AWS, ipinfo for geolocation, and httpx for HTTP.",
   },
   {
     q: "Can I add dashboard pages to the frontend?",
@@ -158,7 +158,7 @@ const FAQS = [
   },
   {
     q: "Do I need all the API keys to run it?",
-    a: "No. Each module works independently. If you only need the scraper, just run the backend without OpenAI or AWS keys — those endpoints will simply return errors when called.",
+    a: "No. Each module works independently. If you only need the scraper, just run the backend without AI or AWS keys — those endpoints will simply return errors when called.",
   },
   {
     q: "Is the scraper able to bypass Cloudflare?",
@@ -170,7 +170,7 @@ const STACK_ITEMS = [
   { icon: "🐍", label: "Python" },
   { icon: "⚡", label: "FastAPI" },
   { icon: "▲", label: "Next.js 16" },
-  { icon: "🧠", label: "OpenAI" },
+  { icon: "🧠", label: "Gemini AI" },
   { icon: "🎭", label: "Playwright" },
   { icon: "☁️", label: "AWS boto3" },
   { icon: "🔄", label: "Framer Motion" },
@@ -181,7 +181,7 @@ const STACK_ITEMS = [
 
 const COMPARISON_OURS = [
   `One unified backend for ${MODULE_COUNT} AI/cloud services`,
-  "Natural language AWS management via GPT",
+  "Natural language AWS management via AI",
   "Stealth scraping with Cloudflare bypass",
   "Vision AI + OCR built in",
   "Typed schemas + auto-generated docs",
@@ -526,7 +526,7 @@ export default function HomePage() {
                 </h3>
                 <p>
                   Send a plain-English command to the DevOps Agent. It parses
-                  your intent with OpenAI, dispatches the matching AWS boto3
+                  your intent with AI, dispatches the matching AWS boto3
                   call, and returns a human-readable summary — all through one
                   POST endpoint.
                 </p>
@@ -964,7 +964,7 @@ export default function HomePage() {
               <ul>
                 <li><a href="https://fastapi.tiangolo.com" target="_blank" rel="noopener">FastAPI</a></li>
                 <li><a href="https://nextjs.org" target="_blank" rel="noopener">Next.js 16</a></li>
-                <li><a href="https://platform.openai.com" target="_blank" rel="noopener">OpenAI API</a></li>
+                <li><a href="https://aistudio.google.com" target="_blank" rel="noopener">Gemini AI</a></li>
                 <li><a href="https://playwright.dev" target="_blank" rel="noopener">Playwright</a></li>
               </ul>
             </div>
