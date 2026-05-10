@@ -261,7 +261,7 @@ GET /api/location/geocode?q=Times+Square
 
 ## 🔐 Authentication
 
-Currently, OmniDev uses **API key authentication** via environment variables. All external service keys (`OPENAI_API_KEY`, `AWS_*`) are configured server-side and never exposed to the frontend.
+Currently, OmniDev uses **API key authentication** via environment variables. All optional external service keys (`GEMINI_API_KEY`, `AWS_*`, `IPINFO_TOKEN`, `CONTEXT7_API_KEY`) are configured server-side and never exposed to the frontend.
 
 ## ⚠️ Error Handling
 

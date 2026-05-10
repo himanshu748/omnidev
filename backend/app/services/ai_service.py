@@ -1,6 +1,8 @@
 """
-Shared Gemini client helpers for AI-backed services.
-Uses Google's free Gemini API (google-genai SDK).
+Configured AI provider helpers for AI-backed services.
+
+The current optional external AI provider is Google Gemini via the
+``google-genai`` SDK; local/default non-AI features do not call this module.
 """
 
 from __future__ import annotations
@@ -89,17 +91,17 @@ async def generate_with_tool(
 
 
 def extract_function_call(response: Any, function_name: str) -> dict[str, Any]:
-    """Extract the arguments of a specific function call from a Gemini response."""
+    """Extract the arguments of a function call from the configured AI response."""
     for candidate in getattr(response, "candidates", []):
         for part in getattr(candidate.content, "parts", []):
             fc = getattr(part, "function_call", None)
             if fc and fc.name == function_name:
                 return dict(fc.args) if fc.args else {}
-    raise ValueError(f"Gemini response did not include function call for {function_name!r}")
+    raise ValueError(f"Configured AI provider response did not include function call for {function_name!r}")
 
 
 def get_response_text(response: Any) -> str:
-    """Extract plain text from a Gemini response."""
+    """Extract plain text from the configured AI provider response."""
     return getattr(response, "text", "") or ""
 
 

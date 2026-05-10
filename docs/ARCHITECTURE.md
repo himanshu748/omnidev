@@ -48,8 +48,8 @@
           ┌────┘            │             │            └────┐
           ▼                 ▼             ▼                 ▼
     ┌──────────┐     ┌──────────┐  ┌──────────┐     ┌──────────┐
-    │  OpenAI  │     │Playwright│  │  AWS S3  │     │  IPInfo   │
-    │ GPT-4.1  │     │(Chromium)│  │  (boto3) │     │ Nominatim │
+    │   AI     │     │Playwright│  │ AWS EC2/ │     │ IPInfo + │
+    │ Provider │     │ local    │  │ S3 boto3 │     │ Nominatim│
     └──────────┘     └──────────┘  └──────────┘     └──────────┘
 ```
 
@@ -146,12 +146,28 @@ All styling flows from `globals.css` via CSS custom properties:
 
 <br />
 
+## Provider Modes
+
+OmniDev is local-first: the FastAPI backend, Next.js frontend, Playwright scraping runtime, code preview checker, and OpenStreetMap/Nominatim geocoding path can run from a developer workstation without an account-specific AI key. Features that need proprietary models or cloud accounts use optional external provider adapters and fail fast with clear configuration errors when the matching credentials are missing.
+
+| Mode | Provider boundary | Features | Configuration |
+|------|-------------------|----------|---------------|
+| **Local default** | Runs on the local backend/frontend process or keyless public endpoints | Web Scraper, preview health checks, frontend file viewing/downloads, local API docs, public-IP discovery, Nominatim geocoding | Python/Node dependencies, `playwright install chromium`, `CORS_ORIGINS` |
+| **Optional AI provider** | Configured AI client; current implementation uses Google Gemini through `google-genai` | DevOps natural-language parsing/summaries, Code Gen project generation, Vision Lab analysis/OCR | `GEMINI_API_KEY`, optional `GEMINI_MODEL` |
+| **Optional cloud provider** | AWS APIs through boto3 | EC2 DevOps actions and S3 Cloud Storage | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION` |
+| **Optional docs provider** | Context7 API | Fresh library documentation injected into Code Gen prompts | `CONTEXT7_API_KEY` |
+| **Optional geolocation provider** | IPInfo API | Higher-limit/enriched IP lookups | `IPINFO_TOKEN` |
+| **Optional preview/deploy providers** | Browser-hosted or deployment services | StackBlitz live preview from generated files; Vercel/Railway/Render deployment targets | Frontend package dependencies or provider account settings |
+
 ## External Services
 
 | Service | Usage | Config |
 |---------|-------|--------|
-| **OpenAI** | GPT-4.1 for DevOps NLU + Vision analysis | `OPENAI_API_KEY` |
-| **AWS** | EC2/S3 management via boto3 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
-| **Playwright** | Headless Chromium for web scraping | Installed via `playwright install chromium` |
-| **IPInfo** | IP geolocation lookups | `IPINFO_TOKEN` (optional) |
-| **Nominatim** | Forward/reverse geocoding (OpenStreetMap) | No key required |
+| **Google Gemini** | Optional AI provider for DevOps NLU/summaries, Code Gen, and Vision analysis/OCR | `GEMINI_API_KEY`, `GEMINI_MODEL` |
+| **AWS** | Optional EC2/S3 management via boto3 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_DEFAULT_REGION` |
+| **Playwright** | Local default headless Chromium for web scraping | Installed via `playwright install chromium` |
+| **Context7** | Optional Code Gen documentation context | `CONTEXT7_API_KEY` |
+| **IPInfo** | Optional IP geolocation enrichment | `IPINFO_TOKEN` |
+| **Nominatim** | Local-default/keyless forward/reverse geocoding through OpenStreetMap | No key required |
+| **StackBlitz** | Optional browser preview for generated frontend files | Frontend `@stackblitz/sdk` dependency |
+| **Vercel / Railway / Render** | Optional deployment targets documented for production hosting | Provider account/project configuration |

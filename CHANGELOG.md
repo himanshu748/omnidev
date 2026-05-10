@@ -23,9 +23,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [0.1.0] — 2026-01-13
 
 ### ✨ Added
-- **DevOps Agent** — Natural language AWS infrastructure management via OpenAI + boto3
+- **DevOps Agent** — Natural language AWS infrastructure management via the then-configured optional external OpenAI provider + boto3 (current docs use an optional provider abstraction)
 - **Web Scraper** — Playwright-powered stealth scraping with Cloudflare bypass, text/HTML/screenshot extraction
-- **Vision Lab** — Image analysis and OCR powered by OpenAI GPT-4.1 Vision
+- **Vision Lab** — Image analysis and OCR powered by the then-configured optional external OpenAI GPT-4.1 Vision provider (current docs use an optional provider abstraction)
 - **Cloud Storage** — S3 bucket browser with upload, download, list, and delete operations
 - **Location Services** — IP geolocation, forward/reverse geocoding via IPInfo + Nominatim
 - **Premium landing page** — Hero, features grid, code demo, testimonials, pricing, FAQ, comparison
