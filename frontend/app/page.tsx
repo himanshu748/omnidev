@@ -26,7 +26,7 @@ const FEATURES = [
     emoji: "⚡",
     title: "Code Gen",
     href: "/codegen",
-    desc: "Generate websites with Streamlit, React, Node, Python, or any framework. Context7 docs built-in; run in Vercel Sandbox.",
+    desc: "Generate websites with Streamlit, React, Node, Python, or any framework. Optional Context7 docs; run locally or optionally in Vercel Sandbox.",
     star: true,
   },
   {
@@ -150,7 +150,7 @@ const FAQS = [
   },
   {
     q: "What backend stack does it use?",
-    a: "Python 3.13 + FastAPI with async handlers, Pydantic schemas, Google Gemini SDK, Playwright with stealth, boto3 for AWS, ipinfo for geolocation, and httpx for HTTP.",
+    a: "Python 3.13 + FastAPI with async handlers, Pydantic schemas, an optional Google Gemini SDK provider, Playwright with stealth, optional boto3/AWS, optional ipinfo geolocation, and httpx for HTTP.",
   },
   {
     q: "Can I add dashboard pages to the frontend?",
@@ -170,7 +170,7 @@ const STACK_ITEMS = [
   { icon: "🐍", label: "Python" },
   { icon: "⚡", label: "FastAPI" },
   { icon: "▲", label: "Next.js 16" },
-  { icon: "🧠", label: "Gemini AI" },
+  { icon: "🧠", label: "Optional Gemini AI" },
   { icon: "🎭", label: "Playwright" },
   { icon: "☁️", label: "AWS boto3" },
   { icon: "🔄", label: "Framer Motion" },
@@ -964,7 +964,7 @@ export default function HomePage() {
               <ul>
                 <li><a href="https://fastapi.tiangolo.com" target="_blank" rel="noopener">FastAPI</a></li>
                 <li><a href="https://nextjs.org" target="_blank" rel="noopener">Next.js 16</a></li>
-                <li><a href="https://aistudio.google.com" target="_blank" rel="noopener">Gemini AI</a></li>
+                <li><a href="https://aistudio.google.com" target="_blank" rel="noopener">Optional Gemini AI</a></li>
                 <li><a href="https://playwright.dev" target="_blank" rel="noopener">Playwright</a></li>
               </ul>
             </div>

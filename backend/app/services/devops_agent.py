@@ -1,8 +1,10 @@
 """
-DevOps Agent service — v3 (Gemini).
-1. Parse natural-language command via Gemini -> structured intent
-2. Dispatch to the matching boto3 AWS call
-3. Summarise the result with Gemini
+DevOps Agent service.
+
+1. Parse natural-language commands through the configured optional AI provider
+   (Google Gemini in the current implementation) into structured intent.
+2. Dispatch to the matching optional AWS/boto3 call.
+3. Summarise the result through the configured AI provider.
 
 Supported AWS services: EC2, S3, VPC, IAM, RDS, CloudWatch, Lambda.
 """

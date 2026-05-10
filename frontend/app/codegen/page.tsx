@@ -111,14 +111,14 @@ export default function CodeGenPage() {
   return (
     <FeatureLayout
       title="Code Gen"
-      description="Generate full websites or apps with Streamlit, React, Node, Python, or any supported framework. Uses Context7 for live docs; run your project in Vercel Sandbox."
+      description="Generate full websites or apps with Streamlit, React, Node, Python, or any supported framework. Uses optional Context7 live docs; run locally or optionally in Vercel Sandbox."
       icon="⚡"
       endpoints={[{ method: "POST", path: "/api/codegen/generate" }]}
     >
       <div className="codegenHero">
         <h1 className="codegenHeroTitle">Build apps in seconds</h1>
         <p className="codegenHeroSubtitle">
-          Describe what you want — get runnable code. Context7 docs built-in; run in Vercel Sandbox or copy files.
+          Describe what you want — get runnable code. Optional Context7 docs; run locally, optionally in Vercel Sandbox, or copy files.
         </p>
       </div>
 
@@ -127,7 +127,7 @@ export default function CodeGenPage() {
         <span className="codegenHowArrow">→</span>
         <span className="codegenHowStep"><strong>2</strong> Generate</span>
         <span className="codegenHowArrow">→</span>
-        <span className="codegenHowStep"><strong>3</strong> Run in Sandbox or copy</span>
+        <span className="codegenHowStep"><strong>3</strong> Run locally, optional Sandbox, or copy</span>
       </div>
 
       <div className="featureCard">
@@ -138,7 +138,7 @@ export default function CodeGenPage() {
           </h2>
         </div>
         <p className="featureCardSubtitle">
-          Describe what you want to build and pick a framework. Code is generated with Context7 docs and ready for Vercel Sandbox.
+          Describe what you want to build and pick a framework. Code can use optional Context7 docs and can run locally or optionally in Vercel Sandbox.
         </p>
 
         <form className="featureForm" onSubmit={handleGenerate}>
@@ -252,7 +252,7 @@ export default function CodeGenPage() {
                 }}
                 disabled={!canEmbed}
               >
-                Open in StackBlitz →
+                Open optional StackBlitz preview →
               </button>
             </div>
 

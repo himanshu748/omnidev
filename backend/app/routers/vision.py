@@ -1,4 +1,4 @@
-"""Vision Lab router — image analysis & OCR via Claude."""
+"""Vision Lab router — image analysis & OCR via configured AI provider."""
 
 from __future__ import annotations
 

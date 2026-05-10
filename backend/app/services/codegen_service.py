@@ -1,7 +1,9 @@
 """
-Code Gen service — generate website/project code with Context7 docs.
+Code Gen service — generate website/project code.
+
 Frameworks: Streamlit, React, Next.js, Node/Express, Python/FastAPI, etc.
-Output is meant to be run in Vercel Sandbox (instructions returned to user).
+Context7 is an optional external docs provider. Vercel Sandbox is an optional
+external run target mentioned in the returned instructions.
 """
 
 from __future__ import annotations
@@ -79,7 +81,7 @@ async def _fetch_docs_for_framework(framework: str, prompt: str) -> str:
 async def generate_project(prompt: str, framework: str) -> dict[str, Any]:
     """
     Generate a full project (multiple files) for the given prompt and framework.
-    Uses Context7 docs when CONTEXT7_API_KEY is set.
+    Uses optional Context7 docs when CONTEXT7_API_KEY is set.
     """
     docs_block = await _fetch_docs_for_framework(framework, prompt)
     system = """You are an expert full-stack developer. Generate a complete, runnable project based on the user's request and the framework they chose.
@@ -121,5 +123,5 @@ Rules:
             "instructions": "Fix the generation or try again.",
         }
     files = data.get("files") or []
-    instructions = data.get("instructions") or "Run the project with the usual commands for your framework (e.g. npm install && npm run dev, or streamlit run app.py). You can use Vercel Sandbox for a live preview: https://vercel.com/docs/vercel-sandbox"
+    instructions = data.get("instructions") or "Run the project with the usual commands for your framework (e.g. npm install && npm run dev, or streamlit run app.py). You can optionally use Vercel Sandbox for a live preview: https://vercel.com/docs/vercel-sandbox"
     return {"files": files, "instructions": instructions}

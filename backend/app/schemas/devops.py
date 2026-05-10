@@ -16,7 +16,7 @@ class DevOpsCommandRequest(BaseModel):
     )
 
 
-# ── Internal: Claude-parsed intent ─────────────────────────
+# ── Internal: provider-parsed intent ───────────────────────
 class ParsedIntent(BaseModel):
     action: str = Field(..., description="One of the supported action names")
     params: dict[str, Any] = Field(default_factory=dict)
