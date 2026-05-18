@@ -1,8 +1,6 @@
 """
 Vision Lab service.
-
-Sends images to the configured optional AI provider for analysis / OCR.
-Google Gemini is the current provider implementation.
+Sends images to Gemini for analysis / OCR.
 """
 
 from __future__ import annotations
@@ -32,7 +30,7 @@ async def analyze_image(
     custom_prompt: str | None = None,
 ) -> dict:
     """
-    Send an image to the configured AI provider and return the result.
+    Send an image to Gemini and return the result.
     """
     if mode == VisionMode.custom:
         prompt = custom_prompt or "What do you see in this image?"

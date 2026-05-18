@@ -1,4 +1,4 @@
-"""Code Gen router — generate apps with optional Context7 docs and Vercel Sandbox instructions."""
+"""Code Gen router — generate websites/apps with Context7 docs; run in Vercel Sandbox."""
 
 from __future__ import annotations
 
@@ -14,8 +14,8 @@ router = APIRouter()
 async def codegen_generate(body: CodeGenRequest):
     """
     Generate a full project (multiple files) for the given prompt and framework.
-    Uses optional Context7 docs when CONTEXT7_API_KEY is set.
-    Output can be run locally or optionally in Vercel Sandbox (see response instructions).
+    Uses Context7 for up-to-date docs when CONTEXT7_API_KEY is set.
+    Output is ready to run in Vercel Sandbox (see instructions in response).
     """
     try:
         result = await generate_project(prompt=body.prompt, framework=body.framework)

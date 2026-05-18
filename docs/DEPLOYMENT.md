@@ -19,16 +19,15 @@
 Create a `.env` file in the `backend/` directory:
 
 ```env
-# Optional AI provider (Google Gemini; needed for DevOps Agent, Code Gen, Vision Lab)
-GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.0-flash
+# AI
+OPENAI_API_KEY=sk-...
 
-# Optional cloud provider (AWS; needed for DevOps Agent + Cloud Storage)
+# AWS (for DevOps Agent + Cloud Storage)
 AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=...
 AWS_DEFAULT_REGION=us-east-1
 
-# Optional geolocation provider (IPInfo; Location Services have keyless defaults)
+# Geolocation (optional — falls back to free tier)
 IPINFO_TOKEN=...
 
 # CORS (comma-separated origins for production)
@@ -143,9 +142,9 @@ services:
 
 <br />
 
-## Option 3: Optional Vercel (Frontend) + Railway (Backend)
+## Option 3: Vercel (Frontend) + Railway (Backend)
 
-### Frontend on Vercel (optional external deployment provider)
+### Frontend on Vercel
 
 ```bash
 npm i -g vercel
@@ -153,7 +152,7 @@ cd frontend
 vercel --prod
 ```
 
-Set `NEXT_PUBLIC_API_URL` in Vercel project settings if you choose this optional external deployment provider.
+Set `NEXT_PUBLIC_API_URL` in Vercel project settings.
 
 ### Backend on Railway
 

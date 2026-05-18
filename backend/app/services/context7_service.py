@@ -1,5 +1,5 @@
 """
-Optional Context7 integration — fetch up-to-date library docs for code generation.
+Context7 integration — fetch up-to-date library docs for code generation.
 API: https://context7.com (search libs, get context).
 """
 

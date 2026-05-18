@@ -15,7 +15,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ── Optional AI provider: Google Gemini (free tier) ───
+    # ── Google Gemini (free tier) ──────────────────────────
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash"
 
@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     # ── IPInfo ──────────────────────────────────────────────
     ipinfo_token: str = ""
 
-    # ── Optional Context7 docs provider for Code Gen ───────
+    # ── Context7 (docs for codegen) ─────────────────────────
     context7_api_key: str = ""
 
     # ── CORS ────────────────────────────────────────────────

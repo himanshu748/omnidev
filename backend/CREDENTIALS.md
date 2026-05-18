@@ -6,20 +6,20 @@ This guide walks you through getting each API key or credential used by the back
 
 ## API key matrix (at a glance)
 
-| Module           | Gemini AI provider | AWS | IPInfo | Context7 | Notes |
-|-----------------|--------------------|-----|--------|----------|--------|
-| **DevOps Agent**| Optional external service required for NLU/summaries | Optional external service required for AWS actions | — | — | Local UI/API plus provider-backed natural language → boto3 |
-| **Code Gen**    | Optional external service required for generation | — | — | Optional docs provider | Without Context7: no live docs. |
-| **Vision Lab**  | Optional external service required for image analysis/OCR | — | — | — | Local UI/API plus provider-backed analysis / OCR |
-| **Web Scraper** | — | — | — | — | Local default: no keys (Playwright) |
-| **Cloud Storage**| — | Optional external service required for S3 operations | — | — | S3 only |
-| **Location**    | — | — | Optional external service | — | Keyless defaults work (rate limited) |
+| Module           | Gemini | AWS | IPInfo | Context7 | Notes |
+|-----------------|--------|-----|--------|----------|--------|
+| **DevOps Agent**| ✅ Required | ✅ Required | — | — | Natural language → boto3 |
+| **Code Gen**    | ✅ Required | — | — | Optional | Without Context7: no live docs. |
+| **Vision Lab**  | ✅ Required | — | — | — | Image analysis / OCR |
+| **Web Scraper** | — | — | — | — | No keys (Playwright) |
+| **Cloud Storage**| — | ✅ Required | — | — | S3 only |
+| **Location**    | — | — | Optional | — | Works without token (rate limited) |
 
 ---
 
-## 1. Optional Google Gemini API Key (needed for DevOps Agent, Code Gen, Vision Lab)
+## 1. Google Gemini API Key (required for DevOps Agent, Code Gen, Vision Lab)
 
-OmniDev's current AI provider adapter uses the **Google GenAI** SDK with a free-tier key from AI Studio. Local/default non-AI features do not need this key:
+OmniDev uses the **Google GenAI** SDK with a free-tier key from AI Studio:
 
 1. Go to **https://aistudio.google.com/apikey**
 2. Sign in with a Google account and create an API key.
@@ -94,9 +94,9 @@ Location endpoints work without a token (free tier). For higher limits and more 
 
 ---
 
-## 4. Optional Context7 API Key (Code Gen docs provider)
+## 4. Context7 API Key (optional for Code Gen)
 
-Code Gen can use optional Context7 to inject up-to-date library docs (React, Next.js, Streamlit, etc.) into generated code. Without it, generation still works using model knowledge.
+Code Gen uses Context7 to inject up-to-date library docs (React, Next.js, Streamlit, etc.) into generated code. Without it, generation still works using model knowledge.
 
 1. Go to **https://context7.com/dashboard**
 2. Sign up and create an API key.
@@ -111,19 +111,19 @@ Code Gen can use optional Context7 to inject up-to-date library docs (React, Nex
 ## Quick reference: `.env` template
 
 ```bash
-# Optional AI provider: Google Gemini (needed for DevOps, Code Gen, Vision)
+# Google Gemini (required for DevOps, Code Gen, Vision)
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.0-flash
 
-# Optional cloud provider: AWS (needed for DevOps + Storage)
+# AWS (required for DevOps + Storage)
 AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=...
 AWS_DEFAULT_REGION=us-east-1
 
-# Optional geolocation provider: IPInfo (Location has keyless defaults)
+# IPInfo (optional for Location)
 IPINFO_TOKEN=
 
-# Optional docs provider: Context7 (for Code Gen live docs)
+# Context7 (optional for Code Gen live docs)
 CONTEXT7_API_KEY=
 
 # CORS
@@ -143,9 +143,9 @@ Run the backend (`cd backend && uv run uvicorn app.main:app --reload`) and front
 | **Health** | `curl http://localhost:8000/health` → `{"status":"ok"}` |
 | **Scraper** (no key) | Open http://localhost:3000/scraper → paste URL → Start Scraping. Should return content. |
 | **Location** (optional key) | Open http://localhost:3000/location → Detect Location. Should show IP + city. |
-| **DevOps** (optional Gemini AI provider + optional AWS) | Open http://localhost:3000/devops → e.g. "List my EC2 instances" → Run. Should return summary (or 500 if keys missing). |
-| **Code Gen** (optional Gemini AI provider) | Open http://localhost:3000/codegen → prompt e.g. "A hello world page", framework React → Generate. Should return files. |
-| **Vision** (optional Gemini AI provider) | Open http://localhost:3000/vision → Upload image → Analyze. Needs a valid optional AI provider key (`GEMINI_API_KEY`). |
+| **DevOps** (Gemini + AWS) | Open http://localhost:3000/devops → e.g. "List my EC2 instances" → Run. Should return summary (or 500 if keys missing). |
+| **Code Gen** (Gemini) | Open http://localhost:3000/codegen → prompt e.g. "A hello world page", framework React → Generate. Should return files. |
+| **Vision** (Gemini) | Open http://localhost:3000/vision → Upload image → Analyze. Needs valid `GEMINI_API_KEY`. |
 | **Storage** (AWS) | Open http://localhost:3000/storage → List buckets. Should list buckets or `[]` (500 if AWS keys missing). |
 
 If any endpoint returns **500** with a message like "Invalid API key" or "Credentials not found", add or fix that key in `backend/.env`.
