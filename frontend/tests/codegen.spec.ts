@@ -12,6 +12,7 @@ test("codegen generate flow", async ({ page }) => {
   await page.goto("/codegen");
   await page.fill("#codegen-prompt", "Build a todo app");
   await page.getByRole("button", { name: "Generate project" }).click();
-  await expect(page.getByText("Generated project")).toBeVisible();
-  await expect(page.getByText("package.json")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Live preview" })).toBeVisible();
+  await expect(page.locator(".codegenFileListTitle", { hasText: "Files" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "package.json" })).toBeVisible();
 });

@@ -19,27 +19,52 @@ const FRAMEWORKS = [
 ];
 
 const WEB_FRAMEWORKS = ["react", "next", "vue", "svelte"];
+const CODEGEN_SAFETY_POINTS = [
+  "Gemini generation with optional Context7 docs",
+  "Backend validates file paths and output size",
+  "No backend execution of generated code",
+  "Web previews run in StackBlitz browser isolation",
+];
+const BLOCKED_SCRIPT_FRAGMENTS = ["|", ";", "`", "$(", ">", "<"];
+const BLOCKED_SCRIPT_PATTERN =
+  /(^|[\s&|;])(?:bash|sh|zsh|fish|powershell|pwsh|curl|wget|nc|ncat|netcat|ssh|scp|rsync|sudo|chmod|chown|openssl)\b|\b(?:node|python|python3|ruby|perl|php)\s+-[ce]\b|\bbase64\s+(?:-d|--decode)\b/i;
+
+function isSafePreviewScript(command: unknown): command is string {
+  if (typeof command !== "string") return false;
+  return !BLOCKED_SCRIPT_FRAGMENTS.some((fragment) => command.includes(fragment)) && !BLOCKED_SCRIPT_PATTERN.test(command);
+}
+
+function getSafePackageJson(files: FileEntry[]): { parsed: Record<string, unknown>; startCommand: string } | null {
+  const pkg = files.find((x) => x.path === "package.json");
+  if (!pkg) return null;
+  try {
+    const parsed = JSON.parse(pkg.content) as Record<string, unknown>;
+    const scripts = parsed.scripts && typeof parsed.scripts === "object" ? (parsed.scripts as Record<string, unknown>) : {};
+    for (const command of Object.values(scripts)) {
+      if (!isSafePreviewScript(command)) return null;
+    }
+    const startCommand =
+      (typeof scripts.dev === "string" && scripts.dev) ||
+      (typeof scripts.start === "string" && scripts.start) ||
+      (typeof scripts.build === "string" ? "npm run build && npm start" : "npm start");
+    return { parsed, startCommand };
+  } catch {
+    return null;
+  }
+}
 
 function buildStackBlitzFiles(files: FileEntry[]): Record<string, string> {
   const out: Record<string, string> = {};
   for (const f of files) {
     out[f.path] = f.content;
   }
-  const pkg = files.find((x) => x.path === "package.json");
-  if (pkg) {
-    try {
-      const parsed = JSON.parse(pkg.content);
-      const scripts = parsed.scripts || {};
-      const startCmd =
-        scripts.dev || scripts.start || (scripts.build ? "npm run build && npm start" : "npm start");
-      parsed.stackblitz = {
-        installDependencies: true,
-        startCommand: startCmd,
-      };
-      out["package.json"] = JSON.stringify(parsed, null, 2);
-    } catch {
-      // keep original
-    }
+  const safePackage = getSafePackageJson(files);
+  if (safePackage) {
+    safePackage.parsed.stackblitz = {
+      installDependencies: true,
+      startCommand: safePackage.startCommand,
+    };
+    out["package.json"] = JSON.stringify(safePackage.parsed, null, 2);
   }
   return out;
 }
@@ -55,7 +80,7 @@ export default function CodeGenPage() {
   const [embedReady, setEmbedReady] = useState(false);
   const embedRef = useRef<HTMLDivElement>(null);
 
-  const canEmbed = result && WEB_FRAMEWORKS.includes(framework) && result.files.some((f) => f.path === "package.json");
+  const canEmbed = result && WEB_FRAMEWORKS.includes(framework) && Boolean(getSafePackageJson(result.files));
 
   useEffect(() => {
     if (!canEmbed || !result || !embedRef.current) return;
@@ -111,23 +136,31 @@ export default function CodeGenPage() {
   return (
     <FeatureLayout
       title="Code Gen"
-      description="Generate full websites or apps with Streamlit, React, Node, Python, or any supported framework. Uses Context7 for live docs; run your project in Vercel Sandbox."
+      description="Generate project files with Gemini and optional Context7 docs. OmniDev validates paths and sizes, then lets you preview web projects in StackBlitz or download a safe ZIP."
       icon="⚡"
       endpoints={[{ method: "POST", path: "/api/codegen/generate" }]}
     >
       <div className="codegenHero">
-        <h1 className="codegenHeroTitle">Build apps in seconds</h1>
+        <h1 className="codegenHeroTitle">Generate files, then run them safely</h1>
         <p className="codegenHeroSubtitle">
-          Describe what you want — get runnable code. Context7 docs built-in; run in Vercel Sandbox or copy files.
+          Describe what you want and pick a framework. The backend returns
+          validated relative files only; OmniDev never executes generated code
+          on your machine or server.
         </p>
       </div>
 
       <div className="codegenHowItWorks">
         <span className="codegenHowStep"><strong>1</strong> Describe + framework</span>
         <span className="codegenHowArrow">→</span>
-        <span className="codegenHowStep"><strong>2</strong> Generate</span>
+        <span className="codegenHowStep"><strong>2</strong> Validate files</span>
         <span className="codegenHowArrow">→</span>
-        <span className="codegenHowStep"><strong>3</strong> Run in Sandbox or copy</span>
+        <span className="codegenHowStep"><strong>3</strong> Preview or download</span>
+      </div>
+
+      <div className="codegenSafetyStrip">
+        {CODEGEN_SAFETY_POINTS.map((point) => (
+          <span key={point}>{point}</span>
+        ))}
       </div>
 
       <div className="featureCard">
@@ -138,7 +171,9 @@ export default function CodeGenPage() {
           </h2>
         </div>
         <p className="featureCardSubtitle">
-          Describe what you want to build and pick a framework. Code is generated with Context7 docs and ready for Vercel Sandbox.
+          Describe what you want to build and pick a framework. Code is generated
+          with Gemini, grounded with Context7 docs when configured, and returned
+          as sandboxed output files.
         </p>
 
         <form className="featureForm" onSubmit={handleGenerate}>

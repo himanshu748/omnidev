@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { API_BASE, isHostedWithoutApiConfig } from "@/lib/api";
 
 const FEATURE_LINKS = [
   { label: "DevOps Agent", href: "/devops", emoji: "🤖" },
@@ -31,6 +33,11 @@ export default function FeatureLayout({
   endpoints?: EndpointInfo[];
 }) {
   const pathname = usePathname();
+  const [showApiNotice, setShowApiNotice] = useState(false);
+
+  useEffect(() => {
+    setShowApiNotice(isHostedWithoutApiConfig());
+  }, []);
 
   return (
     <div className="featureApp">
@@ -58,6 +65,13 @@ export default function FeatureLayout({
           {icon && <div className="featurePageIcon">{icon}</div>}
           <h1 className="featureTitle">{title}</h1>
           <p className="featureDesc">{description}</p>
+          {showApiNotice && (
+            <div className="featureApiNotice" role="status">
+              <span className="statusDot statusError" />
+              <span>Backend API not configured for this hosted frontend.</span>
+              <code>{API_BASE}</code>
+            </div>
+          )}
           {endpoints && endpoints.length > 0 && (
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginTop: 14 }}>
               {endpoints.map((ep) => (

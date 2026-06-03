@@ -11,7 +11,7 @@ from app.schemas.location import (
     MyLocationResponse,
     ReverseGeocodeResponse,
 )
-from app.services.location_service import geocode, ip_lookup, my_location, reverse_geocode
+from app.services import location_service
 
 router = APIRouter()
 
@@ -20,7 +20,7 @@ router = APIRouter()
 async def get_ip_location(ip: str = Query(None, description="IP to look up (omit for your own)")):
     """Look up geolocation data for an IP address."""
     try:
-        result = await ip_lookup(ip)
+        result = await location_service.ip_lookup(ip)
         return IPLocationResponse(**result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
@@ -33,7 +33,7 @@ async def get_reverse_geocode(
 ):
     """Convert latitude/longitude to a human-readable address via Nominatim."""
     try:
-        result = await reverse_geocode(lat, lng)
+        result = await location_service.reverse_geocode(lat, lng)
         return ReverseGeocodeResponse(**result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
@@ -50,7 +50,7 @@ async def get_geocode(
 ):
     """Convert an address or place name to latitude/longitude (Nominatim)."""
     try:
-        results = await geocode(q, limit=limit, countrycodes=countrycodes)
+        results = await location_service.geocode(q, limit=limit, countrycodes=countrycodes)
         return GeocodeResponse(
             results=[GeocodeResultItem(**r) for r in results]
         )
@@ -62,7 +62,7 @@ async def get_geocode(
 async def get_my_location():
     """Detect the server's public IP and resolve its location."""
     try:
-        result = await my_location()
+        result = await location_service.my_location()
         return MyLocationResponse(**result)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))

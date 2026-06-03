@@ -48,8 +48,8 @@
           ┌────┘            │             │            └────┐
           ▼                 ▼             ▼                 ▼
     ┌──────────┐     ┌──────────┐  ┌──────────┐     ┌──────────┐
-    │  OpenAI  │     │Playwright│  │  AWS S3  │     │  IPInfo   │
-    │ GPT-4.1  │     │(Chromium)│  │  (boto3) │     │ Nominatim │
+    │ Gemini   │     │Playwright│  │  AWS S3  │     │  IPInfo  │
+    │ AI       │     │(Chromium)│  │  (boto3) │     │ Nominatim│
     └──────────┘     └──────────┘  └──────────┘     └──────────┘
 ```
 
@@ -71,7 +71,7 @@ omnidev/
 │   │   │   ├── storage.py     # /api/storage/*
 │   │   │   └── location.py    # /api/location/*
 │   │   ├── services/          # Business logic layer
-│   │   │   ├── devops_service.py
+│   │   │   ├── devops_agent.py
 │   │   │   ├── scraper_service.py
 │   │   │   ├── vision_service.py
 │   │   │   ├── storage_service.py
@@ -86,7 +86,7 @@ omnidev/
 │   └── .env.example
 ├── frontend/
 │   ├── app/
-│   │   ├── layout.tsx         # Root layout (Space Grotesk + JetBrains Mono)
+│   │   ├── layout.tsx         # Root layout and metadata
 │   │   ├── page.tsx           # Landing page with 8 sections
 │   │   ├── globals.css        # Design system (2600+ lines)
 │   │   ├── devops/page.tsx    # DevOps Agent dashboard
@@ -140,7 +140,7 @@ Each feature page follows a consistent pattern:
 
 All styling flows from `globals.css` via CSS custom properties:
 - **No inline colors** — use `var(--accent)`, `var(--bg-card)`, etc.
-- **Typography**: Space Grotesk (display/UI) + JetBrains Mono (code/technical)
+- **Typography**: offline-safe system sans stack for display/UI + system mono stack for code/technical values
 - **Glassmorphism**: `.glass-panel`, `.glass-nav` utility classes
 - **Responsive**: `clamp()`, `min()`, and media queries throughout
 
@@ -150,7 +150,9 @@ All styling flows from `globals.css` via CSS custom properties:
 
 | Service | Usage | Config |
 |---------|-------|--------|
-| **OpenAI** | GPT-4.1 for DevOps NLU + Vision analysis | `OPENAI_API_KEY` |
+| **Google Gemini** | DevOps NLU, code generation, and Vision analysis | `GEMINI_API_KEY`, `GEMINI_MODEL` |
+| **Context7** | Optional docs grounding for Code Gen prompts | `CONTEXT7_API_KEY` |
+| **StackBlitz** | Browser-isolated preview for generated web projects; OmniDev backend does not execute generated code | None |
 | **AWS** | EC2/S3 management via boto3 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
 | **Playwright** | Headless Chromium for web scraping | Installed via `playwright install chromium` |
 | **IPInfo** | IP geolocation lookups | `IPINFO_TOKEN` (optional) |

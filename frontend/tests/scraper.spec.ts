@@ -15,7 +15,7 @@ test("scraper happy path", async ({ page }) => {
   await page.goto("/scraper");
   await page.fill("#scraper-url", "https://example.com");
   await page.getByRole("button", { name: "🕷️ Start Scraping →" }).click();
-  await expect(page.getByText("Example Domain")).toBeVisible();
+  await expect(page.locator(".scraperTitle", { hasText: "Example Domain" })).toBeVisible();
   await expect(page.getByText("HTTP 200")).toBeVisible();
 });
 

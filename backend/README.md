@@ -7,11 +7,11 @@ All-in-One AI Developer Platform — FastAPI backend.
 | Module | Description |
 |---|---|
 | DevOps Agent | Manage AWS with natural language (Google Gemini + boto3) |
-| Web Scraper | Playwright with stealth mode & Cloudflare bypass |
+| Web Scraper | Playwright with stealth mode, screenshots, PDFs, links, and metadata extraction |
 | Vision Lab | Gemini multimodal for image analysis & OCR |
 | Cloud Storage | S3 file manager with upload/download |
 | Location Services | IP geolocation, reverse geocoding |
-| Code Gen | Project generation with optional Context7 docs |
+| Code Gen | Gemini project generation with optional Context7 docs, validated file output, and no backend execution |
 
 ## Quick Start
 

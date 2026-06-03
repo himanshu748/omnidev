@@ -2,16 +2,17 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { API_BASE } from "@/lib/api";
 
 /* ================================================================
    DATA
    ================================================================ */
 
 const NAV_LINKS = [
-  { label: "Features", href: "#features" },
+  { label: "Setup", href: "#setup" },
+  { label: "Modules", href: "#features" },
   { label: "Process", href: "#process" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Proof", href: "#proof" },
 ];
 
 const FEATURES = [
@@ -19,21 +20,21 @@ const FEATURES = [
     emoji: "🤖",
     title: "DevOps Agent",
     href: "/devops",
-    desc: 'Manage AWS infrastructure with natural language — "List my EC2 instances", "Launch a t2.micro", "Show security groups".',
+    desc: 'Run AWS commands from a local dashboard or API — "List my EC2 instances", "Show security groups", "Create an S3 bucket".',
     flagship: true,
   },
   {
     emoji: "⚡",
     title: "Code Gen",
     href: "/codegen",
-    desc: "Generate websites with Streamlit, React, Node, Python, or any framework. Context7 docs built-in; run in Vercel Sandbox.",
+    desc: "Generate app scaffolds with Gemini and Context7-backed docs, then inspect the result before wiring it into your workflow.",
     star: true,
   },
   {
     emoji: "🕷️",
     title: "Web Scraper",
     href: "/scraper",
-    desc: "Playwright-powered scraping with stealth mode, Cloudflare bypass, custom JS execution, and full-page screenshots.",
+    desc: "Playwright-powered scraping for metadata, links, PDFs, screenshots, and custom waits while keeping bot-protection limits explicit.",
   },
   {
     emoji: "🖼️",
@@ -56,97 +57,73 @@ const FEATURES = [
 ];
 
 const MODULE_COUNT = FEATURES.length;
-const HERO_PARTICLES = Array.from({ length: 12 }, (_, i) => i);
+
+const LOCAL_COMMANDS = [
+  "cd backend && python -m uvicorn app.main:app --reload",
+  "cd frontend && NEXT_PUBLIC_API_URL=http://localhost:8000 npm run dev",
+];
+
+const CONFIG_ITEMS = [
+  { label: "Default API", value: "http://localhost:8000" },
+  { label: "Override", value: "NEXT_PUBLIC_API_URL" },
+  { label: "Docs", value: "/docs" },
+];
 
 const STEPS = [
   {
     num: "01",
-    title: "Configure Once",
-    body: "Add your AI API key, AWS credentials, and optional IPInfo token to a single .env file. OmniDev wires everything behind one unified FastAPI backend — no boilerplate, no glue code.",
+    title: "Run the API Locally",
+    body: "Start the FastAPI backend on port 8000. The frontend points there by default, so local development works before you touch a hosted environment.",
   },
   {
     num: "02",
-    title: "Prompt or Trigger",
-    body: "Use natural language to manage AWS resources, post a URL to scrape, upload an image for analysis, or call any endpoint directly from the interactive Swagger docs at /docs.",
+    title: "Configure Only What You Use",
+    body: "Add Gemini, AWS, and optional IPInfo keys module by module. Missing credentials are surfaced by the relevant endpoint instead of blocking the whole app.",
   },
   {
     num: "03",
-    title: "Ship Faster",
-    body: "Get structured JSON results instantly. Pipe them into your frontend, CI/CD, or automation scripts. Focus on building product instead of integrating five different SDKs.",
+    title: "Point Hosted UI at Any API",
+    body: "Set NEXT_PUBLIC_API_URL when deploying the frontend so the same dashboards can target a local tunnel, staging API, or production backend.",
   },
 ];
 
-const TESTIMONIALS = [
+const PROOF_POINTS = [
   {
-    quote:
-      "OmniDev replaced three separate tools in my workflow. The DevOps agent alone saves me 30 minutes a day on AWS management.",
-    name: "Alex Chen",
-    role: "Indie Hacker",
-    initials: "AC",
+    metric: "6",
+    label: "Working Modules",
+    body: "DevOps, Code Gen, Scraper, Vision, Storage, and Location are wired through typed FastAPI routes and dedicated frontend pages.",
   },
   {
-    quote:
-      "The stealth scraper handles Cloudflare sites that broke every other tool I tried. Combined with Vision Lab for OCR, it's incredibly powerful.",
-    name: "Priya Sharma",
-    role: "Data Engineer",
-    initials: "PS",
+    metric: "2",
+    label: "Runtime Surfaces",
+    body: "A FastAPI backend exposes OpenAPI docs while the Next.js app gives each service a focused dashboard instead of a generic demo shell.",
   },
   {
-    quote:
-      "Having everything in one FastAPI backend with typed schemas and auto-generated docs is a dream for solo developers.",
-    name: "Marcus Rivera",
-    role: "Fullstack Developer",
-    initials: "MR",
+    metric: "14+",
+    label: "Tested Flows",
+    body: "Backend pytest coverage and frontend Playwright specs cover health checks, mocked API flows, and the core module screens.",
   },
 ];
 
-const PRICING = [
+const RUNBOOK = [
   {
-    name: "Starter",
-    price: 0,
-    yearlyPrice: 0,
-    sub: "Free forever",
-    features: [
-      `All ${MODULE_COUNT} backend modules`,
-      "Single-user local setup",
-      "Interactive OpenAPI docs",
-      "Community support",
-      "MIT licensed",
-    ],
+    title: "Install Both Sides",
+    detail: "Install Python dependencies in `backend/` and Node dependencies in `frontend/`. Keep each runtime independent so failures are easier to isolate.",
   },
   {
-    name: "Pro Solo",
-    price: 29,
-    yearlyPrice: 23,
-    sub: "per month",
-    popular: true,
-    features: [
-      "Everything in Starter",
-      "Priority feature updates",
-      "Production-ready frontend",
-      "Advanced prompt templates",
-      "Direct support channel",
-    ],
+    title: "Start Local API First",
+    detail: "Run the FastAPI server on `http://localhost:8000`, then open the Next.js app. The frontend uses that URL unless `NEXT_PUBLIC_API_URL` is set.",
   },
   {
-    name: "Scale",
-    price: null,
-    yearlyPrice: null,
-    sub: "custom pricing",
-    features: [
-      "Multi-user support (roadmap)",
-      "Role-based access control",
-      "Observability & audit logs",
-      "Custom integrations",
-      "Dedicated engineering support",
-    ],
+    title: "Deploy with an Explicit API",
+    detail: "For Vercel, Netlify, or any hosted UI, set `NEXT_PUBLIC_API_URL` to the reachable backend URL before building.",
   },
 ];
 
 const FAQS = [
   {
     q: "Is OmniDev designed for solo developers?",
-    a: "Yes. This version is intentionally optimized for solo developers — no database, no auth overhead, just fast local tooling. Multi-user support is on the roadmap.",
+    a: "Yes. This version is intentionally optimized for local solo development — no database, no auth overhead, just focused dashboards backed by a FastAPI server you control.",
   },
   {
     q: "What backend stack does it use?",
@@ -158,11 +135,11 @@ const FAQS = [
   },
   {
     q: "Do I need all the API keys to run it?",
-    a: "No. Each module works independently. If you only need the scraper, just run the backend without AI or AWS keys — those endpoints will simply return errors when called.",
+    a: "No. Each module works independently. If you only need the scraper, start the backend without AI or AWS keys; AI and AWS endpoints will report missing credentials only when called.",
   },
   {
-    q: "Is the scraper able to bypass Cloudflare?",
-    a: "It uses playwright-stealth with realistic browser fingerprints, custom user agents, and configurable wait strategies. It handles basic protections well; advanced CAPTCHAs may need proxy rotation.",
+    q: "Can the scraper handle protected sites?",
+    a: "It uses playwright-stealth, realistic browser fingerprints, custom user agents, proxies, and configurable wait strategies. Advanced bot protections and CAPTCHAs can still block automation.",
   },
 ];
 
@@ -180,21 +157,21 @@ const STACK_ITEMS = [
 ];
 
 const COMPARISON_OURS = [
-  `One unified backend for ${MODULE_COUNT} AI/cloud services`,
-  "Natural language AWS management via AI",
-  "Stealth scraping with Cloudflare bypass",
-  "Vision AI + OCR built in",
-  "Typed schemas + auto-generated docs",
-  "Zero-config local development",
+  `One local FastAPI backend for ${MODULE_COUNT} AI/cloud modules`,
+  "Configurable API URL for hosted frontends",
+  "Natural-language AWS management via Gemini",
+  "Browser automation with screenshots, PDFs, links, and metadata",
+  "Typed schemas and auto-generated OpenAPI docs",
+  "Module-level credentials instead of all-or-nothing setup",
 ];
 
 const COMPARISON_OTHERS = [
-  "Separate tools and accounts for each service",
-  "Manual CLI or console for AWS",
-  "Basic scraping that gets blocked instantly",
-  "No built-in image analysis",
-  "Untyped APIs, manual documentation",
-  "Complex setup with multiple dependencies",
+  "Disconnected scripts for each workflow",
+  "Frontend hard-coded to one backend URL",
+  "Manual CLI or console work for AWS",
+  "Scraping, OCR, storage, and geo split across tools",
+  "Untyped APIs and hand-written docs",
+  "Credential setup hidden until runtime failures",
 ];
 
 /* ================================================================
@@ -226,8 +203,8 @@ export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
-  const [yearly, setYearly] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const docsHref = `${API_BASE}/docs`;
   const cardRefs = useRef<(HTMLElement | null)[]>([]);
 
   /* Navbar scroll effect */
@@ -281,7 +258,7 @@ export default function HomePage() {
             ))}
           </ul>
           <div className="navActions">
-            <a href="http://localhost:8000/docs" className="btn btnPrimary navCta">
+            <a href={docsHref} className="btn btnPrimary navCta">
               Open API Docs
             </a>
             <button
@@ -314,7 +291,7 @@ export default function HomePage() {
                 {l.label}
               </a>
             ))}
-            <a href="http://localhost:8000/docs" className="btn btnPrimary" onClick={closeMobileMenu}>
+            <a href={docsHref} className="btn btnPrimary" onClick={closeMobileMenu}>
               Open API Docs
             </a>
           </motion.div>
@@ -326,22 +303,6 @@ export default function HomePage() {
         <section className="hero section">
           <div className="heroImageLayer" aria-hidden>
             <img src="/images/omni-hero-bg.svg" alt="" />
-          </div>
-          <div className="heroOrb heroOrb1" />
-          <div className="heroOrb heroOrb2" />
-          <div className="heroOrb heroOrb3" />
-          <div className="heroParticles" aria-hidden>
-            {HERO_PARTICLES.map((i) => (
-              <span
-                key={i}
-                style={{
-                  left: `${8 + (i % 6) * 16}%`,
-                  top: `${12 + Math.floor(i / 6) * 34}%`,
-                  animationDelay: `${i * 0.55}s`,
-                  animationDuration: `${8 + (i % 4) * 1.8}s`,
-                }}
-              />
-            ))}
           </div>
           <div className="heroShapes" aria-hidden>
             <svg viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -364,35 +325,63 @@ export default function HomePage() {
           </div>
 
           <div className="heroContent container">
-            <motion.div
-              className="heroEyebrow"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              NEW GEN AI DEVELOPER PLATFORM
-            </motion.div>
+            <div className="heroIntro">
+              <motion.div
+                className="heroEyebrow"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+              >
+                LOCAL-FIRST AI DEVELOPER WORKBENCH
+              </motion.div>
 
-            <motion.h1
-              className="heroTitle"
-              initial={{ opacity: 0, y: 24 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, delay: 0.1 }}
-            >
-              Build Smarter. Ship Faster.{" "}
-              <span className="gradientText">With OmniDev.</span>
-            </motion.h1>
+              <motion.h1
+                className="heroTitle"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.7, delay: 0.1 }}
+              >
+                OmniDev runs on your machine first.
+              </motion.h1>
 
-            <motion.p
-              className="heroSub"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.25 }}
+              <motion.p
+                className="heroSub"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.25 }}
+              >
+                A local FastAPI backend and focused Next.js dashboards for AWS
+                automation, code generation, scraping, vision, storage, and
+                location tools. Deploy the UI later by setting one API URL.
+              </motion.p>
+            </div>
+
+            <div
+              className="localSetupPanel"
+              id="setup"
             >
-              One platform to manage AWS in plain English, generate full-stack apps
-              with live docs, scrape the web, analyze images, manage storage,
-              and more — open source and built for makers.
-            </motion.p>
+              <div className="localSetupHeader">
+                <span className="statusDot" />
+                <div>
+                  <strong>Local API target</strong>
+                  <p>Frontend requests currently point to:</p>
+                </div>
+                <code>{API_BASE}</code>
+              </div>
+              <div className="localCommandList" aria-label="Local startup commands">
+                {LOCAL_COMMANDS.map((command) => (
+                  <code key={command}>{command}</code>
+                ))}
+              </div>
+              <div className="localConfigGrid">
+                {CONFIG_ITEMS.map((item) => (
+                  <div key={item.label}>
+                    <span>{item.label}</span>
+                    <strong>{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             <motion.div
               className="heroActions"
@@ -403,11 +392,11 @@ export default function HomePage() {
               <a href="/devops" className="btn btnPrimary">
                 Try DevOps Agent
               </a>
-              <a href="/codegen" className="btn btnGhost">
-                Open Code Gen
+              <a href={docsHref} className="btn btnGhost">
+                Open API Docs
               </a>
-              <a href="#features" className="btn btnGhost">
-                Explore Features
+              <a href="#setup" className="btn btnGhost">
+                Configure API
               </a>
             </motion.div>
 
@@ -448,7 +437,7 @@ export default function HomePage() {
               variants={fadeUp}
               custom={0}
             >
-              <span className="sectionLabel">FEATURES</span>
+              <span className="sectionLabel">MODULES</span>
             </motion.div>
             <motion.h2
               className="sectionTitle"
@@ -458,7 +447,7 @@ export default function HomePage() {
               variants={fadeUp}
               custom={1}
             >
-              Smarter Services, Built with AI
+              Modules That Work as Local Tools
             </motion.h2>
             <motion.p
               className="sectionLead"
@@ -468,8 +457,8 @@ export default function HomePage() {
               variants={fadeUp}
               custom={2}
             >
-              Everything you need to automate your developer workflow — without
-              juggling disconnected tools and services.
+              Each module has a dashboard, typed API route, and clear dependency
+              boundary so you can run only the pieces you actually need.
             </motion.p>
 
             <motion.div
@@ -520,15 +509,15 @@ export default function HomePage() {
               <motion.div className="codeDemoText" variants={fadeUp} custom={0}>
                 <span className="sectionLabel">DEVELOPER EXPERIENCE</span>
                 <h3>
-                  Natural Language
+                  API-first
                   <br />
                   <span className="gradientText">DevOps Automation</span>
                 </h3>
                 <p>
-                  Send a plain-English command to the DevOps Agent. It parses
-                  your intent with AI, dispatches the matching AWS boto3
-                  call, and returns a human-readable summary — all through one
-                  POST endpoint.
+                  Send a plain-English command to the local DevOps Agent. It
+                  parses intent with Gemini, dispatches the matching AWS boto3
+                  call, and returns a human-readable summary through one POST
+                  endpoint.
                 </p>
               </motion.div>
 
@@ -589,7 +578,7 @@ export default function HomePage() {
               variants={fadeUp}
               custom={1}
             >
-              Our Simple &amp; Smart Process
+              Local First, Hosted When Ready
             </motion.h2>
 
             <div className="stepTabs">
@@ -623,8 +612,8 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ── Testimonials ─────────────────────────────── */}
-        <section className="section sectionAlt">
+        {/* ── Proof ────────────────────────────────────── */}
+        <section id="proof" className="section sectionAlt">
           <div className="container">
             <motion.div
               style={{ display: "flex", justifyContent: "center" }}
@@ -634,7 +623,7 @@ export default function HomePage() {
               variants={fadeUp}
               custom={0}
             >
-              <span className="sectionLabel">REVIEWS</span>
+              <span className="sectionLabel">PROOF</span>
             </motion.div>
             <motion.h2
               className="sectionTitle"
@@ -644,40 +633,46 @@ export default function HomePage() {
               variants={fadeUp}
               custom={1}
             >
-              Trusted by Developers
+              Built Like a Real Developer Tool
             </motion.h2>
+            <motion.p
+              className="sectionLead"
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.3 }}
+              variants={fadeUp}
+              custom={2}
+            >
+              OmniDev is strongest when it shows the actual engineering: typed
+              backend modules, focused dashboards, and tests around the core
+              flows.
+            </motion.p>
 
             <motion.div
-              className="testimonialGrid"
+              className="proofGrid"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.1 }}
               variants={stagger}
             >
-              {TESTIMONIALS.map((t, i) => (
+              {PROOF_POINTS.map((point, i) => (
                 <motion.div
-                  key={t.name}
-                  className="testimonialCard"
+                  key={point.label}
+                  className="proofCard"
                   variants={fadeUp}
                   custom={i}
                 >
-                  <div className="testimonialStars">★★★★★</div>
-                  <blockquote>&ldquo;{t.quote}&rdquo;</blockquote>
-                  <div className="testimonialAuthor">
-                    <div className="testimonialAvatar">{t.initials}</div>
-                    <div className="testimonialMeta">
-                      <strong>{t.name}</strong>
-                      <span>{t.role}</span>
-                    </div>
-                  </div>
+                  <strong>{point.metric}</strong>
+                  <h3>{point.label}</h3>
+                  <p>{point.body}</p>
                 </motion.div>
               ))}
             </motion.div>
           </div>
         </section>
 
-        {/* ── Pricing ──────────────────────────────────── */}
-        <section id="pricing" className="section">
+        {/* ── Runbook ──────────────────────────────────── */}
+        <section className="section">
           <div className="container">
             <motion.div
               style={{ display: "flex", justifyContent: "center" }}
@@ -687,7 +682,7 @@ export default function HomePage() {
               variants={fadeUp}
               custom={0}
             >
-              <span className="sectionLabel">PRICING</span>
+              <span className="sectionLabel">RUNBOOK</span>
             </motion.div>
             <motion.h2
               className="sectionTitle"
@@ -697,55 +692,26 @@ export default function HomePage() {
               variants={fadeUp}
               custom={1}
             >
-              Flexible Plans for Everyone
+              From Clone to Useful in Minutes
             </motion.h2>
 
-            <div className="pricingToggle">
-              <span>Monthly</span>
-              <button
-                className={`toggleSwitch ${yearly ? "active" : ""}`}
-                onClick={() => setYearly(!yearly)}
-                aria-label="Toggle yearly pricing"
-              >
-                <div className="toggleKnob" />
-              </button>
-              <span>Yearly</span>
-              <span className="saveBadge">Save 20%</span>
-            </div>
-
             <motion.div
-              className="priceGrid"
+              className="runbookGrid"
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true, amount: 0.1 }}
               variants={stagger}
             >
-              {PRICING.map((p, i) => (
+              {RUNBOOK.map((step, i) => (
                 <motion.article
-                  key={p.name}
-                  className={`priceCard ${p.popular ? "popular" : ""}`}
+                  key={step.title}
+                  className="runbookCard"
                   variants={fadeUp}
                   custom={i}
                 >
-                  {p.popular && <span className="popularBadge">Popular</span>}
-                  <p className="priceName">{p.name}</p>
-                  <p className="priceAmount">
-                    {p.price !== null ? (
-                      <>
-                        ${yearly ? p.yearlyPrice : p.price}
-                        <span> /mo</span>
-                      </>
-                    ) : (
-                      "Custom"
-                    )}
-                  </p>
-                  <p className="priceSub">{p.sub}</p>
-                  <ul className="priceFeatures">
-                    {p.features.map((f) => (
-                      <li key={f}>{f}</li>
-                    ))}
-                  </ul>
-                  <button className="btn btnPrimary btnBlock">Get Started</button>
+                  <span>{String(i + 1).padStart(2, "0")}</span>
+                  <h3>{step.title}</h3>
+                  <p>{step.detail}</p>
                 </motion.article>
               ))}
             </motion.div>
@@ -894,8 +860,7 @@ export default function HomePage() {
               variants={fadeUp}
               custom={0}
             >
-              Ready to Build{" "}
-              <span className="gradientText">Smarter</span>?
+              Start Local, Then Wire the Host.
             </motion.h2>
             <motion.p
               initial="hidden"
@@ -904,8 +869,9 @@ export default function HomePage() {
               variants={fadeUp}
               custom={1}
             >
-              Start with the backend foundation you already have, and layer this
-              frontend into your production flow.
+              Keep <code>localhost:8000</code> for development. Set{" "}
+              <code>NEXT_PUBLIC_API_URL</code> when the frontend needs to talk
+              to a remote backend.
             </motion.p>
             <motion.div
               initial="hidden"
@@ -915,7 +881,7 @@ export default function HomePage() {
               custom={2}
               style={{ display: "flex", gap: 14, justifyContent: "center", flexWrap: "wrap" }}
             >
-              <a href="http://localhost:8000/docs" className="btn btnPrimary">
+              <a href={docsHref} className="btn btnPrimary">
                 Open API Docs
               </a>
               <a href="#features" className="btn btnGhost">
@@ -935,17 +901,17 @@ export default function HomePage() {
                 Omni<span>Dev</span>
               </a>
               <p>
-                All-in-One AI Developer Platform. Built for solo developers who
-                want to move fast without juggling five tools.
+                Local-first AI developer workbench. Built for solo developers
+                who want one configurable API behind focused dashboards.
               </p>
             </div>
             <div className="footerCol">
               <h4>Platform</h4>
               <ul>
                 <li><a href="#features">Features</a></li>
-                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#proof">Proof</a></li>
                 <li><a href="#faq">FAQ</a></li>
-                <li><a href="http://localhost:8000/docs">API Docs</a></li>
+                <li><a href={docsHref}>API Docs</a></li>
               </ul>
             </div>
             <div className="footerCol">

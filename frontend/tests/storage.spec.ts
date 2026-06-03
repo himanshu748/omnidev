@@ -29,7 +29,7 @@ test("storage list and download flow", async ({ page }) => {
     expires_in: 3600,
   });
   await page.goto("/storage");
-  await expect(page.getByRole("option", { name: "demo-bucket" })).toBeVisible();
+  await expect(page.getByRole("combobox").first()).toHaveValue("demo-bucket");
   await expect(page.getByText("report.pdf")).toBeVisible();
   await page.getByRole("button", { name: "🔗 Link" }).click();
   await expect(page.getByRole("link", { name: "⬇ Open" })).toBeVisible();

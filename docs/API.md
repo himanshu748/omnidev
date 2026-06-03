@@ -36,7 +36,7 @@ Content-Type: application/json
 **Request Body:**
 ```json
 {
-  "command": "List my EC2 instances",
+  "message": "List my EC2 instances",
   "confirm_destructive": false
 }
 ```
@@ -45,9 +45,10 @@ Content-Type: application/json
 ```json
 {
   "action": "list_ec2",
-  "parameters": {},
+  "params": {},
+  "raw_result": { "...": "..." },
   "summary": "You have 3 running EC2 instances...",
-  "raw": { ... }
+  "needs_confirmation": false
 }
 ```
 
@@ -70,39 +71,50 @@ Content-Type: application/json
 ```json
 {
   "url": "https://example.com",
-  "mode": "text",
+  "extract": "text",
   "stealth": true,
   "wait_for": null,
-  "custom_js": null,
-  "wait_after_load": 0
+  "javascript": null,
+  "wait_seconds": 0
 }
 ```
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `url` | `string` | *required* | Target URL to scrape |
-| `mode` | `string` | `"text"` | `"text"`, `"html"`, or `"screenshot"` |
+| `extract` | `string` | `"text"` | `"text"`, `"html"`, `"screenshot"`, `"links"`, `"metadata"`, or `"pdf"` |
 | `stealth` | `bool` | `true` | Enable anti-detection fingerprinting |
 | `wait_for` | `string?` | `null` | CSS selector to wait for before extraction |
-| `custom_js` | `string?` | `null` | JavaScript to execute on the page |
-| `wait_after_load` | `int` | `0` | Seconds to wait after page load (0–30) |
+| `javascript` | `string?` | `null` | JavaScript to execute on the page |
+| `wait_seconds` | `number` | `0` | Seconds to wait after page load (0–30) |
+| `proxy` | `string?` | `null` | Optional proxy URL |
+| `block_resources` | `string[]?` | `null` | Resource types to block, such as `image`, `font`, or `stylesheet` |
 
 **Response (text/html mode):**
 ```json
 {
-  "status": "success",
-  "status_code": 200,
-  "title": "Example Domain",
   "url": "https://example.com",
-  "text": "..."
+  "title": "Example Domain",
+  "status_code": 200,
+  "content": "...",
+  "screenshot_b64": null,
+  "pdf_b64": null,
+  "links": null,
+  "metadata": null,
+  "word_count": 42,
+  "elapsed_ms": 1200
 }
 ```
 
 **Response (screenshot mode):**
 ```json
 {
-  "status": "success",
-  "screenshot_base64": "iVBORw0KGgo..."
+  "url": "https://example.com",
+  "title": "Example Domain",
+  "status_code": 200,
+  "content": "",
+  "screenshot_b64": "iVBORw0KGgo...",
+  "elapsed_ms": 1200
 }
 ```
 
@@ -119,7 +131,7 @@ Content-Type: multipart/form-data
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `file` | `file` | Image file (PNG, JPG, GIF, WebP) |
+| `image` | `file` | Image file (PNG, JPG, GIF, WebP) |
 | `mode` | `string` | `"analyze"`, `"ocr"`, or `"custom"` |
 | `prompt` | `string?` | Custom prompt (when mode = `"custom"`) |
 
@@ -127,8 +139,8 @@ Content-Type: multipart/form-data
 ```json
 {
   "mode": "analyze",
-  "model": "gpt-4.1-mini",
-  "tokens": 512,
+  "model": "gemini-2.0-flash",
+  "tokens_used": 512,
   "result": "This image shows a modern office workspace with..."
 }
 ```
@@ -153,7 +165,7 @@ GET /api/storage/buckets
 ### List Files
 
 ```http
-GET /api/storage/files/{bucket}?prefix=folder/
+GET /api/storage/files?bucket={bucket}&prefix=folder/
 ```
 
 | Parameter | Type | Description |
@@ -191,7 +203,7 @@ Content-Type: multipart/form-data
 ### Download File
 
 ```http
-GET /api/storage/download/{bucket}/{key}
+GET /api/storage/download?bucket={bucket}&key={key}
 ```
 
 Returns a **presigned URL** for direct download.
@@ -199,7 +211,7 @@ Returns a **presigned URL** for direct download.
 ### Delete File
 
 ```http
-DELETE /api/storage/delete/{bucket}/{key}
+DELETE /api/storage/files?bucket={bucket}&key={key}
 ```
 
 ---
@@ -230,13 +242,13 @@ Returns location based on the request's IP address.
 ### IP Lookup
 
 ```http
-GET /api/location/ip/{ip_address}
+GET /api/location/ip?ip=8.8.8.8
 ```
 
 ### Reverse Geocode
 
 ```http
-GET /api/location/reverse?lat=40.7128&lon=-74.0060
+GET /api/location/reverse?lat=40.7128&lng=-74.0060
 ```
 
 ### Forward Geocode (Address Search)
@@ -261,7 +273,7 @@ GET /api/location/geocode?q=Times+Square
 
 ## 🔐 Authentication
 
-Currently, OmniDev uses **API key authentication** via environment variables. All external service keys (`OPENAI_API_KEY`, `AWS_*`) are configured server-side and never exposed to the frontend.
+OmniDev keeps external service keys in backend environment variables. Gemini, AWS, IPInfo, and Context7 credentials are configured server-side and are never exposed to the frontend.
 
 ## ⚠️ Error Handling
 

@@ -6,6 +6,7 @@ FastAPI entry point with lifespan-managed Playwright browser.
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
+import logging
 from typing import AsyncIterator
 
 from fastapi import FastAPI
@@ -15,25 +16,43 @@ from playwright.async_api import async_playwright, Playwright, Browser
 from app.config import settings
 from app.routers import codegen, devops, location, preview, scraper, storage, vision
 
+logger = logging.getLogger(__name__)
+
 
 # ── Lifespan ────────────────────────────────────────────────
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     """Start Playwright browser once; share it across requests via app.state."""
-    pw: Playwright = await async_playwright().start()
-    browser: Browser = await pw.chromium.launch(headless=True)
+    pw: Playwright | None = None
+    browser: Browser | None = None
+    try:
+        pw = await async_playwright().start()
+        browser = await pw.chromium.launch(headless=True)
+    except Exception as exc:
+        logger.warning(
+            "Playwright browser failed to start; scraper endpoints will return 503. Error: %s",
+            exc,
+        )
+        if pw is not None:
+            try:
+                await pw.stop()
+            except Exception:
+                pass
+            pw = None
     app.state.playwright = pw
     app.state.browser = browser
     yield
     # During dev shutdown, transports can already be closed; ignore cleanup races.
-    try:
-        await browser.close()
-    except Exception:
-        pass
-    try:
-        await pw.stop()
-    except Exception:
-        pass
+    if browser is not None:
+        try:
+            await browser.close()
+        except Exception:
+            pass
+    if pw is not None:
+        try:
+            await pw.stop()
+        except Exception:
+            pass
 
 
 # ── App ─────────────────────────────────────────────────────

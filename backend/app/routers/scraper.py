@@ -25,7 +25,12 @@ async def scrape_url(body: ScrapeRequest, request: Request):
 
     Extra features: cookie injection, proxy support, resource blocking.
     """
-    browser = request.app.state.browser
+    browser = getattr(request.app.state, "browser", None)
+    if browser is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Playwright browser is unavailable. Restart the backend with browser permissions to use scraping.",
+        )
     try:
         result = await scrape(
             browser,

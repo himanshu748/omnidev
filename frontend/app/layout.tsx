@@ -1,32 +1,28 @@
 import type { Metadata } from "next";
-import { Syne, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const syne = Syne({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-display",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-body",
-  weight: ["400", "500", "600", "700"],
-});
-
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-mono",
-  weight: ["400", "500", "600"],
-});
-
 export const metadata: Metadata = {
-  title: "OmniDev - All-in-One AI Developer Platform",
+  metadataBase: new URL("https://omnidev-flame.vercel.app"),
+  title: {
+    default: "OmniDev - Local AI Developer Workbench",
+    template: "%s | OmniDev",
+  },
   description:
-    "Build faster with AI-powered DevOps, scraping, vision, cloud storage, and location services in one solo-developer platform.",
+    "A local-first FastAPI and Next.js workbench for DevOps automation, code generation, scraping, vision, S3 storage, and location services.",
+  openGraph: {
+    title: "OmniDev - Local AI Developer Workbench",
+    description:
+      "Local-first FastAPI and Next.js dashboards for AI-assisted developer workflows across cloud, scraping, vision, storage, and location services.",
+    url: "https://omnidev-flame.vercel.app",
+    siteName: "OmniDev",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "OmniDev - Local AI Developer Workbench",
+    description:
+      "Local-first FastAPI and Next.js dashboards for AI-assisted developer workflows.",
+  },
 };
 
 export default function RootLayout({
@@ -35,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}>
+    <html lang="en">
       <body style={{ fontFamily: "var(--font-body), system-ui, sans-serif" }}>
         {children}
       </body>

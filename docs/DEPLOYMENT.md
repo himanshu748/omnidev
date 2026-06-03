@@ -6,7 +6,7 @@
 
 ## Prerequisites
 
-- Python 3.11+ and Node.js 18+
+- Python 3.11+ and Node.js 20.9+
 - All environment variables configured (see [Configuration](#configuration))
 - Playwright Chromium browser installed
 
@@ -19,8 +19,12 @@
 Create a `.env` file in the `backend/` directory:
 
 ```env
-# AI
-OPENAI_API_KEY=sk-...
+# Google Gemini
+GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.0-flash
+
+# Context7 (optional, used by Code Gen for live docs)
+CONTEXT7_API_KEY=
 
 # AWS (for DevOps Agent + Cloud Storage)
 AWS_ACCESS_KEY_ID=AKIA...
@@ -44,7 +48,7 @@ NEXT_PUBLIC_API_URL=https://api.your-domain.com
 
 <br />
 
-## Option 1: Render (Recommended)
+## Option 1: Render Backend + Vercel Frontend (Recommended)
 
 ### Backend
 
@@ -59,12 +63,12 @@ NEXT_PUBLIC_API_URL=https://api.your-domain.com
 
 ### Frontend
 
-1. Create a **Static Site** on Render
+1. Create a Vercel project from the same GitHub repo
 2. Configure:
    - **Root Directory**: `frontend`
-   - **Build Command**: `npm install && npm run build`
-   - **Publish Directory**: `frontend/out` (or use Next.js standalone)
-3. Set `NEXT_PUBLIC_API_URL` to your backend URL
+   - **Build Command**: `npm run build`
+3. Set `NEXT_PUBLIC_API_URL` to your Render backend URL
+4. Add the Vercel domain to `CORS_ORIGINS` in the backend environment
 
 <br />
 
@@ -134,7 +138,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     depends_on:
       - backend
     restart: unless-stopped
@@ -142,7 +146,7 @@ services:
 
 <br />
 
-## Option 3: Vercel (Frontend) + Railway (Backend)
+## Option 3: Vercel Frontend + Railway Backend
 
 ### Frontend on Vercel
 

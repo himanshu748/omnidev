@@ -1,6 +1,6 @@
 # 🎨 Design System
 
-> OmniDev's frontend design is built on a premium dark theme with glassmorphism, micro-animations, and the **Space Grotesk** typeface — designed in [Stitch by Google](https://stitch.withgoogle.com).
+> OmniDev's frontend design is built on a premium dark theme with glassmorphism, micro-animations, and offline-safe system font stacks — designed in [Stitch by Google](https://stitch.withgoogle.com) and adapted for local-first builds.
 
 <br />
 
@@ -13,7 +13,7 @@
 
 | # | Screen | Screen ID | Resolution |
 |---|--------|-----------|------------|
-| 1 | **Landing Page** — Hero, features, code demo, pricing | `be0b6d05018747dbbb2cf39c26b8c9ec` | 2560×7824 |
+| 1 | **Landing Page** — Hero, features, code demo, proof, runbook | `be0b6d05018747dbbb2cf39c26b8c9ec` | 2560×7824 |
 | 2 | **Web Scraper Dashboard** — URL input, modes, results | `6bb1251aa33e401a84ece73b6a68308f` | 2560×3144 |
 | 3 | **DevOps Agent Dashboard** — NLU command, suggestions | `bcc0f3477e5b4755a98ca5acc7ea2270` | 2560×2880 |
 | 4 | **Vision Lab Dashboard** — Upload, analysis modes | `4976d0a12a5249ff84d90887c47a2d67` | 2560×2734 |
@@ -24,22 +24,20 @@
 
 ## Typography
 
-### Primary: Space Grotesk
+### Primary: System Sans
 
 ```
-Font: Space Grotesk
-Weights: 300 (Light), 400 (Regular), 500 (Medium), 600 (SemiBold), 700 (Bold)
-Source: Google Fonts
+Font stack: Inter, Segoe UI, system-ui, sans-serif
+Weights: Browser/system dependent
 Usage: All headings, body text, navigation, buttons, labels
 ```
 
-**Why Space Grotesk?** It's a geometric sans-serif designed for modern interfaces. Its open apertures and proportional spacing give OmniDev a clean, technical, and premium feel that aligns with the developer-tool aesthetic.
+**Why a system stack?** OmniDev should build and run offline without fetching fonts during Next.js production builds. The stack keeps the interface crisp while avoiding a hidden network dependency.
 
-### Monospace: JetBrains Mono
+### Monospace: System Mono
 
 ```
-Font: JetBrains Mono
-Weights: 400, 500, 600
+Font stack: SFMono-Regular, Cascadia Code, Liberation Mono, ui-monospace, monospace
 Usage: Code blocks, API endpoints, JSON responses, terminal output, technical values
 ```
 

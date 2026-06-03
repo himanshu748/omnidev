@@ -31,6 +31,6 @@ test("location geocode flow", async ({ page }) => {
   await page.goto("/location");
   await page.getByRole("button", { name: "🔍 Search Address" }).click();
   await page.fill("#loc-addr", "Eiffel Tower");
-  await page.getByRole("button", { name: "🔍 Search" }).click();
-  await expect(page.getByText("Eiffel Tower, Paris")).toBeVisible();
+  await page.locator("form").filter({ has: page.locator("#loc-addr") }).getByRole("button", { name: "🔍 Search" }).click();
+  await expect(page.locator(".resultValue", { hasText: "Eiffel Tower, Paris" })).toBeVisible();
 });

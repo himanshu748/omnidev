@@ -47,3 +47,18 @@ async def test_scraper_error(client, monkeypatch):
     monkeypatch.setattr(scraper_router, "scrape", fake_scrape)
     resp = await client.post("/api/scraper/scrape", json={"url": "https://example.com"})
     assert resp.status_code == 500
+
+
+@pytest.mark.asyncio
+async def test_scraper_returns_503_when_browser_unavailable(client, app, monkeypatch):
+    app.state.browser = None
+
+    async def fake_scrape(*args, **kwargs):
+        raise AssertionError("scrape should not be called without a browser")
+
+    monkeypatch.setattr(scraper_router, "scrape", fake_scrape)
+    resp = await client.post("/api/scraper/scrape", json={"url": "https://example.com"})
+
+    assert resp.status_code == 503
+    assert "Playwright browser is unavailable" in resp.json()["detail"]
+    app.state.browser = object()

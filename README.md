@@ -18,7 +18,7 @@
 
 ---
 
-**OmniDev** is a full-stack AI developer platform that combines **DevOps automation**, **stealth web scraping**, **AI vision analysis**, **cloud storage management**, and **location intelligence** into a single, cohesive application. It features a **FastAPI** backend with a **Next.js 16** frontend using **Syne**, **DM Sans**, and **JetBrains Mono**.
+**OmniDev** is a full-stack AI developer platform that combines **DevOps automation**, **web scraping**, **AI vision analysis**, **cloud storage management**, and **location intelligence** into a single, cohesive application. It features a **FastAPI** backend with a **Next.js 16** frontend using offline-safe system font stacks.
 
 ### 📚 Documentation
 
@@ -39,8 +39,8 @@
 | Module | Description | Tech |
 |--------|-------------|------|
 | 🤖 **DevOps Agent** | Manage AWS infrastructure with natural language commands — list EC2 instances, launch servers, manage security groups | Google Gemini + boto3 |
-| ⚡ **Code Gen** | Generate full-stack projects (React, Next.js, Streamlit, Node, Python, Vue, Svelte) using live docs from Context7; instructions are ready for Vercel Sandbox | Google Gemini + Context7 |
-| 🕷️ **Web Scraper** | Playwright-powered stealth scraping with anti-detection, Cloudflare bypass, full-page screenshots, and custom JS execution | Playwright + Stealth |
+| ⚡ **Code Gen** | Generate validated project files for React, Next.js, Streamlit, Node, Python, Vue, or Svelte using Gemini and optional Context7 docs; preview web apps in StackBlitz | Google Gemini + Context7 |
+| 🕷️ **Web Scraper** | Playwright-powered scraping with stealth mode, browser automation, metadata extraction, PDFs, links, screenshots, and custom JS execution | Playwright + Stealth |
 | 🖼️ **Vision Lab** | AI-powered image analysis, OCR text extraction, and custom visual Q&A | Google Gemini (multimodal) |
 | 📦 **Cloud Storage** | Full S3 file manager — browse buckets, upload/download files, generate presigned URLs, delete objects | boto3 S3 |
 | 📍 **Location Services** | IP geolocation, forward & reverse geocoding, public IP detection | IPInfo + Nominatim |
@@ -79,8 +79,8 @@ omnidev/
 │   └── CREDENTIALS.md        # Extra credential notes (Gemini: Google AI Studio)
 ├── frontend/                 # Next.js 16 (React 19)
 │   ├── app/
-│   │   ├── page.tsx          # Landing page (OmniDev hero, features, pricing)
-│   │   ├── layout.tsx        # Root layout (Syne + DM Sans + JetBrains Mono)
+│   │   ├── page.tsx          # Landing page (OmniDev hero, features, proof, runbook)
+│   │   ├── layout.tsx        # Root layout and metadata
 │   │   ├── globals.css       # Premium dark theme + industrial/AI styling
 │   │   ├── components/       # Shared components
 │   │   ├── devops/page.tsx   # DevOps Agent UI
@@ -123,7 +123,7 @@ omnidev/
 ### Prerequisites
 
 - **Python 3.11+** (tested on 3.13)
-- **Node.js 18+** (tested with Node 22)
+- **Node.js 20.9+** (tested with Node 22; required by Next.js 16)
 - **npm** (comes with Node.js)
 
 ### 1. Clone the Repository
@@ -206,6 +206,12 @@ IPINFO_TOKEN=
 
 # CORS (frontend URL)
 CORS_ORIGINS=http://localhost:3000
+```
+
+For hosted frontend builds, create `frontend/.env.local` or set the variable in your hosting dashboard:
+
+```bash
+NEXT_PUBLIC_API_URL=https://your-backend.example.com
 ```
 
 > 📖 **Need help getting credentials?** See [`backend/CREDENTIALS.md`](backend/CREDENTIALS.md) for AWS, IPInfo, and Context7. For Gemini, use [Google AI Studio](https://aistudio.google.com/apikey).
@@ -344,11 +350,11 @@ GET /health
     { "path": "package.json", "content": "{...}" },
     { "path": "src/main.tsx", "content": "..." }
   ],
-  "instructions": "npm install && npm run dev (or run in Vercel Sandbox)"
+  "instructions": "Review files first, then run npm install && npm run dev in an isolated directory."
 }
 ```
 
-> The frontend Code Gen page lets you pick a framework, view generated files, copy code, download a ZIP, and open a live preview via StackBlitz.
+> Code Gen validates generated paths, size, case-insensitive duplicates, secret-bearing files, hard-coded secret-looking content, risky npm lifecycle hooks, and suspicious npm script bodies before returning files. OmniDev does not execute generated code on the backend; supported web previews run in StackBlitz's isolated browser environment.
 
 ---
 
@@ -357,10 +363,10 @@ GET /health
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/storage/buckets` | List all S3 buckets |
-| `GET` | `/api/storage/files/{bucket}` | List files in a bucket (optional `?prefix=`) |
+| `GET` | `/api/storage/files?bucket={bucket}&prefix=folder/` | List files in a bucket |
 | `POST` | `/api/storage/upload` | Upload a file (form: `file`, `bucket`, `key`) |
-| `GET` | `/api/storage/download/{bucket}/{key}` | Generate presigned download URL |
-| `DELETE` | `/api/storage/delete/{bucket}/{key}` | Delete a file |
+| `GET` | `/api/storage/download?bucket={bucket}&key={key}` | Generate presigned download URL |
+| `DELETE` | `/api/storage/files?bucket={bucket}&key={key}` | Delete a file |
 
 ---
 
@@ -379,7 +385,7 @@ GET /health
 
 The frontend provides a **premium dark-themed dashboard** for each service:
 
-- **🏠 Landing Page** — Hero section, feature cards, tech stack, process walkthrough, testimonials, pricing, FAQ
+- **🏠 Landing Page** — Hero section, feature cards, tech stack, process walkthrough, proof, runbook, FAQ
 - **🤖 DevOps** — Natural language command input with suggestion chips, structured result display, destructive action safeguards
 - **⚡ Code Gen** — Prompt + framework selector, generated file tree + code viewer, one-click copy, ZIP download, and live StackBlitz preview
 - **🕷️ Scraper** — URL input with demo suggestions, extraction mode toggles (text/HTML/screenshot), stealth toggle, elapsed time
@@ -390,10 +396,10 @@ The frontend provides a **premium dark-themed dashboard** for each service:
 ### Design Highlights
 
 - 🌑 Premium dark theme with glassmorphism and subtle grid background
-- ✨ Animated gradient orbs and micro-interactions
+- ✨ Motion states and micro-interactions
 - 🎯 API endpoint badges showing HTTP methods (GET/POST/DELETE)
 - 📱 Fully responsive on mobile, tablet, and desktop
-- ⚡ JetBrains Mono for code/technical elements
+- ⚡ Offline-safe monospace stack for code/technical elements
 
 <br />
 
