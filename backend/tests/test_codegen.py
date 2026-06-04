@@ -1,7 +1,7 @@
 import pytest
 
 from app.routers import codegen as codegen_router
-from app.services.codegen_service import MAX_FILES, _sanitize_file_entries
+from app.services.codegen_service import MAX_FILES, _safe_instructions, _sanitize_file_entries
 
 
 @pytest.mark.asyncio
@@ -190,6 +190,18 @@ def test_codegen_rejects_package_json_suspicious_script_bodies():
         )
 
 
+def test_codegen_rejects_package_json_chained_scripts():
+    with pytest.raises(ValueError, match="blocked shell command"):
+        _sanitize_file_entries(
+            [
+                {
+                    "path": "package.json",
+                    "content": '{"scripts":{"dev":"vite && npm run preview","build":"vite build"}}',
+                }
+            ]
+        )
+
+
 def test_codegen_allows_normal_package_json_scripts():
     files = _sanitize_file_entries(
         [
@@ -201,6 +213,20 @@ def test_codegen_allows_normal_package_json_scripts():
     )
 
     assert files[0]["path"] == "package.json"
+
+
+def test_codegen_instructions_do_not_echo_secret_like_output():
+    instructions = _safe_instructions('Run with apiKey = "sk-live-1234567890abcdef1234567890abcdef"')
+
+    assert "sk-live" not in instructions
+    assert "isolated directory" in instructions
+
+
+def test_codegen_instructions_do_not_echo_private_key_blocks():
+    instructions = _safe_instructions("-----BEGIN PRIVATE KEY-----\nsecret\n-----END PRIVATE KEY-----")
+
+    assert "PRIVATE KEY" not in instructions
+    assert "isolated directory" in instructions
 
 
 def test_codegen_rejects_hard_coded_secret_content():

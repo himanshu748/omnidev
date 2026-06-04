@@ -25,7 +25,7 @@ const CODEGEN_SAFETY_POINTS = [
   "No backend execution of generated code",
   "Web previews run in StackBlitz browser isolation",
 ];
-const BLOCKED_SCRIPT_FRAGMENTS = ["|", ";", "`", "$(", ">", "<"];
+const BLOCKED_SCRIPT_FRAGMENTS = ["|", "&", ";", "`", "$(", ">", "<", "\n", "\r"];
 const BLOCKED_SCRIPT_PATTERN =
   /(^|[\s&|;])(?:bash|sh|zsh|fish|powershell|pwsh|curl|wget|nc|ncat|netcat|ssh|scp|rsync|sudo|chmod|chown|openssl)\b|\b(?:node|python|python3|ruby|perl|php)\s+-[ce]\b|\bbase64\s+(?:-d|--decode)\b/i;
 
@@ -46,7 +46,8 @@ function getSafePackageJson(files: FileEntry[]): { parsed: Record<string, unknow
     const startCommand =
       (typeof scripts.dev === "string" && scripts.dev) ||
       (typeof scripts.start === "string" && scripts.start) ||
-      (typeof scripts.build === "string" ? "npm run build && npm start" : "npm start");
+      "";
+    if (!startCommand) return null;
     return { parsed, startCommand };
   } catch {
     return null;

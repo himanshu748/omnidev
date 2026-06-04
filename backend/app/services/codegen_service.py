@@ -60,7 +60,7 @@ BLOCKED_NPM_LIFECYCLE_SCRIPTS = {
     "prepublishOnly",
     "prepare",
 }
-BLOCKED_NPM_SCRIPT_FRAGMENTS = ("|", ";", "`", "$(", ">", "<")
+BLOCKED_NPM_SCRIPT_FRAGMENTS = ("|", "&", ";", "`", "$(", ">", "<", "\n", "\r")
 BLOCKED_NPM_SCRIPT_PATTERNS = (
     re.compile(
         r"(^|[\s&|;])(?:bash|sh|zsh|fish|powershell|pwsh|curl|wget|nc|ncat|netcat|ssh|scp|rsync|sudo|chmod|chown|openssl)\b",
@@ -239,6 +239,8 @@ def _safe_failure_project(message: str) -> dict[str, Any]:
 
 def _safe_instructions(value: Any) -> str:
     if not isinstance(value, str) or not value.strip():
+        return "Review the generated files, install dependencies in an isolated directory, then run the usual command for the framework."
+    if any(marker in value for marker in PRIVATE_KEY_MARKERS) or SECRET_ASSIGNMENT_PATTERN.search(value):
         return "Review the generated files, install dependencies in an isolated directory, then run the usual command for the framework."
     encoded = value.encode("utf-8")
     if len(encoded) <= MAX_INSTRUCTIONS_BYTES:
