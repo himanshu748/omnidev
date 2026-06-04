@@ -149,6 +149,8 @@ def _safe_file_path(raw_path: Any) -> str:
     lowered_path = normalized.as_posix().lower()
     if lowered_path in BLOCKED_EXACT_PATHS:
         raise ValueError(f"Blocked generated file path: {raw_path!r}")
+    if parts[-1].lower() in BLOCKED_EXACT_PATHS:
+        raise ValueError(f"Blocked generated file path: {raw_path!r}")
     if lowered_parts & BLOCKED_PATH_PARTS:
         raise ValueError(f"Blocked generated file path: {raw_path!r}")
     if parts[-1].lower() in BLOCKED_FILENAMES:
@@ -180,7 +182,7 @@ def _sanitize_file_entries(files: Any) -> list[dict[str, str]]:
             raise ValueError(f"Generated content for {path!r} includes a private-key block")
         if SECRET_ASSIGNMENT_PATTERN.search(content):
             raise ValueError(f"Generated content for {path!r} appears to include a hard-coded secret")
-        if path == "package.json":
+        if PurePosixPath(path).parts[-1].lower() == "package.json":
             _validate_package_json(content)
 
         content_bytes = len(content.encode("utf-8"))
