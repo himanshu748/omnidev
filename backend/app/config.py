@@ -5,6 +5,8 @@ Reads from a .env file in the backend/ directory if present.
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -35,7 +37,11 @@ class Settings(BaseSettings):
 
     @property
     def cors_origin_list(self) -> list[str]:
-        configured = [o.strip() for o in self.cors_origins.split(",") if o.strip()]
+        configured = [
+            origin
+            for origin in (self._safe_cors_origin(o) for o in self.cors_origins.split(","))
+            if origin
+        ]
         local_defaults = [
             "http://localhost:3000",
             "http://127.0.0.1:3000",
@@ -44,6 +50,18 @@ class Settings(BaseSettings):
         ]
         # Keep configured values first, then add missing local dev origins.
         return list(dict.fromkeys([*configured, *local_defaults]))
+
+    @staticmethod
+    def _safe_cors_origin(raw_origin: str) -> str | None:
+        origin = raw_origin.strip().rstrip("/")
+        if not origin or origin == "*":
+            return None
+        parsed = urlparse(origin)
+        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+            return None
+        if parsed.path or parsed.params or parsed.query or parsed.fragment:
+            return None
+        return origin
 
 
 settings = Settings()
