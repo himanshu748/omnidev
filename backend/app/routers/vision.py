@@ -6,6 +6,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.schemas.vision import VisionMode, VisionResponse
 from app.services.vision_service import analyze_image
+from app.routers.errors import internal_error
 
 router = APIRouter()
 
@@ -46,4 +47,4 @@ async def vision_analyze(
         )
         return VisionResponse(**result)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Vision analysis failed.") from exc

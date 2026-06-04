@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Query
 
 from app.schemas.location import (
     GeocodeResponse,
@@ -12,6 +12,7 @@ from app.schemas.location import (
     ReverseGeocodeResponse,
 )
 from app.services import location_service
+from app.routers.errors import internal_error
 
 router = APIRouter()
 
@@ -23,7 +24,7 @@ async def get_ip_location(ip: str = Query(None, description="IP to look up (omit
         result = await location_service.ip_lookup(ip)
         return IPLocationResponse(**result)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("IP location lookup failed.") from exc
 
 
 @router.get("/reverse", response_model=ReverseGeocodeResponse)
@@ -36,7 +37,7 @@ async def get_reverse_geocode(
         result = await location_service.reverse_geocode(lat, lng)
         return ReverseGeocodeResponse(**result)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Reverse geocoding failed.") from exc
 
 
 @router.get("/geocode", response_model=GeocodeResponse)
@@ -55,7 +56,7 @@ async def get_geocode(
             results=[GeocodeResultItem(**r) for r in results]
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Geocoding failed.") from exc
 
 
 @router.get("/me", response_model=MyLocationResponse)
@@ -65,4 +66,4 @@ async def get_my_location():
         result = await location_service.my_location()
         return MyLocationResponse(**result)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Current location lookup failed.") from exc

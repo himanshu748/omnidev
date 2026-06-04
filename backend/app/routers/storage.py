@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, Query, UploadFile
 
 from app.schemas.storage import (
     BucketListResponse,
@@ -18,6 +18,7 @@ from app.services.storage_service import (
     presigned_download_url,
     upload_file,
 )
+from app.routers.errors import internal_error
 
 router = APIRouter()
 
@@ -29,7 +30,7 @@ async def get_buckets():
         buckets = await list_buckets()
         return BucketListResponse(buckets=buckets)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Storage bucket listing failed.") from exc
 
 
 @router.get("/files", response_model=FileListResponse)
@@ -42,7 +43,7 @@ async def get_files(
         files = await list_files(bucket, prefix)
         return FileListResponse(bucket=bucket, prefix=prefix, files=files)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Storage file listing failed.") from exc
 
 
 @router.post("/upload", response_model=UploadResponse)
@@ -63,7 +64,7 @@ async def upload(
         )
         return UploadResponse(bucket=bucket, key=resolved_key)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Storage upload failed.") from exc
 
 
 @router.get("/download", response_model=DownloadResponse)
@@ -79,7 +80,7 @@ async def download(
             bucket=bucket, key=key, presigned_url=url, expires_in=expires_in
         )
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Storage download URL generation failed.") from exc
 
 
 @router.delete("/files", response_model=DeleteResponse)
@@ -92,4 +93,4 @@ async def delete(
         await delete_file(bucket, key)
         return DeleteResponse(bucket=bucket, key=key)
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
+        raise internal_error("Storage delete failed.") from exc
