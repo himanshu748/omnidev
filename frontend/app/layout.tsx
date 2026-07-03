@@ -8,11 +8,11 @@ export const metadata: Metadata = {
     template: "%s | OmniDev",
   },
   description:
-    "A local-first FastAPI and Next.js workbench for DevOps automation, code generation, scraping, vision, S3 storage, and location services.",
+    "A local-first FastAPI and Next.js workbench for DevOps automation, code generation, scraping, vision, and S3 storage.",
   openGraph: {
     title: "OmniDev - Local AI Developer Workbench",
     description:
-      "Local-first FastAPI and Next.js dashboards for AI-assisted developer workflows across cloud, scraping, vision, storage, and location services.",
+      "Local-first FastAPI and Next.js dashboards for AI-assisted developer workflows across cloud, scraping, vision, and storage.",
     url: "https://omnidev-flame.vercel.app",
     siteName: "OmniDev",
     type: "website",

@@ -6,14 +6,13 @@ This guide walks you through getting each API key or credential used by the back
 
 ## API key matrix (at a glance)
 
-| Module           | Gemini | AWS | IPInfo | Context7 | Notes |
-|-----------------|--------|-----|--------|----------|--------|
-| **DevOps Agent**| ✅ Required | ✅ Required | — | — | Natural language → boto3 |
-| **Code Gen**    | ✅ Required | — | — | Optional | Without Context7: no live docs. |
-| **Vision Lab**  | ✅ Required | — | — | — | Image analysis / OCR |
-| **Web Scraper** | — | — | — | — | No keys (Playwright) |
-| **Cloud Storage**| — | ✅ Required | — | — | S3 only |
-| **Location**    | — | — | Optional | — | Works without token (rate limited) |
+| Module           | Gemini | AWS | Context7 | Notes |
+|-----------------|--------|-----|----------|--------|
+| **DevOps Agent**| ✅ Required | ✅ Required | — | Natural language → boto3 |
+| **Code Gen**    | ✅ Required | — | Optional | Without Context7: no live docs. |
+| **Vision Lab**  | ✅ Required | — | — | Image analysis / OCR |
+| **Web Scraper** | — | — | — | No keys (Playwright) |
+| **Cloud Storage**| — | ✅ Required | — | S3 only |
 
 ---
 
@@ -80,21 +79,7 @@ Replace `us-east-1` with your preferred region (e.g. `ap-south-1` for Mumbai) if
 
 ---
 
-## 3. IPInfo Token (optional for Location Services)
-
-Location endpoints work without a token (free tier). For higher limits and more data:
-
-1. Go to **https://ipinfo.io**
-2. Sign up → **Dashboard** → **Account** (or **Token**).
-3. Copy your token and in `backend/.env` set:
-   ```bash
-   IPINFO_TOKEN=your-token
-   ```
-   Or leave it empty: `IPINFO_TOKEN=`.
-
----
-
-## 4. Context7 API Key (optional for Code Gen)
+## 3. Context7 API Key (optional for Code Gen)
 
 Code Gen uses Context7 to inject up-to-date library docs (React, Next.js, Streamlit, etc.) into generated code. Without it, generation still works using model knowledge.
 
@@ -120,9 +105,6 @@ AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=...
 AWS_DEFAULT_REGION=us-east-1
 
-# IPInfo (optional for Location)
-IPINFO_TOKEN=
-
 # Context7 (optional for Code Gen live docs)
 CONTEXT7_API_KEY=
 
@@ -142,7 +124,6 @@ Run the backend (`cd backend && uv run uvicorn app.main:app --reload`) and front
 |-------|-----|
 | **Health** | `curl http://localhost:8000/health` → `{"status":"ok"}` |
 | **Scraper** (no key) | Open http://localhost:3000/scraper → paste URL → Start Scraping. Should return content. |
-| **Location** (optional key) | Open http://localhost:3000/location → Detect Location. Should show IP + city. |
 | **DevOps** (Gemini + AWS) | Open http://localhost:3000/devops → e.g. "List my EC2 instances" → Run. Should return summary (or 500 if keys missing). |
 | **Code Gen** (Gemini) | Open http://localhost:3000/codegen → prompt e.g. "A hello world page", framework React → Generate. Should return files. |
 | **Vision** (Gemini) | Open http://localhost:3000/vision → Upload image → Analyze. Needs valid `GEMINI_API_KEY`. |

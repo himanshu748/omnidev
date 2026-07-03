@@ -55,6 +55,10 @@ async def test_vision_error_details_are_sanitized(client, monkeypatch):
 
 @pytest.mark.asyncio
 async def test_devops_error_details_are_sanitized(client, monkeypatch):
+    monkeypatch.setattr(devops.settings, "gemini_api_key", "test-gemini-key")
+    monkeypatch.setattr(devops.settings, "aws_access_key_id", "test-access-key")
+    monkeypatch.setattr(devops.settings, "aws_secret_access_key", "test-secret-key")
+
     async def fake_run_command(*args, **kwargs):
         raise RuntimeError(SECRET_LIKE_ERROR)
 

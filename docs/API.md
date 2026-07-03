@@ -83,7 +83,7 @@ Content-Type: application/json
 |-----------|------|---------|-------------|
 | `url` | `string` | *required* | Target URL to scrape |
 | `extract` | `string` | `"text"` | `"text"`, `"html"`, `"screenshot"`, `"links"`, `"metadata"`, or `"pdf"` |
-| `stealth` | `bool` | `true` | Enable anti-detection fingerprinting |
+| `stealth` | `bool` | `true` | Enable compatibility fingerprint adjustments for authorized pages; not a bot-protection bypass guarantee |
 | `wait_for` | `string?` | `null` | CSS selector to wait for before extraction |
 | `javascript` | `string?` | `null` | JavaScript to execute on the page |
 | `wait_seconds` | `number` | `0` | Seconds to wait after page load (0–30) |
@@ -158,7 +158,12 @@ GET /api/storage/buckets
 **Response:**
 ```json
 {
-  "buckets": ["my-assets", "my-backups", "my-logs"]
+  "buckets": [
+    {
+      "name": "my-assets",
+      "creation_date": "2026-01-10T12:00:00Z"
+    }
+  ]
 }
 ```
 
@@ -216,64 +221,9 @@ DELETE /api/storage/files?bucket={bucket}&key={key}
 
 ---
 
-## 📍 Location Services
-
-### Detect My Location
-
-```http
-GET /api/location/me
-```
-
-Returns location based on the request's IP address.
-
-**Response:**
-```json
-{
-  "ip": "49.36.148.92",
-  "city": "Mumbai",
-  "region": "Maharashtra",
-  "country": "IN",
-  "loc": "19.0760,72.8777",
-  "org": "AS55836 Reliance Jio",
-  "timezone": "Asia/Kolkata"
-}
-```
-
-### IP Lookup
-
-```http
-GET /api/location/ip?ip=8.8.8.8
-```
-
-### Reverse Geocode
-
-```http
-GET /api/location/reverse?lat=40.7128&lng=-74.0060
-```
-
-### Forward Geocode (Address Search)
-
-```http
-GET /api/location/geocode?q=Times+Square
-```
-
-**Response:**
-```json
-[
-  {
-    "display_name": "Times Square, Manhattan, New York...",
-    "lat": "40.7580",
-    "lon": "-73.9855",
-    "type": "tourism"
-  }
-]
-```
-
----
-
 ## 🔐 Authentication
 
-OmniDev keeps external service keys in backend environment variables. Gemini, AWS, IPInfo, and Context7 credentials are configured server-side and are never exposed to the frontend.
+OmniDev keeps external service keys in backend environment variables. Gemini, AWS, and Context7 credentials are configured server-side and are never exposed to the frontend.
 
 ## ⚠️ Error Handling
 

@@ -1,4 +1,5 @@
-import { test, expect, Route } from "@playwright/test";
+import { test, expect } from "@playwright/test";
+import type { Route } from "playwright";
 import { mockJson } from "./helpers";
 
 test("storage list and download flow", async ({ page }) => {

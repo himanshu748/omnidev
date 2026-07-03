@@ -1,459 +1,213 @@
-<p align="center">
-  <br />
-  <strong style="font-size: 2rem;">🚀 OmniDev</strong>
-  <br />
-  <em>All-in-One AI Developer Platform</em>
-  <br /><br />
-  <a href="#features">Features</a> · <a href="#quick-start">Quick Start</a> · <a href="#api-reference">API Reference</a> · <a href="#architecture">Architecture</a>
-  <br /><br />
-  <img src="https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white" alt="Python" />
-  <img src="https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white" alt="Next.js" />
-  <img src="https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white" alt="FastAPI" />
-  <img src="https://img.shields.io/badge/Google-Gemini-4285F4?logo=google&logoColor=white" alt="Google Gemini" />
-  <img src="https://img.shields.io/badge/License-MIT-green?logo=opensourceinitiative&logoColor=white" alt="License" />
-  <img src="https://img.shields.io/badge/Playwright-Stealth-2EAD33?logo=playwright&logoColor=white" alt="Playwright" />
-  <img src="https://img.shields.io/badge/Design-Stitch-6567f1?logo=google&logoColor=white" alt="Stitch Design" />
-  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?logo=github" alt="PRs Welcome" />
-</p>
+# OmniDev
 
----
+Local-first AI developer workbench for shipping, inspecting, and operating software from one cockpit.
 
-**OmniDev** is a full-stack AI developer platform that combines **DevOps automation**, **web scraping**, **AI vision analysis**, **cloud storage management**, and **location intelligence** into a single, cohesive application. It features a **FastAPI** backend with a **Next.js 16** frontend using offline-safe system font stacks.
+[Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [Deployment](docs/DEPLOYMENT.md) · [Contributing](CONTRIBUTING.md)
 
-### 📚 Documentation
+![Python 3.13](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white)
+![Google Gemini](https://img.shields.io/badge/AI-Gemini-4285F4?logo=google&logoColor=white)
+![AWS boto3](https://img.shields.io/badge/AWS-boto3-FF9900?logo=amazonaws&logoColor=white)
+![License MIT](https://img.shields.io/badge/License-MIT-green)
 
-| Document | Description |
-|----------|-------------|
-| [Architecture](docs/ARCHITECTURE.md) | System design, directory structure, design patterns |
-| [API Reference](docs/API.md) | All endpoints with request/response examples |
-| [Design System](docs/DESIGN.md) | Typography, colors, glassmorphism, Stitch screens |
-| [Deployment](docs/DEPLOYMENT.md) | Render, Docker, Vercel deployment guides |
-| [Contributing](CONTRIBUTING.md) | Branch strategy, commit conventions, code style |
-| [Changelog](CHANGELOG.md) | Version history and release notes |
-| [Code of Conduct](CODE_OF_CONDUCT.md) | Community standards |
+OmniDev is a full-stack local developer toolkit built with a FastAPI backend and a Next.js frontend. It brings together AI-assisted code generation, AWS operations, browser automation, visual analysis, and S3 file management in one place.
 
+The product direction is a polished local-first developer cockpit: run it on your machine, keep credentials under your control, ask it questions about real infrastructure, and require human confirmation before risky agent actions.
 
+## What It Does
 
-## ✨ Features
+| Module | Purpose | Backend |
+|--------|---------|---------|
+| DevOps Agent | Parse natural-language AWS requests, inspect resources, and gate destructive actions behind confirmation. | Gemini + boto3 |
+| Code Gen | Generate project files for common web/backend frameworks with validation and browser-isolated preview/download flows. | Gemini + optional Context7 |
+| Web Scraper | Extract text, HTML, metadata, links, PDFs, or screenshots from authorized pages with Playwright-powered browser automation. | Playwright |
+| Vision Lab | Analyze images, run OCR-style prompts, and ask custom visual questions. | Gemini multimodal |
+| Cloud Storage | Browse S3 buckets, list objects, upload files, delete objects, and generate presigned download URLs. | boto3 S3 |
 
-| Module | Description | Tech |
-|--------|-------------|------|
-| 🤖 **DevOps Agent** | Manage AWS infrastructure with natural language commands — list EC2 instances, launch servers, manage security groups | Google Gemini + boto3 |
-| ⚡ **Code Gen** | Generate validated project files for React, Next.js, Streamlit, Node, Python, Vue, or Svelte using Gemini and optional Context7 docs; preview web apps in StackBlitz | Google Gemini + Context7 |
-| 🕷️ **Web Scraper** | Playwright-powered scraping with stealth mode, browser automation, metadata extraction, PDFs, links, screenshots, and custom JS execution | Playwright + Stealth |
-| 🖼️ **Vision Lab** | AI-powered image analysis, OCR text extraction, and custom visual Q&A | Google Gemini (multimodal) |
-| 📦 **Cloud Storage** | Full S3 file manager — browse buckets, upload/download files, generate presigned URLs, delete objects | boto3 S3 |
-| 📍 **Location Services** | IP geolocation, forward & reverse geocoding, public IP detection | IPInfo + Nominatim |
+## Product Surface
 
-<br />
+- `/` is the product landing page: positioning, modules, local-first story, platform direction, and calls to launch the app.
+- `/app` is the main cockpit: setup status, command center, agent mode, approvals, and module launcher.
+- Feature pages live under `frontend/app/` and share API helpers through `frontend/lib/api.ts`.
 
-## 🏗️ Architecture
+The current app includes a native macOS SwiftUI/WebKit shell around the Next.js frontend, with the FastAPI backend and frontend dev server managed as local sidecars. Windows and Linux packages are planned next.
 
-```
+## Architecture
+
+```text
 omnidev/
-├── backend/                  # FastAPI (Python 3.13)
+├── backend/
 │   ├── app/
-│   │   ├── main.py           # FastAPI app + Playwright lifespan
-│   │   ├── config.py         # Pydantic settings (env vars)
-│   │   ├── routers/          # API endpoint definitions
-│   │   │   ├── devops.py     # POST /api/devops/command
-│   │   │   ├── codegen.py    # POST /api/codegen/generate
-│   │   │   ├── scraper.py    # POST /api/scraper/scrape
-│   │   │   ├── preview.py    # POST /api/preview/check
-│   │   │   ├── vision.py     # POST /api/vision/analyze
-│   │   │   ├── storage.py    # GET/POST/DELETE /api/storage/*
-│   │   │   └── location.py   # GET /api/location/*
-│   │   ├── services/         # Business logic
-│   │   │   ├── ai_service.py       # Shared Gemini client (google-genai)
-│   │   │   ├── devops_agent.py
-│   │   │   ├── codegen_service.py
-│   │   │   ├── context7_service.py
-│   │   │   ├── scraper_service.py
-│   │   │   ├── preview_service.py
-│   │   │   ├── vision_service.py
-│   │   │   ├── storage_service.py
-│   │   │   └── location_service.py
-│   │   └── schemas/          # Pydantic request/response models
+│   │   ├── main.py              # FastAPI app and Playwright lifespan
+│   │   ├── config.py            # env/.env-backed settings
+│   │   ├── routers/             # HTTP endpoints
+│   │   ├── services/            # Gemini, boto3, and Playwright logic
+│   │   └── schemas/             # Pydantic request/response models
 │   ├── requirements.txt
-│   ├── .env.example
-│   └── CREDENTIALS.md        # Extra credential notes (Gemini: Google AI Studio)
-├── frontend/                 # Next.js 16 (React 19)
+│   └── .env.example
+├── frontend/
 │   ├── app/
-│   │   ├── page.tsx          # Landing page (OmniDev hero, features, proof, runbook)
-│   │   ├── layout.tsx        # Root layout and metadata
-│   │   ├── globals.css       # Premium dark theme + industrial/AI styling
-│   │   ├── components/       # Shared components
-│   │   ├── devops/page.tsx   # DevOps Agent UI
-│   │   ├── codegen/page.tsx  # Code Gen UI (generate + live preview)
-│   │   ├── scraper/page.tsx  # Web Scraper UI
-│   │   ├── vision/page.tsx   # Vision Lab UI
-│   │   ├── storage/page.tsx  # Cloud Storage UI
-│   │   └── location/page.tsx # Location Services UI
-│   ├── lib/api.ts            # API base URL config
+│   │   ├── page.tsx             # landing page
+│   │   ├── app/page.tsx         # app cockpit
+│   │   ├── components/          # shared frontend chrome
+│   │   ├── devops/page.tsx
+│   │   ├── codegen/page.tsx
+│   │   ├── scraper/page.tsx
+│   │   ├── vision/page.tsx
+│   │   └── storage/page.tsx
+│   ├── lib/api.ts
 │   └── package.json
-├── docs/                     # Documentation
-│   ├── ARCHITECTURE.md       # System design & patterns
-│   ├── API.md                # Full API reference
-│   ├── DESIGN.md             # Design system & Stitch screens
-│   └── DEPLOYMENT.md         # Deployment guides
-├── CONTRIBUTING.md           # Contribution guidelines
-├── CHANGELOG.md              # Version history
-├── CODE_OF_CONDUCT.md        # Community standards
-├── LICENSE                   # MIT License
-├── .gitignore
-└── README.md                 # ← You are here
+├── docs/
+├── AGENTS.md
+└── README.md
 ```
 
-### Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| **Backend** | Python 3.13, FastAPI, Pydantic Settings, Uvicorn |
-| **Frontend** | Next.js 16, React 19, Framer Motion, TypeScript, StackBlitz SDK (live previews) |
-| **AI** | Google Gemini (`google-genai`), optional Context7 for codegen docs |
-| **Cloud** | AWS (EC2, S3) via boto3 |
-| **Scraping** | Playwright (Chromium), playwright-stealth |
-| **Geolocation** | IPInfo, OpenStreetMap Nominatim, ipify |
-| **HTTP** | httpx (async), python-multipart |
-
-<br />
-
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
-- **Python 3.11+** (tested on 3.13)
-- **Node.js 20.9+** (tested with Node 22; required by Next.js 16)
-- **npm** (comes with Node.js)
+- Python 3.11+; Python 3.13 is used for local verification.
+- Node.js 20.9+; Node 22 works with Next.js 16.
+- npm.
 
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/himanshu748/omnidev.git
-cd omnidev
-```
-
-### 2. Backend Setup
+### Backend
 
 ```bash
 cd backend
-
-# Create virtual environment
-python -m venv .venv
-source .venv/bin/activate        # macOS/Linux
-# .venv\Scripts\activate         # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install Playwright browser
-playwright install chromium
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your credentials (Gemini key: https://aistudio.google.com/apikey)
-```
-
-### 3. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-```
-
-### 4. Run Both Servers
-
-**Terminal 1 — Backend (port 8000):**
-```bash
-cd backend
+python3.13 -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
+playwright install chromium
+cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-**Terminal 2 — Frontend (port 3000):**
+If `python3.13` is not available, use any supported Python 3.11+ interpreter.
+
+### Frontend
+
 ```bash
 cd frontend
+npm install
 npm run dev
 ```
 
-Open **http://localhost:3000** in your browser to see the UI.  
-Open **http://localhost:8000/docs** for the interactive Swagger API docs.
-
-<br />
-
-## 🔑 Environment Variables
-
-Create a `backend/.env` file based on `backend/.env.example`:
+Open `http://localhost:3000`. If that port is occupied, run:
 
 ```bash
-# Google Gemini (required for DevOps Agent, Code Gen, Vision Lab)
-# Free tier: https://aistudio.google.com/apikey
+npm run dev -- -p 3001
+```
+
+The backend API docs are available at `http://localhost:8000/docs`.
+
+## Configuration
+
+Create `backend/.env` from `backend/.env.example`.
+
+```bash
+# Required for DevOps Agent, Code Gen, and Vision Lab
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.0-flash
 
-# Context7 (optional — recommended for Code Gen live docs)
+# Optional docs grounding for Code Gen
 CONTEXT7_API_KEY=
 
-# AWS (required for DevOps Agent + Cloud Storage)
+# Optional explicit AWS credentials.
+# If omitted, boto3 uses the standard AWS credential chain:
+# ~/.aws/credentials, AWS SSO/session env, instance role, etc.
 AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_DEFAULT_REGION=us-east-1
 
-# IPInfo (optional — free tier works without a token)
-IPINFO_TOKEN=
-
-# CORS (frontend URL)
-CORS_ORIGINS=http://localhost:3000
+# Local frontend origins
+CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001
 ```
 
-For hosted frontend builds, create `frontend/.env.local` or set the variable in your hosting dashboard:
+Credential needs by module:
+
+| Module | Gemini | AWS | Context7 |
+|--------|--------|-----|----------|
+| DevOps Agent | Required | Required through boto3 chain | No |
+| Code Gen | Required | No | Optional |
+| Web Scraper | No | No | No |
+| Vision Lab | Required | No | No |
+| Cloud Storage | No | Required through boto3 chain | No |
+
+## API Snapshot
+
+All backend routes are served from `http://localhost:8000` by default.
+
+| Method | Endpoint | Notes |
+|--------|----------|-------|
+| `GET` | `/health` | Service health check. |
+| `POST` | `/api/devops/command` | Natural-language AWS command; destructive operations require `confirm_destructive: true`. |
+| `POST` | `/api/codegen/generate` | Returns validated generated files and instructions. Backend does not execute generated code. |
+| `POST` | `/api/scraper/scrape` | Browser-based extraction for text, HTML, screenshots, links, metadata, and PDFs. |
+| `POST` | `/api/preview/check` | Captures page preview and basic metadata. |
+| `POST` | `/api/vision/analyze` | Multipart image analysis. |
+| `GET` | `/api/storage/buckets` | Lists S3 buckets as `{ name, creation_date }` objects. |
+| `GET` | `/api/storage/files` | Lists S3 objects for a bucket and optional prefix. |
+| `POST` | `/api/storage/upload` | Uploads a file to S3. |
+| `GET` | `/api/storage/download` | Returns a presigned download URL. |
+| `DELETE` | `/api/storage/files` | Deletes an S3 object. |
+
+See [docs/API.md](docs/API.md) for request and response examples.
+
+## Agent Safety
+
+- Generated code is returned as files for review, download, or isolated browser preview; OmniDev does not run generated projects on the backend.
+- Code Gen blocks unsafe paths, duplicate case-insensitive paths, secret-like outputs, risky npm lifecycle hooks, and suspicious script bodies.
+- DevOps operations are mapped to explicit boto3 actions before execution.
+- Destructive DevOps actions require a confirmation flag.
+- AWS credentials stay local and are resolved by boto3; no credential values should be committed to the repo.
+
+## Verification
+
+Common checks:
 
 ```bash
-NEXT_PUBLIC_API_URL=https://your-backend.example.com
+cd frontend && npm run lint
+cd frontend && npm run build
+cd backend && pytest
 ```
 
-> 📖 **Need help getting credentials?** See [`backend/CREDENTIALS.md`](backend/CREDENTIALS.md) for AWS, IPInfo, and Context7. For Gemini, use [Google AI Studio](https://aistudio.google.com/apikey).
+Local verification on June 18, 2026:
 
-### Which Credentials Are Needed for Each Feature?
+| Check | Result |
+|-------|--------|
+| Frontend typecheck | Passed via `npm run lint`. |
+| Frontend production build | Passed via `npm run build`. |
+| Backend tests | Passed: 58 tests. |
+| Live `/health` | Passed. |
+| Live scraper/preview probes | Passed against local frontend. |
+| Live S3 bucket listing | Passed through local AWS profile with zero bucket names printed. |
+| AI-only endpoints without `GEMINI_API_KEY` | Return service-unavailable responses instead of crashing. |
 
-| Feature | Gemini | AWS | IPInfo | Context7 |
-|---------|--------|-----|--------|----------|
-| DevOps Agent | ✅ Required | ✅ Required | — | — |
-| Code Gen | ✅ Required | — | — | Optional |
-| Web Scraper | — | — | — | — |
-| Vision Lab | ✅ Required | — | — | — |
-| Cloud Storage | — | ✅ Required | — | — |
-| Location Services | — | — | Optional | — |
+## Desktop Packaging Direction
 
-> **Web Scraper** and **Location Services** work with zero configuration!
+OmniDev includes a native macOS `.app` shell for local developer use. See [docs/MACOS_APP.md](docs/MACOS_APP.md).
 
-<br />
+The broader packaging plan is:
 
-## 📡 API Reference
+- macOS native shell now; Windows and Linux builds next.
+- Local FastAPI sidecar process managed by the desktop shell.
+- Next.js frontend loaded inside the macOS shell, with a future path to bundled static/runtime assets.
+- Local credential discovery through the user's existing AWS/Gemini environment.
+- Human-in-the-loop approval UI for agent actions before infrastructure changes.
 
-All endpoints are prefixed with the backend URL (default: `http://localhost:8000`).
-
-### Health Check
-
-```
-GET /health
-→ { "status": "ok", "service": "omnidev" }
-```
-
-### 🤖 DevOps Agent
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/devops/command` | Execute a natural language AWS command |
-
-**Request Body:**
-```json
-{
-  "message": "List my EC2 instances",
-  "confirm_destructive": false
-}
-```
-
-**Response:**
-```json
-{
-  "action": "list_ec2",
-  "params": {},
-  "raw_result": [...],
-  "summary": "You have 3 EC2 instances...",
-  "needs_confirmation": false
-}
-```
-
-**Supported Actions:** `list_ec2`, `launch_ec2`, `stop_ec2`, `terminate_ec2`, `list_s3_buckets`, `describe_security_groups`
-
-> ⚠️ Destructive actions (`stop_ec2`, `terminate_ec2`) require `confirm_destructive: true`.
-
----
-
-### 🕷️ Web Scraper
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/scraper/scrape` | Scrape a URL with optional stealth mode |
-
-**Request Body:**
-```json
-{
-  "url": "https://example.com",
-  "extract": "text",
-  "stealth": true,
-  "wait_for": ".main-content",
-  "javascript": "document.querySelector('.cookie-btn')?.click()",
-  "timeout_ms": 30000
-}
-```
-
-**Extract Modes:** `text` (inner text), `html` (full HTML), `screenshot` (full-page PNG as base64)
-
-**Response:**
-```json
-{
-  "url": "https://example.com",
-  "title": "Example Domain",
-  "status_code": 200,
-  "content": "...",
-  "screenshot_b64": null
-}
-```
-
----
-
-### 🖼️ Vision Lab
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/vision/analyze` | Analyze an uploaded image |
-
-**Form Data:**
-- `image` (file, required) — The image file
-- `mode` (string) — `analyze`, `ocr`, or `custom`
-- `prompt` (string) — Custom prompt when mode is `custom`
-
-**Response:**
-```json
-{
-  "mode": "analyze",
-  "result": "This image shows...",
-  "model": "gemini-2.0-flash",
-  "tokens_used": 1250
-}
-```
-
----
-
-### ⚡ Code Gen
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/codegen/generate` | Generate a full project for the requested framework |
-
-**Request Body:**
-```json
-{
-  "prompt": "A todo app with dark mode and local storage",
-  "framework": "react"
-}
-```
-
-**Response (simplified):**
-```json
-{
-  "files": [
-    { "path": "package.json", "content": "{...}" },
-    { "path": "src/main.tsx", "content": "..." }
-  ],
-  "instructions": "Review files first, then run npm install && npm run dev in an isolated directory."
-}
-```
-
-> Code Gen validates generated paths, size, case-insensitive duplicates, secret-bearing files, hard-coded secret-looking content, risky npm lifecycle hooks, and suspicious npm script bodies before returning files. OmniDev does not execute generated code on the backend; supported web previews run in StackBlitz's isolated browser environment.
-
----
-
-### 📦 Cloud Storage
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/storage/buckets` | List all S3 buckets |
-| `GET` | `/api/storage/files?bucket={bucket}&prefix=folder/` | List files in a bucket |
-| `POST` | `/api/storage/upload` | Upload a file (form: `file`, `bucket`, `key`) |
-| `GET` | `/api/storage/download?bucket={bucket}&key={key}` | Generate presigned download URL |
-| `DELETE` | `/api/storage/files?bucket={bucket}&key={key}` | Delete a file |
-
----
-
-### 📍 Location Services
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/location/me` | Detect server's public IP + location |
-| `GET` | `/api/location/ip?ip=8.8.8.8` | Look up any IP (omit for own IP) |
-| `GET` | `/api/location/reverse?lat=40.71&lng=-74.01` | Reverse geocode coordinates |
-| `GET` | `/api/location/geocode?q=New+York&limit=5` | Forward geocode an address |
-
-<br />
-
-## 🎨 Frontend Features
-
-The frontend provides a **premium dark-themed dashboard** for each service:
-
-- **🏠 Landing Page** — Hero section, feature cards, tech stack, process walkthrough, proof, runbook, FAQ
-- **🤖 DevOps** — Natural language command input with suggestion chips, structured result display, destructive action safeguards
-- **⚡ Code Gen** — Prompt + framework selector, generated file tree + code viewer, one-click copy, ZIP download, and live StackBlitz preview
-- **🕷️ Scraper** — URL input with demo suggestions, extraction mode toggles (text/HTML/screenshot), stealth toggle, elapsed time
-- **🖼️ Vision** — Drag-and-drop image upload with preview, mode pills (Analyze/OCR/Custom), token & model info
-- **📦 Storage** — Bucket chip selector, file browser with icons/sizes/dates, prefix filter, upload form, download links
-- **📍 Location** — Tabbed interface (My Location / IP Lookup / Reverse Geocode / Address Search), suggestion chips, Google Maps links
-
-### Design Highlights
-
-- 🌑 Premium dark theme with glassmorphism and subtle grid background
-- ✨ Motion states and micro-interactions
-- 🎯 API endpoint badges showing HTTP methods (GET/POST/DELETE)
-- 📱 Fully responsive on mobile, tablet, and desktop
-- ⚡ Offline-safe monospace stack for code/technical elements
-
-<br />
-
-## 🧪 Testing the API
-
-You can test the backend directly using `curl`:
-
-```bash
-# Health check
-curl http://localhost:8000/health
-
-# Scrape a website (no auth required)
-curl -X POST http://localhost:8000/api/scraper/scrape \
-  -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com", "extract": "text"}'
-
-# Detect location (no auth required)
-curl http://localhost:8000/api/location/me
-
-# Forward geocode
-curl "http://localhost:8000/api/location/geocode?q=Eiffel+Tower&limit=3"
-
-# DevOps command (requires Gemini + AWS keys)
-curl -X POST http://localhost:8000/api/devops/command \
-  -H "Content-Type: application/json" \
-  -d '{"message": "List my EC2 instances"}'
-```
-
-Or visit **http://localhost:8000/docs** for the interactive Swagger UI.
-
-<br />
-
-## 📝 License
-
-This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
-<br />
-
-## 📚 Documentation
+## Documentation
 
 | Document | Description |
 |----------|-------------|
-| 📋 [CHANGELOG](CHANGELOG.md) | Release history and version notes |
-| 🤝 [CONTRIBUTING](CONTRIBUTING.md) | How to contribute to OmniDev |
-| 💜 [CODE OF CONDUCT](CODE_OF_CONDUCT.md) | Community standards |
-| 🏗️ [Architecture](docs/ARCHITECTURE.md) | System design, data flow, and module deep dives |
-| 📡 [API Reference](docs/API.md) | Complete REST API documentation |
-| 🚀 [Deployment](docs/DEPLOYMENT.md) | Docker, Render, and Vercel deployment guides |
-| 🎨 [Design System](docs/DESIGN.md) | Stitch prototypes, design tokens, and component library |
+| [Architecture](docs/ARCHITECTURE.md) | System design and project structure. |
+| [API Reference](docs/API.md) | REST endpoints and examples. |
+| [Deployment](docs/DEPLOYMENT.md) | Docker, Render, and Vercel notes. |
+| [Design System](docs/DESIGN.md) | Visual system and UI references. |
+| [Contributing](CONTRIBUTING.md) | Contribution guide. |
+| [Changelog](CHANGELOG.md) | Release notes. |
+| [Code of Conduct](CODE_OF_CONDUCT.md) | Community standards. |
 
-<br />
+## License
 
----
-
-<p align="center">
-  Built with ❤️ using FastAPI, Next.js, and Google Gemini
-</p>
+MIT. See [LICENSE](LICENSE).

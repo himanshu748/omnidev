@@ -18,7 +18,6 @@
 | 3 | **DevOps Agent Dashboard** — NLU command, suggestions | `bcc0f3477e5b4755a98ca5acc7ea2270` | 2560×2880 |
 | 4 | **Vision Lab Dashboard** — Upload, analysis modes | `4976d0a12a5249ff84d90887c47a2d67` | 2560×2734 |
 | 5 | **Cloud Storage Manager** — Bucket browser, upload | `a08369346c6f44d889716860c7c5eee4` | 2560×2478 |
-| 6 | **Location Services Hub** — Tabs, maps, geocoding | `df86930c88034c4b8b0931719689fabb` | 2560×3174 |
 
 <br />
 

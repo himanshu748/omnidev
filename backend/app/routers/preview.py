@@ -22,7 +22,12 @@ async def preview_check(body: PreviewRequest, request: Request):
             status_code=400,
             detail="Enable at least one of desktop or mobile",
         )
-    browser = request.app.state.browser
+    browser = getattr(request.app.state, "browser", None)
+    if browser is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Playwright browser is unavailable. Restart the backend with browser permissions to use preview.",
+        )
     try:
         result = await capture_preview(
             browser,

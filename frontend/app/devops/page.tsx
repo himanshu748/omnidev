@@ -78,23 +78,6 @@ const SUGGESTION_GROUPS = [
   },
 ];
 
-function syntaxHighlight(json: string): string {
-  return json.replace(
-    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-    (match) => {
-      let cls = "jsonNumber";
-      if (/^"/.test(match)) {
-        cls = /:$/.test(match) ? "jsonKey" : "jsonString";
-      } else if (/true|false/.test(match)) {
-        cls = "jsonBool";
-      } else if (/null/.test(match)) {
-        cls = "jsonNull";
-      }
-      return `<span class="${cls}">${match}</span>`;
-    }
-  );
-}
-
 function formatElapsed(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
@@ -160,6 +143,12 @@ export default function DevOpsPage() {
         setError(data.detail ?? `HTTP ${res.status}`);
         return;
       }
+      const rawResult = data.raw_result;
+      const isResultError =
+        rawResult !== null &&
+        typeof rawResult === "object" &&
+        !Array.isArray(rawResult) &&
+        "error" in rawResult;
       const entry: HistoryEntry = {
         id: nextId++,
         command: message.trim(),
@@ -172,7 +161,7 @@ export default function DevOpsPage() {
           second: "2-digit",
         }),
         elapsed,
-        isError: false,
+        isError: isResultError,
       };
       setActiveEntry(entry);
       setHistory((prev) => [entry, ...prev.slice(0, 9)]);
@@ -191,9 +180,9 @@ export default function DevOpsPage() {
   }
 
   const isDangerous =
-    message.toLowerCase().includes("terminate") ||
-    message.toLowerCase().includes("delete") ||
-    message.toLowerCase().includes("stop");
+    ["terminate", "delete", "stop", "reboot", "launch", "create"].some((word) =>
+      message.toLowerCase().includes(word)
+    );
 
   return (
     <FeatureLayout
@@ -501,23 +490,16 @@ export default function DevOpsPage() {
                         </div>
                       </div>
                       <div className="devopsJsonMeta">
-                        <span className="devopsJsonStatus">200 OK</span>
+                        <span className={activeEntry.isError ? "devopsJsonStatus error" : "devopsJsonStatus"}>
+                          {activeEntry.isError ? "AWS ERROR" : "200 OK"}
+                        </span>
                         <span className="devopsJsonElapsed">
                           {formatElapsed(activeEntry.elapsed)}
                         </span>
                       </div>
-                      <pre
-                        className={`devopsJsonPre ${expandedJson ? "expanded" : ""}`}
-                        dangerouslySetInnerHTML={{
-                          __html: syntaxHighlight(
-                            JSON.stringify(
-                              activeEntry.result.raw_result,
-                              null,
-                              2
-                            )
-                          ),
-                        }}
-                      />
+                      <pre className={`devopsJsonPre ${expandedJson ? "expanded" : ""}`}>
+                        {JSON.stringify(activeEntry.result.raw_result, null, 2)}
+                      </pre>
                     </div>
                   )}
 

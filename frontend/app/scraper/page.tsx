@@ -43,25 +43,7 @@ const DEMO_URLS = [
   { label: "Hacker News", url: "https://news.ycombinator.com" },
   { label: "Wikipedia", url: "https://en.wikipedia.org/wiki/Web_scraping" },
   { label: "GitHub", url: "https://github.com" },
-  { label: "Keepa", url: "https://keepa.com" },
 ];
-
-function syntaxHighlight(json: string): string {
-  return json.replace(
-    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-    (match) => {
-      let cls = "jsonNumber";
-      if (/^"/.test(match)) {
-        cls = /:$/.test(match) ? "jsonKey" : "jsonString";
-      } else if (/true|false/.test(match)) {
-        cls = "jsonBool";
-      } else if (/null/.test(match)) {
-        cls = "jsonNull";
-      }
-      return `<span class="${cls}">${match}</span>`;
-    }
-  );
-}
 
 export default function ScraperPage() {
   const [url, setUrl] = useState("https://example.com");
@@ -116,7 +98,7 @@ export default function ScraperPage() {
   return (
     <FeatureLayout
       title="Web Scraper"
-      description="Playwright-powered stealth scraping engine. Extract data from dynamic SPAs and modern web apps without getting blocked."
+      description="Playwright-powered browser extraction for pages you are authorized to inspect. Capture text, HTML, screenshots, links, metadata, and PDFs from local workflows."
       icon="🕷️"
       endpoints={[{ method: "POST", path: "/api/scraper/scrape" }]}
     >
@@ -129,7 +111,7 @@ export default function ScraperPage() {
           </h2>
         </div>
         <p className="featureCardSubtitle">
-          Extract text, HTML, screenshots, links, SEO metadata, or PDF from any URL. Stealth mode uses anti-detection patterns.
+          Extract text, HTML, screenshots, links, SEO metadata, or PDF from a page you have permission to inspect. Compatibility mode adjusts browser fingerprints for modern sites; it is not a bypass guarantee.
         </p>
 
         <form className="featureForm" onSubmit={handleSubmit}>
@@ -144,7 +126,7 @@ export default function ScraperPage() {
                 placeholder="https://"
                 required
               />
-              <span className="inputTag">🔒</span>
+              <span className="inputTag">URL</span>
             </div>
           </div>
 
@@ -181,7 +163,7 @@ export default function ScraperPage() {
               </div>
             </div>
             <div>
-              <label>Stealth Mode</label>
+              <label>Compatibility mode</label>
               <div className="stealthToggle">
                 <input
                   id="scraper-stealth"
@@ -191,7 +173,7 @@ export default function ScraperPage() {
                 />
                 <label htmlFor="scraper-stealth" className="stealthLabel">
                   <span className={`stealthDot ${stealth ? "active" : ""}`} />
-                  {stealth ? "Secure connection" : "Standard mode"}
+                  {stealth ? "Fingerprint adjustments on" : "Standard browser context"}
                 </label>
               </div>
             </div>
@@ -378,12 +360,7 @@ export default function ScraperPage() {
                   <span className="consoleTitle">SEO & Page Metadata</span>
                 </div>
                 <div className="consoleBody">
-                  <pre
-                    className="consoleJson"
-                    dangerouslySetInnerHTML={{
-                      __html: syntaxHighlight(JSON.stringify(result.metadata, null, 2)),
-                    }}
-                  />
+                  <pre className="consoleJson">{JSON.stringify(result.metadata, null, 2)}</pre>
                 </div>
               </div>
             )}
@@ -413,29 +390,24 @@ export default function ScraperPage() {
                       {result.content.length > 20000 ? "\n… (truncated)" : ""}
                     </pre>
                   ) : (
-                    <pre
-                      className="consoleJson"
-                      dangerouslySetInnerHTML={{
-                        __html: syntaxHighlight(
-                          JSON.stringify(
-                            {
-                              status: "success",
-                              timestamp: new Date().toISOString(),
-                              url: result.url,
-                              title: result.title,
-                              word_count: result.word_count,
-                              text_content: result.content.slice(0, 500),
-                              "...": result.content.length > 500 ? `${result.content.length} chars total` : undefined,
-                              performance: {
-                                elapsed_ms: result.elapsed_ms ?? elapsed,
-                              },
-                            },
-                            null,
-                            2
-                          )
-                        ),
-                      }}
-                    />
+                    <pre className="consoleJson">
+                      {JSON.stringify(
+                        {
+                          status: "success",
+                          timestamp: new Date().toISOString(),
+                          url: result.url,
+                          title: result.title,
+                          word_count: result.word_count,
+                          text_content: result.content.slice(0, 500),
+                          "...": result.content.length > 500 ? `${result.content.length} chars total` : undefined,
+                          performance: {
+                            elapsed_ms: result.elapsed_ms ?? elapsed,
+                          },
+                        },
+                        null,
+                        2
+                      )}
+                    </pre>
                   )}
                 </div>
               </div>

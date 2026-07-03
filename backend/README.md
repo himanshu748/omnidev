@@ -7,10 +7,9 @@ All-in-One AI Developer Platform — FastAPI backend.
 | Module | Description |
 |---|---|
 | DevOps Agent | Manage AWS with natural language (Google Gemini + boto3) |
-| Web Scraper | Playwright with stealth mode, screenshots, PDFs, links, and metadata extraction |
+| Web Scraper | Playwright browser extraction for authorized pages, screenshots, PDFs, links, and metadata |
 | Vision Lab | Gemini multimodal for image analysis & OCR |
 | Cloud Storage | S3 file manager with upload/download |
-| Location Services | IP geolocation, reverse geocoding |
 | Code Gen | Gemini project generation with optional Context7 docs, validated file output, and no backend execution |
 
 ## Quick Start
@@ -33,4 +32,4 @@ Open **http://localhost:8000/docs** for the interactive API docs.
 
 ## Environment Variables
 
-See `.env.example` for variable names (`GEMINI_API_KEY`, `GEMINI_MODEL`, AWS, IPInfo, Context7, CORS). For AWS and IPInfo setup steps, see [CREDENTIALS.md](CREDENTIALS.md).
+See `.env.example` for variable names (`GEMINI_API_KEY`, `GEMINI_MODEL`, AWS, Context7, CORS). For AWS setup steps, see [CREDENTIALS.md](CREDENTIALS.md).

@@ -11,7 +11,6 @@ const FEATURE_LINKS = [
   { label: "Web Scraper", href: "/scraper", emoji: "🕷️" },
   { label: "Vision Lab", href: "/vision", emoji: "🖼️" },
   { label: "Cloud Storage", href: "/storage", emoji: "📦" },
-  { label: "Location", href: "/location", emoji: "📍" },
 ];
 
 type EndpointInfo = {

@@ -130,12 +130,20 @@ async def parse_intent(message: str) -> ParsedIntent:
 
 
 # ── boto3 clients ───────────────────────────────────────────
+def _aws_client_kwargs() -> dict[str, str]:
+    if settings.aws_access_key_id and settings.aws_secret_access_key:
+        return {
+            "aws_access_key_id": settings.aws_access_key_id,
+            "aws_secret_access_key": settings.aws_secret_access_key,
+        }
+    return {}
+
+
 def _ec2_client(region: str | None = None):
     return boto3.client(
         "ec2",
         region_name=region or settings.aws_default_region,
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
+        **_aws_client_kwargs(),
     )
 
 
@@ -143,16 +151,14 @@ def _s3_client():
     return boto3.client(
         "s3",
         region_name=settings.aws_default_region,
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
+        **_aws_client_kwargs(),
     )
 
 
 def _iam_client():
     return boto3.client(
         "iam",
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
+        **_aws_client_kwargs(),
     )
 
 
@@ -160,8 +166,7 @@ def _rds_client(region: str | None = None):
     return boto3.client(
         "rds",
         region_name=region or settings.aws_default_region,
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
+        **_aws_client_kwargs(),
     )
 
 
@@ -169,8 +174,7 @@ def _cloudwatch_client(region: str | None = None):
     return boto3.client(
         "cloudwatch",
         region_name=region or settings.aws_default_region,
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
+        **_aws_client_kwargs(),
     )
 
 
@@ -178,8 +182,7 @@ def _lambda_client(region: str | None = None):
     return boto3.client(
         "lambda",
         region_name=region or settings.aws_default_region,
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
+        **_aws_client_kwargs(),
     )
 
 
@@ -500,7 +503,9 @@ async def run_command(message: str, confirm_destructive: bool = False) -> dict:
             "needs_confirmation": False,
         }
 
-    if intent.is_destructive and not confirm_destructive:
+    is_destructive = intent.action in DESTRUCTIVE_ACTIONS or intent.is_destructive
+
+    if is_destructive and not confirm_destructive:
         return {
             "action": intent.action,
             "params": intent.params,

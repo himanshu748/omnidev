@@ -10,47 +10,38 @@
 ┌──────────────────────────────────────────────────────────────────┐
 │                        FRONTEND (Next.js 16)                     │
 │                                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐│
-│  │  DevOps  │ │ Scraper  │ │  Vision  │ │ Storage  │ │Location││
-│  │  Agent   │ │Dashboard │ │   Lab    │ │ Manager  │ │Services││
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘ └───┬────┘│
-│       │             │            │             │           │      │
-│       └──────┬──────┴─────┬──────┴──────┬──────┴─────┬─────┘      │
-│              │            │             │            │            │
-│         FeatureLayout   globals.css   api.ts     layout.tsx      │
-└──────────────┬────────────┬─────────────┬────────────┬───────────┘
-               │            │             │            │
-          HTTP/REST    HTTP/REST     HTTP/REST    HTTP/REST
-               │            │             │            │
-┌──────────────┴────────────┴─────────────┴────────────┴───────────┐
+│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐            │
+│  │ DevOps   │ │ Scraper  │ │ Vision   │ │ Storage  │            │
+│  │ Agent    │ │Dashboard │ │ Lab      │ │ Manager  │            │
+│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘            │
+│       └────────────┴────────────┴────────────┘                  │
+│                FeatureLayout + globals.css + api.ts              │
+└─────────────────────────────┬────────────────────────────────────┘
+                              │ HTTP/REST
+┌─────────────────────────────┴────────────────────────────────────┐
 │                       BACKEND (FastAPI)                           │
 │                                                                  │
 │  main.py ─── Lifespan (Playwright browser pool)                  │
 │     │                                                            │
 │  ┌──────────────────────────────────────────────────────────┐    │
 │  │                     ROUTERS (API Layer)                   │    │
-│  │  devops.py  scraper.py  vision.py  storage.py  location.py│   │
-│  └──────┬──────────┬──────────┬──────────┬──────────┬────────┘   │
-│         │          │          │          │          │             │
-│  ┌──────┴──────────┴──────────┴──────────┴──────────┴────────┐   │
-│  │                   SERVICES (Business Logic)                │   │
-│  │  devops_svc  scraper_svc  vision_svc  storage_svc  loc_svc│   │
-│  └──────┬──────────┬──────────┬──────────┬──────────┬────────┘   │
-│         │          │          │          │          │             │
-│  ┌──────┴──────────┴──────────┴──────────┴──────────┴────────┐   │
-│  │                    SCHEMAS (Pydantic Models)               │   │
-│  │  devops.py  scraper.py  vision.py  storage.py  location.py│   │
-│  └───────────────────────────────────────────────────────────┘   │
-│                                                                  │
-│  config.py ─── Pydantic Settings (env-based configuration)       │
+│  │       devops.py  codegen.py  scraper.py  vision.py        │    │
+│  │       preview.py storage.py                               │    │
+│  └───────────────────────┬──────────────────────────────────┘    │
+│  ┌───────────────────────┴──────────────────────────────────┐    │
+│  │                   SERVICES (Business Logic)                │    │
+│  │       Gemini, boto3, Playwright, StackBlitz handoff        │    │
+│  └───────────────────────┬──────────────────────────────────┘    │
+│  ┌───────────────────────┴──────────────────────────────────┐    │
+│  │                    SCHEMAS (Pydantic Models)               │    │
+│  └───────────────────────────────────────────────────────────┘    │
 └──────────────────────────────────────────────────────────────────┘
-               │            │             │            │
-          ┌────┘            │             │            └────┐
-          ▼                 ▼             ▼                 ▼
-    ┌──────────┐     ┌──────────┐  ┌──────────┐     ┌──────────┐
-    │ Gemini   │     │Playwright│  │  AWS S3  │     │  IPInfo  │
-    │ AI       │     │(Chromium)│  │  (boto3) │     │ Nominatim│
-    └──────────┘     └──────────┘  └──────────┘     └──────────┘
+          │                  │                    │
+          ▼                  ▼                    ▼
+    ┌──────────┐       ┌──────────┐        ┌──────────┐
+    │ Gemini   │       │Playwright│        │ AWS/S3   │
+    │ AI       │       │Chromium  │        │ boto3    │
+    └──────────┘       └──────────┘        └──────────┘
 ```
 
 <br />
@@ -68,20 +59,17 @@ omnidev/
 │   │   │   ├── devops.py      # /api/devops/*
 │   │   │   ├── scraper.py     # /api/scraper/*
 │   │   │   ├── vision.py      # /api/vision/*
-│   │   │   ├── storage.py     # /api/storage/*
-│   │   │   └── location.py    # /api/location/*
+│   │   │   └── storage.py     # /api/storage/*
 │   │   ├── services/          # Business logic layer
 │   │   │   ├── devops_agent.py
 │   │   │   ├── scraper_service.py
 │   │   │   ├── vision_service.py
-│   │   │   ├── storage_service.py
-│   │   │   └── location_service.py
+│   │   │   └── storage_service.py
 │   │   └── schemas/           # Pydantic request/response models
 │   │       ├── devops.py
 │   │       ├── scraper.py
 │   │       ├── vision.py
-│   │       ├── storage.py
-│   │       └── location.py
+│   │       └── storage.py
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/
@@ -92,8 +80,7 @@ omnidev/
 │   │   ├── devops/page.tsx    # DevOps Agent dashboard
 │   │   ├── scraper/page.tsx   # Web Scraper dashboard
 │   │   ├── vision/page.tsx    # Vision Lab dashboard
-│   │   ├── storage/page.tsx   # Cloud Storage dashboard
-│   │   └── location/page.tsx  # Location Services dashboard
+│   │   └── storage/page.tsx   # Cloud Storage dashboard
 │   ├── components/
 │   │   └── FeatureLayout.tsx  # Shared navigation + header layout
 │   ├── lib/
@@ -155,5 +142,3 @@ All styling flows from `globals.css` via CSS custom properties:
 | **StackBlitz** | Browser-isolated preview for generated web projects; OmniDev backend does not execute generated code | None |
 | **AWS** | EC2/S3 management via boto3 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |
 | **Playwright** | Headless Chromium for web scraping | Installed via `playwright install chromium` |
-| **IPInfo** | IP geolocation lookups | `IPINFO_TOKEN` (optional) |
-| **Nominatim** | Forward/reverse geocoding (OpenStreetMap) | No key required |

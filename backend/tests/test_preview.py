@@ -35,3 +35,18 @@ async def test_preview_success(client, monkeypatch, coverage_tracker):
     assert resp.status_code == 200
     assert resp.json()["title"] == "Example"
     coverage_tracker("POST /api/preview/check")
+
+
+@pytest.mark.asyncio
+async def test_preview_returns_503_when_browser_unavailable(client, app, monkeypatch):
+    app.state.browser = None
+
+    async def fake_capture(*args, **kwargs):
+        raise AssertionError("capture_preview should not be called without a browser")
+
+    monkeypatch.setattr(preview_router, "capture_preview", fake_capture)
+    resp = await client.post("/api/preview/check", json={"url": "https://example.com"})
+
+    assert resp.status_code == 503
+    assert "Playwright browser is unavailable" in resp.json()["detail"]
+    app.state.browser = object()

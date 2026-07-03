@@ -1,4 +1,5 @@
 import pytest
+from botocore.exceptions import NoCredentialsError
 
 from app.routers import storage as storage_router
 
@@ -58,3 +59,16 @@ async def test_storage_endpoints(client, monkeypatch, coverage_tracker):
 async def test_storage_download_validation(client):
     resp = await client.get("/api/storage/download?bucket=demo&key=file.txt&expires_in=10")
     assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_storage_returns_503_without_aws_credentials(client, monkeypatch):
+    async def fake_list_buckets():
+        raise NoCredentialsError()
+
+    monkeypatch.setattr(storage_router, "list_buckets", fake_list_buckets)
+
+    resp = await client.get("/api/storage/buckets")
+
+    assert resp.status_code == 503
+    assert "AWS credentials" in resp.json()["detail"]

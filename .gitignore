@@ -28,6 +28,11 @@ out/
 *.tsbuildinfo
 next-env.d.ts
 
+# ── macOS / SwiftPM ─────────────────────────────────────────────
+.build/
+macos/.build/
+.omnidev-macos/
+
 # ── Environment & Secrets ──────────────────────────────────────
 .env
 .env.local

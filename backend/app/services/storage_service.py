@@ -13,12 +13,20 @@ import boto3
 from app.config import settings
 
 
+def _aws_client_kwargs() -> dict[str, str]:
+    if settings.aws_access_key_id and settings.aws_secret_access_key:
+        return {
+            "aws_access_key_id": settings.aws_access_key_id,
+            "aws_secret_access_key": settings.aws_secret_access_key,
+        }
+    return {}
+
+
 def _s3_client():
     return boto3.client(
         "s3",
         region_name=settings.aws_default_region,
-        aws_access_key_id=settings.aws_access_key_id,
-        aws_secret_access_key=settings.aws_secret_access_key,
+        **_aws_client_kwargs(),
     )
 
 

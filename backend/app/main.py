@@ -5,6 +5,7 @@ FastAPI entry point with lifespan-managed Playwright browser.
 
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
 import logging
 from typing import AsyncIterator
@@ -18,6 +19,18 @@ from app.routers import codegen, devops, location, preview, scraper, storage, vi
 
 logger = logging.getLogger(__name__)
 
+PLAYWRIGHT_STARTUP_TIMEOUT_SECONDS = 12
+
+
+async def _start_playwright_browser() -> tuple[Playwright, Browser]:
+    pw = await async_playwright().start()
+    try:
+        browser = await pw.chromium.launch(headless=True)
+    except Exception:
+        await pw.stop()
+        raise
+    return pw, browser
+
 
 # ── Lifespan ────────────────────────────────────────────────
 @asynccontextmanager
@@ -26,19 +39,15 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     pw: Playwright | None = None
     browser: Browser | None = None
     try:
-        pw = await async_playwright().start()
-        browser = await pw.chromium.launch(headless=True)
+        pw, browser = await asyncio.wait_for(
+            _start_playwright_browser(),
+            timeout=PLAYWRIGHT_STARTUP_TIMEOUT_SECONDS,
+        )
     except Exception as exc:
         logger.warning(
             "Playwright browser failed to start; scraper endpoints will return 503. Error: %s",
             exc,
         )
-        if pw is not None:
-            try:
-                await pw.stop()
-            except Exception:
-                pass
-            pw = None
     app.state.playwright = pw
     app.state.browser = browser
     yield
