@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright, Playwright, Browser
 
 from app.config import settings
-from app.routers import codegen, devops, location, preview, scraper, storage, vision
+from app.routers import codegen, devops, location, models, preview, scraper, storage, vision
 from app.services.ai_service import close_ai_clients
 
 logger = logging.getLogger(__name__)
@@ -94,6 +94,7 @@ app.include_router(storage.router, prefix="/api/storage", tags=["Cloud Storage"]
 app.include_router(location.router, prefix="/api/location", tags=["Location Services"])
 app.include_router(codegen.router, prefix="/api/codegen", tags=["Code Gen"])
 app.include_router(preview.router, prefix="/api/preview", tags=["Site Preview"])
+app.include_router(models.router, prefix="/api/models", tags=["Models"])
 
 
 # ── Health ──────────────────────────────────────────────────
