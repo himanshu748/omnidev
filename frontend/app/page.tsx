@@ -1,345 +1,281 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Space_Grotesk } from "next/font/google";
 import {
-  Apple,
   ArrowRight,
-  Check,
+  ArrowUpRight,
   Code2,
+  Database,
   Download,
-  FileArchive,
   Eye,
-  Globe2,
-  Laptop,
-  Monitor,
+  Globe,
+  KeyRound,
   ShieldCheck,
-  Sparkles,
   TerminalSquare,
-  Workflow,
+  UserCheck,
 } from "lucide-react";
+import Reveal from "./components/Reveal";
 
-const modules = [
-  {
-    title: "DevOps Agent",
-    body: "Ask about AWS, preview boto3 plans, and approve changes before anything runs.",
-    icon: Workflow,
-    accent: "blue",
-  },
+const displayFont = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-landing-display",
+});
+
+const GITHUB_URL = "https://github.com/himanshu748/omnidev";
+const DOWNLOAD_URL = `${GITHUB_URL}/releases/latest`;
+
+const smallModules = [
   {
     title: "Code Gen",
-    body: "Generate serious project scaffolds with docs-aware AI and inspect files before use.",
+    href: "/codegen",
     icon: Code2,
-    accent: "purple",
+    body: "Full project scaffolds for React, Next.js, FastAPI, and more. Validated, sandboxed, never executed on your machine.",
   },
   {
-    title: "Browser Automation Studio",
-    body: "Turn scraping and browser runs into repeatable local workflows.",
-    icon: Globe2,
-    accent: "cyan",
+    title: "Web Scraper",
+    href: "/scraper",
+    icon: Globe,
+    body: "Playwright-powered extraction of text, links, metadata, PDFs, and screenshots.",
   },
   {
-    title: "Vision Lab",
-    body: "Analyze images, extract OCR, and debug screenshots from one focused lab.",
-    icon: Eye,
-    accent: "violet",
+    title: "Cloud Storage",
+    href: "/storage",
+    icon: Database,
+    body: "Browse S3 buckets, upload and delete objects, generate presigned links.",
   },
-];
-
-const platforms = [
-  {
-    name: "macOS",
-    detail: "Download the native macOS shell for Apple Silicon and Intel Macs.",
-    icon: Apple,
-    status: "Developer preview",
-  },
-  {
-    name: "Windows",
-    detail: "Desktop packaging target for modern Windows developer machines.",
-    icon: Monitor,
-    status: "Planned package",
-  },
-  {
-    name: "Linux",
-    detail: "Desktop packaging target for workstation and container-first setups.",
-    icon: Laptop,
-    status: "Planned package",
-  },
-];
-
-const downloadStats = [
-  {
-    label: "Format",
-    value: ".app zip",
-  },
-  {
-    label: "Runtime",
-    value: "Sidecars",
-  },
-  {
-    label: "Mode",
-    value: "Native shell",
-  },
-];
-
-const trustPoints = [
-  "Local-first by default",
-  "Human approval for risky actions",
-  "Module-level credentials",
-  "FastAPI + Next.js foundation",
-];
+] as const;
 
 export default function LandingPage() {
   return (
-    <main className="landingShell">
-      <header className="landingNav">
-        <Link href="/" className="landingBrand" aria-label="OmniDev home">
-          <Image
-            className="landingBrandMark"
-            src="/brand/omnidev-logo.png"
-            alt=""
-            width={42}
-            height={42}
-            priority
-          />
-          <span>
-            <strong>OmniDev</strong>
-            <small>Local AI Developer App</small>
-          </span>
-        </Link>
-
-        <nav aria-label="Landing navigation">
-          <a href="#modules">Agents</a>
-          <a href="#platforms">Platforms</a>
-          <a href="#security">Local-first</a>
-        </nav>
-
-        <Link href="/app" className="landingNavCta">
-          Open cockpit
-        </Link>
+    <main className={`lpShell ${displayFont.variable}`}>
+      <header className="lpNav">
+        <div className="lpNavInner">
+          <Link href="/" className="lpBrand" aria-label="OmniDev home">
+            <Image src="/brand/omnidev-logo.png" alt="" width={30} height={30} priority />
+            <span>OmniDev</span>
+          </Link>
+          <nav className="lpNavLinks" aria-label="Landing navigation">
+            <a href="#modules">Modules</a>
+            <a href="#offline">Offline AI</a>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+            <Link href="/app" className="lpNavCta">
+              Open cockpit
+            </Link>
+          </nav>
+        </div>
       </header>
 
-      <section className="landingHero">
-        <div className="landingHeroCopy">
-          <p className="landingEyebrow">
-            <Sparkles size={16} aria-hidden="true" />
-            Local-first AI developer workbench
+      <section className="lpHero">
+        <div className="lpContainer">
+          <h1 className="lpDisplay lpHeroIn">
+            Your AI dev cockpit.
+            <span>Nothing leaves your Mac.</span>
+          </h1>
+          <p className="lpHeroSub lpHeroIn2">
+            One native macOS app for code generation, infrastructure, scraping,
+            vision, and storage. Gemma 4 runs entirely on your machine.
           </p>
-          <h1>Download the local app for building with AI.</h1>
-          <p>
-            OmniDev is a native-shell cockpit for DevOps agents, code
-            generation, browser automation, OCR, and S3 workflows. It starts on
-            your machine, keeps risky actions behind review, and gives local
-            developers one beautiful place to work.
-          </p>
-
-          <div className="landingActions">
-            <a href="/downloads/OmniDev-macOS.zip" className="landingPrimary" download>
+          <div className="lpHeroActions lpHeroIn3">
+            <a href={DOWNLOAD_URL} className="lpBtnPrimary" target="_blank" rel="noreferrer">
               <Download size={18} aria-hidden="true" />
-              Download macOS app
+              Download for macOS
             </a>
-            <Link href="/app" className="landingSecondary">
-              Open web cockpit <ArrowRight size={18} aria-hidden="true" />
+            <Link href="/app" className="lpBtnGhost">
+              Open cockpit
+              <ArrowRight size={17} aria-hidden="true" />
             </Link>
-            <a href="#platforms" className="landingTextLink">
-              Platform notes
-            </a>
-          </div>
-
-          <div className="landingTrustRow" id="security">
-            {trustPoints.map((point) => (
-              <span key={point}>
-                <Check size={15} aria-hidden="true" />
-                {point}
-              </span>
-            ))}
           </div>
         </div>
-
-        <div className="landingPreview" aria-label="OmniDev app preview">
-          <div className="previewTopbar">
-            <span />
-            <div>
-              <TerminalSquare size={16} aria-hidden="true" />
-              Ask OmniDev anything...
-            </div>
-            <strong>Agent</strong>
-          </div>
-          <div className="previewBody">
-            <aside>
-              <strong>OmniDev</strong>
-              <span className="previewActive">Command Center</span>
-              <span>DevOps Agent</span>
-              <span>Code Gen</span>
-              <span>Browser Studio</span>
-              <span>Vision Lab</span>
-            </aside>
-            <section>
-              <div className="previewHeader">
-                <div>
-                  <small>Command cockpit</small>
-                  <h2>Human-in-loop cloud automation.</h2>
-                </div>
-                <span>Local API connected</span>
-              </div>
-              <div className="previewGrid">
-                <div className="previewSetup">
-                  <h3>Setup</h3>
-                  {["Install OmniDev", "Start Local API", "Configure AWS", "Test Connection"].map((item, index) => (
-                    <p key={item}>
-                      <Check size={14} aria-hidden="true" />
-                      <span>{item}</span>
-                      <em>{index < 3 ? "Done" : "Next"}</em>
-                    </p>
-                  ))}
-                </div>
-                <div className="previewAgent">
-                  <h3>DevOps Agent</h3>
-                  <div className="previewPrompt">Create an S3 bucket for prod assets</div>
-                  <div className="previewApproval">
-                    <span>Medium risk</span>
-                    <strong>Modify IAM Policy</strong>
-                    <small>Dry-run passed. Waiting for approval.</small>
-                  </div>
-                  <button type="button">Approve in app</button>
-                </div>
-              </div>
-            </section>
+        <div className="lpContainer">
+          <div className="lpHeroShot lpHeroIn4">
+            <Image
+              src="/screenshots/cockpit.png"
+              alt="The OmniDev cockpit showing the DevOps Agent with a pending IAM approval"
+              width={1440}
+              height={1024}
+              priority
+            />
           </div>
         </div>
       </section>
 
-      <section className="landingDownloadBand" aria-label="Download OmniDev app">
-        <div>
-          <p className="landingEyebrow">
-            <FileArchive size={16} aria-hidden="true" />
-            Downloadable app
-          </p>
-          <h2>Native macOS shell today. Windows and Linux packages next.</h2>
-          <p>
-            The current download is a SwiftUI/WebKit macOS developer preview
-            that starts the local FastAPI backend and Next.js cockpit together.
-          </p>
+      <section className="lpSection" id="privacy">
+        <div className="lpContainer">
+          <Reveal>
+            <h2 className="lpDisplay">Private by architecture.</h2>
+            <p className="lpSectionLede">
+              OmniDev is not a cloud product with a desktop wrapper. The backend,
+              the frontend, and the model all run as local processes you can see
+              and stop.
+            </p>
+          </Reveal>
+          <Reveal>
+            <div className="lpPrivacyGrid">
+              <div className="lpPrivacyItem">
+                <h3>
+                  <ShieldCheck size={19} aria-hidden="true" />
+                  On-device AI
+                </h3>
+                <p>
+                  Prompts, generated code, and analyzed images go to a local
+                  Gemma 4 model through Ollama, not to an API on someone else&apos;s
+                  computer.
+                </p>
+              </div>
+              <div className="lpPrivacyItem">
+                <h3>
+                  <KeyRound size={19} aria-hidden="true" />
+                  No accounts, no keys
+                </h3>
+                <p>
+                  Works out of the box with no sign-up, no API key, and no usage
+                  bill. Cloud credentials are only needed for the AWS tools you
+                  choose to connect.
+                </p>
+              </div>
+              <div className="lpPrivacyItem">
+                <h3>
+                  <UserCheck size={19} aria-hidden="true" />
+                  You approve changes
+                </h3>
+                <p>
+                  Destructive infrastructure actions are planned, shown to you,
+                  and held until you explicitly confirm. Every time.
+                </p>
+              </div>
+            </div>
+          </Reveal>
         </div>
-        <div className="landingDownloadPanel">
-          <div className="landingDownloadIcon" aria-hidden="true">
-            <Apple size={30} />
-          </div>
-          <div>
-            <strong>OmniDev for macOS</strong>
-            <span>Native shell developer preview</span>
-          </div>
-          <div className="landingDownloadStats">
-            {downloadStats.map(({ label, value }) => (
-              <p key={label}>
-                <span>{label}</span>
-                <strong>{value}</strong>
+      </section>
+
+      <section className="lpSection" id="modules">
+        <div className="lpContainer">
+          <Reveal>
+            <h2 className="lpDisplay">One cockpit. Five tools.</h2>
+            <p className="lpSectionLede">
+              The tabs you keep open all day, rebuilt as native modules that
+              share one local backend.
+            </p>
+          </Reveal>
+          <Reveal>
+            <div className="lpBento">
+              <Link href="/devops" className="lpCell lpCellWide">
+                <div className="lpCellShot" aria-hidden="true">
+                  <Image
+                    src="/screenshots/cockpit.png"
+                    alt=""
+                    width={1440}
+                    height={1024}
+                  />
+                </div>
+                <ArrowUpRight size={18} className="lpCellArrow" aria-hidden="true" />
+                <h3>
+                  <TerminalSquare size={19} aria-hidden="true" />
+                  DevOps Agent
+                </h3>
+                <p>
+                  Ask about EC2, S3, IAM, or RDS in plain English. Review the
+                  exact boto3 plan before anything runs.
+                </p>
+              </Link>
+              <Link href="/vision" className="lpCell lpCellTall lpCellTint">
+                <ArrowUpRight size={18} className="lpCellArrow" aria-hidden="true" />
+                <h3>
+                  <Eye size={19} aria-hidden="true" />
+                  Vision Lab
+                </h3>
+                <p>
+                  Image analysis, OCR, and visual Q&amp;A. Screenshots of your own
+                  infrastructure never need to leave the room.
+                </p>
+              </Link>
+              {smallModules.map(({ title, href, icon: Icon, body }) => (
+                <Link key={title} href={href} className="lpCell">
+                  <ArrowUpRight size={18} className="lpCellArrow" aria-hidden="true" />
+                  <h3>
+                    <Icon size={19} aria-hidden="true" />
+                    {title}
+                  </h3>
+                  <p>{body}</p>
+                </Link>
+              ))}
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      <section className="lpSection" id="offline">
+        <div className="lpContainer">
+          <div className="lpOfflineGrid">
+            <Reveal className="lpOfflineCopy">
+              <h2 className="lpDisplay">Fully offline with{" "}Gemma&nbsp;4.</h2>
+              <p className="lpSectionLede">
+                The same edge model behind Google&apos;s AI Edge Gallery, served
+                locally by Ollama. Text, structured plans, and vision in a single
+                9.6 GB download.
               </p>
-            ))}
+              <p className="lpOfflineNote">
+                Prefer a hosted model? Add a free Gemini key and OmniDev switches
+                providers automatically.
+              </p>
+            </Reveal>
+            <Reveal>
+              <div className="lpTerminal" aria-label="Setup commands">
+                <code>
+                  <span className="lpPrompt">$ </span>
+                  <span className="lpCmd">ollama pull gemma4:e4b</span>
+                </code>
+                <code>
+                  <span className="lpPrompt">$ </span>
+                  <span className="lpCmd">./script/build_and_run.sh</span>
+                </code>
+                <code>Backend ready on 127.0.0.1:8010</code>
+                <code>OmniDev.app launched</code>
+              </div>
+            </Reveal>
           </div>
-          <a href="/downloads/OmniDev-macOS.zip" className="landingPrimary" download>
-            <Download size={18} aria-hidden="true" />
-            Download
-          </a>
         </div>
       </section>
 
-      <section className="landingSection" id="modules">
-        <div className="landingSectionHead">
-          <p className="landingEyebrow">Feature agents</p>
-          <h2>One focused agent for each developer workflow.</h2>
-        </div>
-        <div className="landingModuleGrid">
-          {modules.map(({ title, body, icon: Icon, accent }) => (
-            <article key={title} className={`landingModule ${accent}`}>
-              <span>
-                <Icon size={22} aria-hidden="true" />
-              </span>
-              <h3>{title}</h3>
-              <p>{body}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="landingSplit">
-        <div>
-          <p className="landingEyebrow">Agent mode</p>
-          <h2>Let it plan the work. Keep the final say.</h2>
-          <p>
-            OmniDev can answer questions in Ask mode, then switch into Agent
-            mode to draft steps, run safe previews, and queue approvals for boto3
-            actions. Risky operations stay human-approved.
-          </p>
-        </div>
-        <div className="landingPlanCard">
-          {[
-            ["Understand", "Parse the request and choose the right module."],
-            ["Plan", "Draft commands, parameters, and expected changes."],
-            ["Dry-run", "Validate impact before touching infrastructure."],
-            ["Approve", "Wait for your explicit review before execution."],
-          ].map(([label, body], index) => (
-            <div key={label}>
-              <span>{index + 1}</span>
-              <strong>{label}</strong>
-              <p>{body}</p>
+      <section className="lpFinal">
+        <div className="lpContainer">
+          <Reveal>
+            <h2 className="lpDisplay">Start with your machine.</h2>
+            <p>
+              Free and MIT licensed. macOS today, Windows and Linux packages
+              next.
+            </p>
+            <div className="lpFinalActions">
+              <a href={DOWNLOAD_URL} className="lpBtnPrimary" target="_blank" rel="noreferrer">
+                <Download size={18} aria-hidden="true" />
+                Download for macOS
+              </a>
+              <a href={GITHUB_URL} className="lpBtnGhost" target="_blank" rel="noreferrer">
+                GitHub
+                <ArrowUpRight size={17} aria-hidden="true" />
+              </a>
             </div>
-          ))}
+          </Reveal>
         </div>
       </section>
 
-      <section className="landingSection" id="platforms">
-        <div className="landingSectionHead">
-          <p className="landingEyebrow">
-            <Download size={16} aria-hidden="true" />
-            Platform availability
-          </p>
-          <h2>Designed to run where developers actually work.</h2>
-          <p>
-            OmniDev runs as a local FastAPI + Next.js stack today. The macOS
-            developer app is available now, with Windows and Linux packages kept
-            as the next packaging targets.
-          </p>
+      <footer className="lpFooter">
+        <div className="lpFooterInner">
+          <span>OmniDev, MIT licensed.</span>
+          <div className="lpFooterLinks">
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer">
+              GitHub
+            </a>
+            <a href={`${GITHUB_URL}/tree/main/docs`} target="_blank" rel="noreferrer">
+              Docs
+            </a>
+            <Link href="/app">Cockpit</Link>
+          </div>
         </div>
-
-        <div className="platformGrid">
-          {platforms.map(({ name, detail, icon: Icon, status }) => (
-            <article key={name} className="platformCard">
-              <Icon size={24} aria-hidden="true" />
-              <h3>{name}</h3>
-              <p>{detail}</p>
-              <span>{status}</span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="landingFinalCta">
-        <div>
-          <p className="landingEyebrow">
-            <ShieldCheck size={16} aria-hidden="true" />
-            Local-first, not lock-in-first
-          </p>
-          <h2>Start with your machine. Add hosting later.</h2>
-          <p>
-            Run the backend locally, connect only the modules you need, and point
-            the hosted UI at any reachable API when you are ready.
-          </p>
-        </div>
-        <div className="landingActions">
-          <a href="/downloads/OmniDev-macOS.zip" className="landingPrimary" download>
-            <Download size={18} aria-hidden="true" />
-            Download app
-          </a>
-          <a
-            href="https://github.com/himanshu748/omnidev"
-            className="landingSecondary"
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Code2 size={18} aria-hidden="true" />
-            GitHub
-          </a>
-        </div>
-      </section>
+      </footer>
     </main>
   );
 }

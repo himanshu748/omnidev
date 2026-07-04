@@ -68,3 +68,6 @@ temp/
 .gemini/
 .antigravity/
 .agent/
+
+# Local macOS app packages (attach to GitHub Releases instead)
+frontend/public/downloads/

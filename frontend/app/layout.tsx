@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://omnidev-flame.vercel.app"),
+  metadataBase: new URL("https://omnidev-himanshus-projects-acd54afd.vercel.app"),
   title: {
     default: "OmniDev - Local AI Developer Workbench",
     template: "%s | OmniDev",
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     title: "OmniDev - Local AI Developer Workbench",
     description:
       "Local-first FastAPI and Next.js dashboards for AI-assisted developer workflows across cloud, scraping, vision, and storage.",
-    url: "https://omnidev-flame.vercel.app",
+    url: "https://omnidev-himanshus-projects-acd54afd.vercel.app",
     siteName: "OmniDev",
     type: "website",
   },

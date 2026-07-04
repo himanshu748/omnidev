@@ -529,7 +529,7 @@ export default function DevOpsPage() {
                 <span>{error ? "Error" : "System Online"}</span>
               </span>
               <span className="devopsFooterRight">
-                <span>Gemini · boto3</span>
+                <span>Gemini/Ollama · boto3</span>
                 <span className="devopsFooterVersion">v0.2.0</span>
               </span>
             </div>

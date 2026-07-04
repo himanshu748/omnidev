@@ -26,7 +26,7 @@ const FRAMEWORKS = [
 
 const WEB_FRAMEWORKS = ["react", "next", "vue", "svelte"];
 const CODEGEN_SAFETY_POINTS = [
-  "Gemini generation with optional Context7 docs",
+  "Gemini or local Ollama generation with optional Context7 docs",
   "Backend validates file paths and output size",
   "No backend execution of generated code",
   "Web previews run in StackBlitz browser isolation",
@@ -148,7 +148,7 @@ export default function CodeGenPage() {
   return (
     <FeatureLayout
       title="Code Gen"
-      description="Generate project files with Gemini and optional Context7 docs. OmniDev validates paths and sizes, then lets you preview web projects in StackBlitz or download a safe ZIP."
+      description="Generate project files with Gemini or a local Ollama model, plus optional Context7 docs. OmniDev validates paths and sizes, then lets you preview web projects in StackBlitz or download a safe ZIP."
       icon="⚡"
       endpoints={[{ method: "POST", path: "/api/codegen/generate" }]}
     >
@@ -184,8 +184,8 @@ export default function CodeGenPage() {
         </div>
         <p className="featureCardSubtitle">
           Describe what you want to build and pick a framework. Code is generated
-          with Gemini, grounded with Context7 docs when configured, and returned
-          as sandboxed output files.
+          with Gemini or a local Ollama model, grounded with Context7 docs when
+          configured, and returned as sandboxed output files.
         </p>
 
         <form className="featureForm" onSubmit={handleGenerate}>
