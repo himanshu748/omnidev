@@ -25,6 +25,14 @@ FRAMEWORK_CONTEXT7: dict[str, list[tuple[str, str]]] = {
     "fastapi": [("fastapi", "/tiangolo/fastapi")],
     "vue": [("vue", "/vuejs/core")],
     "svelte": [("svelte", "/sveltejs/svelte")],
+    "astro": [("astro", "/withastro/astro")],
+    "remix": [("remix", "/remix-run/remix")],
+    "solid": [("solid", "/solidjs/solid")],
+    "sveltekit": [("sveltekit", "/sveltejs/kit"), ("svelte", "/sveltejs/svelte")],
+    "django": [("django", "/django/django")],
+    "flask": [("flask", "/pallets/flask")],
+    "go": [("go", "/golang/go")],
+    "html": [],
 }
 
 SUPPORTED_FRAMEWORKS = set(FRAMEWORK_CONTEXT7)
@@ -74,6 +82,36 @@ SECRET_ASSIGNMENT_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+MAX_REFINE_INSTRUCTION_CHARS = 2000
+MAX_REFINE_INPUT_FILES = MAX_FILES
+
+# Filenames that make a good "open me first" entry, in priority order. The first
+# generated file whose basename matches (case-insensitive) wins; ties fall back
+# to the shallowest path, then the first file.
+ENTRY_FILE_PRIORITY = (
+    "index.html",
+    "app.tsx",
+    "app.jsx",
+    "app.vue",
+    "app.svelte",
+    "app.py",
+    "main.py",
+    "main.go",
+    "main.ts",
+    "main.tsx",
+    "main.js",
+    "app.js",
+    "app.ts",
+    "index.tsx",
+    "index.jsx",
+    "index.ts",
+    "index.js",
+    "streamlit_app.py",
+    "server.py",
+    "server.js",
+    "readme.md",
+)
+
 PROJECT_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
@@ -101,7 +139,7 @@ PROJECT_SCHEMA: dict[str, Any] = {
 async def _fetch_docs_for_framework(framework: str, prompt: str) -> str:
     key = framework.lower().replace(" ", "")
     libs = FRAMEWORK_CONTEXT7.get(key)
-    if not libs:
+    if libs is None:
         libs = [(key, f"/{key}/{key}")]
     combined = []
     for lib_name, lib_id in libs[:2]:
@@ -224,6 +262,8 @@ def _safe_failure_project(message: str) -> dict[str, Any]:
             }
         ],
         "instructions": "Try generation again with a narrower prompt.",
+        "summary": "Generation did not return a valid project.",
+        "entry": "README.md",
     }
 
 
@@ -236,6 +276,28 @@ def _safe_instructions(value: Any) -> str:
     if len(encoded) <= MAX_INSTRUCTIONS_BYTES:
         return value
     return encoded[:MAX_INSTRUCTIONS_BYTES].decode("utf-8", errors="ignore") + "\n\n[Instructions truncated]"
+
+
+def _detect_entry_file(files: list[dict[str, str]]) -> str:
+    """Pick the file a user should open first. Never raises; always returns a path."""
+    if not files:
+        return ""
+    by_basename: dict[str, list[dict[str, str]]] = {}
+    for entry in files:
+        basename = PurePosixPath(entry["path"]).name.lower()
+        by_basename.setdefault(basename, []).append(entry)
+    for candidate in ENTRY_FILE_PRIORITY:
+        matches = by_basename.get(candidate)
+        if matches:
+            # Prefer the shallowest match (fewest path segments) for the entry.
+            return min(matches, key=lambda e: len(PurePosixPath(e["path"]).parts))["path"]
+    return files[0]["path"]
+
+
+def _build_summary(files: list[dict[str, str]], framework_key: str) -> str:
+    count = len(files)
+    noun = "file" if count == 1 else "files"
+    return f"Generated a {framework_key} project with {count} {noun}."
 
 
 async def generate_project(prompt: str, framework: str) -> dict[str, Any]:
@@ -285,4 +347,91 @@ Rules:
         "Safety: OmniDev does not execute generated code on the backend. "
         "Review files first; web previews run in StackBlitz, and downloads contain only validated relative paths."
     )
-    return {"files": files, "instructions": instructions}
+    return {
+        "files": files,
+        "instructions": instructions,
+        "summary": _build_summary(files, framework_key),
+        "entry": _detect_entry_file(files),
+    }
+
+
+def _validate_refine_input_files(files: Any) -> list[dict[str, str]]:
+    """Validate the caller-supplied existing file set before refining it.
+
+    Reuses the same sanitizer/safety sets as generation so a client cannot smuggle
+    unsafe paths or secret-bearing content back in through the refine loop.
+    """
+    if not isinstance(files, list) or not files:
+        raise ValueError("Refine requires the existing project files")
+    if len(files) > MAX_REFINE_INPUT_FILES:
+        raise ValueError(f"Refine input exceeds the maximum allowed file count of {MAX_REFINE_INPUT_FILES}")
+    return _sanitize_file_entries(files)
+
+
+async def refine_project(
+    files: Any, instruction: str, framework: str = "react"
+) -> dict[str, Any]:
+    """
+    Iterate on an existing generated project: apply a natural-language instruction
+    (e.g. "add auth", "convert to TypeScript") and return the modified file set.
+    Runs the SAME validation/sanitization as generate on both input and output.
+    """
+    if not isinstance(instruction, str) or not instruction.strip():
+        raise ValueError("Refine instruction must not be empty")
+    if len(instruction) > MAX_REFINE_INSTRUCTION_CHARS:
+        raise ValueError(
+            f"Refine instruction is too long ({len(instruction)} chars). "
+            f"Maximum allowed is {MAX_REFINE_INSTRUCTION_CHARS} characters."
+        )
+    framework_key = _normalize_framework(framework)
+    existing = _validate_refine_input_files(files)
+    docs_block = await _fetch_docs_for_framework(framework_key, instruction)
+
+    system = """You are an expert full-stack developer refining an existing project. Apply the user's instruction to the provided files and return the COMPLETE updated project.
+
+Rules:
+- Return the full file set after your changes, not just a diff. Include every file that should exist in the refined project (keep unchanged files as-is, add new files, and drop files only when the instruction clearly requires it).
+- Preserve the framework and keep the project runnable.
+- Return only safe relative project file paths. Never use absolute paths, parent directory segments, backslashes, .env files, SSH keys, node_modules, build artifacts, or secret-bearing files.
+- Do not include real credentials, tokens, private keys, or executable install hooks that fetch unknown remote scripts.
+- Use the provided documentation excerpts when present to follow best practices and correct APIs.
+- Return the result by calling the return_project tool. Do not answer in plain text."""
+
+    existing_block = "\n\n".join(
+        f"--- {entry['path']} ---\n{entry['content']}" for entry in existing
+    )
+    user = (
+        f"Framework: {framework_key}\n\n"
+        f"Refine instruction: {instruction}\n\n"
+        f"Existing project files:\n\n{existing_block}\n\n"
+    )
+    if docs_block:
+        user += f"Relevant documentation (use for correct APIs and patterns):\n\n{docs_block}\n\n"
+    user += "Return the complete refined project now."
+
+    try:
+        data = await generate_structured(
+            user,
+            system=system,
+            schema=PROJECT_SCHEMA,
+            tool_name="return_project",
+            tool_description="Return the refined project files and run instructions.",
+            max_tokens=8192,
+        )
+    except AIResponseError:
+        return _safe_failure_project("The model returned text that could not be parsed as a project payload.")
+    if not isinstance(data, dict):
+        return _safe_failure_project("The model returned an unexpected payload shape.")
+    refined = _sanitize_file_entries(data.get("files") or [])
+    instructions = _safe_instructions(data.get("instructions"))
+    instructions = (
+        f"{instructions}\n\n"
+        "Safety: OmniDev does not execute generated code on the backend. "
+        "Review files first; web previews run in StackBlitz, and downloads contain only validated relative paths."
+    )
+    return {
+        "files": refined,
+        "instructions": instructions,
+        "summary": _build_summary(refined, framework_key),
+        "entry": _detect_entry_file(refined),
+    }

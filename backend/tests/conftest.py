@@ -34,6 +34,8 @@ EXPECTED_ENDPOINTS = [
     "GET /api/models",
     "POST /api/models/pull",
     "POST /api/chat/stream",
+    "POST /api/codegen/refine",
+    "POST /api/scraper/crawl",
 ]
 
 

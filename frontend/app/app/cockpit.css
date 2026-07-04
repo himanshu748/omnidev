@@ -1,0 +1,274 @@
+/* Cockpit polish — new styles co-located with app/page.tsx.
+   Reuses the --cockpit-* palette declared on .cockpitShell in globals.css.
+   Kept additive: nothing here overrides existing cockpit* rules. */
+
+/* ---- Setup panel: real detail + loading/complete states ---- */
+.setupList .stepBody {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.setupList .stepBody small {
+  color: var(--cockpit-muted);
+  font-size: 0.72rem;
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.setupList li {
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  padding: 8px 0;
+}
+
+.setupList li.active .stepBody strong {
+  color: var(--cockpit-blue);
+}
+
+.setupLoading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0;
+  color: var(--cockpit-muted);
+  font-size: 0.85rem;
+}
+
+.setupComplete {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--cockpit-green);
+  background: #edfaf1;
+  border: 1px solid #cdeed7;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.setupCta {
+  margin-top: 12px;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ---- Recent activity (replaces fabricated agent stats) ---- */
+.activityPanel {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--cockpit-border);
+  border-radius: 10px;
+  background: var(--cockpit-surface-soft);
+}
+
+.activityHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cockpit-text);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.activityHead small {
+  margin-left: auto;
+  color: var(--cockpit-faint);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.activityEmpty {
+  margin: 10px 0 0;
+  color: var(--cockpit-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.activityList {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.activityList li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--cockpit-text);
+  font-size: 0.82rem;
+}
+
+.activityList li i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--cockpit-faint);
+}
+
+.activityList li.ok i {
+  background: var(--cockpit-green);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.12);
+}
+
+.activityList li.warn i {
+  background: var(--cockpit-amber);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.12);
+}
+
+/* ---- Honest "example" labelling ---- */
+.exampleTag {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: var(--cockpit-amber);
+  background: #fdf3e3;
+  border: 1px solid #f3dcb4;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.approvalsNote {
+  margin: 8px 0 0;
+  color: var(--cockpit-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+/* ---- Module launcher card grid ---- */
+.moduleCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.moduleCard {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid var(--cockpit-border);
+  border-radius: 12px;
+  background: var(--cockpit-surface);
+  color: var(--cockpit-text);
+  text-decoration: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.moduleCard:hover {
+  border-color: var(--cockpit-border-strong);
+  box-shadow: 0 12px 28px -18px rgba(17, 24, 39, 0.4);
+  transform: translateY(-1px);
+}
+
+.moduleCard:focus-visible {
+  outline: 2px solid var(--cockpit-blue);
+  outline-offset: 2px;
+}
+
+.moduleCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.moduleCard .moduleIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+}
+
+.moduleCard.blue .moduleIcon {
+  background: var(--cockpit-blue);
+}
+.moduleCard.purple .moduleIcon {
+  background: var(--cockpit-purple);
+}
+.moduleCard.cyan .moduleIcon {
+  background: var(--cockpit-cyan);
+}
+.moduleCard.violet .moduleIcon {
+  background: #6d5dfc;
+}
+.moduleCard.green .moduleIcon {
+  background: var(--cockpit-green);
+}
+
+.moduleCardTag {
+  padding: 3px 8px;
+  border-radius: 999px;
+  color: var(--cockpit-muted);
+  background: #f1f4f9;
+  font-size: 0.66rem;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.moduleCardTag.flagship {
+  color: var(--cockpit-blue);
+  background: #eef4ff;
+}
+
+.moduleCard strong {
+  margin-top: 4px;
+  font-size: 0.92rem;
+  letter-spacing: -0.01em;
+}
+
+.moduleCardAgent {
+  color: #334155;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.moduleCard small {
+  color: var(--cockpit-muted);
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.moduleCardOpen {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+  color: var(--cockpit-blue);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.moduleCard:hover .moduleCardOpen {
+  gap: 6px;
+}
+
+/* ---- Cheap light/dark affordance on the surrounding page chrome.
+   The cockpit palette is already light; the toggle flips the page frame so
+   the control is honest. Data attribute is set by the page effect. ---- */
+html[data-cockpit-theme="light"] body {
+  background: #eef1f6;
+}
+
+html[data-cockpit-theme="dark"] body {
+  background: var(--bg, #0a0c10);
+}
+
+@media (max-width: 720px) {
+  .moduleCardGrid {
+    grid-template-columns: 1fr;
+  }
+}

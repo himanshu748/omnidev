@@ -5,26 +5,68 @@ import sdk from "@stackblitz/sdk";
 import JSZip from "jszip";
 import FeatureLayout from "../components/FeatureLayout";
 import { api } from "@/lib/api";
+import "./codegen.css";
 
 type FileEntry = { path: string; content: string };
 type CodeGenResult = {
   files: FileEntry[];
   instructions: string;
+  summary: string;
+  entry: string;
   framework: string;
   prompt: string;
 };
 
-const FRAMEWORKS = [
-  { id: "react", label: "React", desc: "SPA with Vite/CRA" },
-  { id: "next", label: "Next.js", desc: "React full-stack" },
-  { id: "streamlit", label: "Streamlit", desc: "Python data apps" },
-  { id: "node", label: "Node / Express", desc: "Backend or SSR" },
-  { id: "python", label: "Python / FastAPI", desc: "API or script" },
-  { id: "vue", label: "Vue", desc: "Vue 3" },
-  { id: "svelte", label: "Svelte", desc: "SvelteKit" },
+type FrameworkDef = { id: string; label: string; desc: string };
+type FrameworkGroup = { label: string; items: FrameworkDef[] };
+
+const FRAMEWORK_GROUPS: FrameworkGroup[] = [
+  {
+    label: "Web",
+    items: [
+      { id: "react", label: "React", desc: "SPA with Vite" },
+      { id: "next", label: "Next.js", desc: "React full-stack" },
+      { id: "vue", label: "Vue", desc: "Vue 3" },
+      { id: "svelte", label: "Svelte", desc: "Svelte component app" },
+      { id: "sveltekit", label: "SvelteKit", desc: "Svelte full-stack" },
+      { id: "astro", label: "Astro", desc: "Content-first sites" },
+      { id: "remix", label: "Remix", desc: "React web standards" },
+      { id: "solid", label: "Solid", desc: "Fine-grained reactive" },
+    ],
+  },
+  {
+    label: "Backend",
+    items: [
+      { id: "node", label: "Node / Express", desc: "Backend or SSR" },
+      { id: "python", label: "Python / FastAPI", desc: "API or script" },
+      { id: "django", label: "Django", desc: "Batteries-included" },
+      { id: "flask", label: "Flask", desc: "Micro framework" },
+      { id: "go", label: "Go", desc: "net/http server" },
+      { id: "streamlit", label: "Streamlit", desc: "Python data apps" },
+    ],
+  },
+  {
+    label: "Static",
+    items: [{ id: "html", label: "HTML", desc: "Static site, no build" }],
+  },
 ];
 
-const WEB_FRAMEWORKS = ["react", "next", "vue", "svelte"];
+const EXAMPLE_PROMPTS = [
+  "A todo app with dark mode and local storage",
+  "A landing page for a coffee subscription with a hero section",
+  "A REST API for a URL shortener",
+  "A markdown notes app with search",
+];
+
+const REFINE_EXAMPLES = [
+  "Add authentication",
+  "Convert to TypeScript",
+  "Add a dark mode toggle",
+  "Add unit tests",
+  "Make it responsive",
+];
+
+const WEB_FRAMEWORKS = ["react", "next", "vue", "svelte", "sveltekit", "astro", "remix", "solid"];
 const CODEGEN_SAFETY_POINTS = [
   "Gemini or local Ollama generation with optional Context7 docs",
   "Backend validates file paths and output size",
@@ -93,9 +135,12 @@ export default function CodeGenPage() {
   const [prompt, setPrompt] = useState("");
   const [framework, setFramework] = useState("react");
   const [loading, setLoading] = useState(false);
+  const [refining, setRefining] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<CodeGenResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [refineInput, setRefineInput] = useState("");
+  const [copied, setCopied] = useState(false);
   const [embedReady, setEmbedReady] = useState(false);
   const [sandboxOpen, setSandboxOpen] = useState(false);
   const embedRef = useRef<HTMLDivElement>(null);
@@ -128,6 +173,21 @@ export default function CodeGenPage() {
       .catch(() => setEmbedReady(false));
   }, [result, canEmbed]);
 
+  function applyResult(data: Record<string, unknown>, usedFramework: string, usedPrompt: string) {
+    const files = (data.files as FileEntry[]) ?? [];
+    const entry = typeof data.entry === "string" ? data.entry : "";
+    setResult({
+      files,
+      instructions: (data.instructions as string) ?? "",
+      summary: (data.summary as string) ?? "",
+      entry,
+      framework: usedFramework,
+      prompt: usedPrompt,
+    });
+    const initial = files.find((f) => f.path === entry)?.path ?? files[0]?.path ?? null;
+    setSelectedFile(initial);
+  }
+
   async function handleGenerate(e: React.FormEvent) {
     e.preventDefault();
     if (!prompt.trim() || loading) return;
@@ -135,6 +195,7 @@ export default function CodeGenPage() {
     setError(null);
     setResult(null);
     setSelectedFile(null);
+    setRefineInput("");
     setSandboxOpen(false);
     try {
       const res = await fetch(api("/api/codegen/generate"), {
@@ -144,13 +205,7 @@ export default function CodeGenPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail ?? `HTTP ${res.status}`);
-      setResult({
-        files: data.files ?? [],
-        instructions: data.instructions ?? "",
-        framework,
-        prompt: prompt.trim(),
-      });
-      if (data.files?.length) setSelectedFile(data.files[0].path);
+      applyResult(data, framework, prompt.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
@@ -158,14 +213,55 @@ export default function CodeGenPage() {
     }
   }
 
+  async function handleRefine(e: React.FormEvent) {
+    e.preventDefault();
+    if (!result || !refineInput.trim() || refining || loading) return;
+    setRefining(true);
+    setError(null);
+    try {
+      const res = await fetch(api("/api/codegen/refine"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          files: result.files,
+          instruction: refineInput.trim(),
+          framework: result.framework,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail ?? `HTTP ${res.status}`);
+      applyResult(data, result.framework, result.prompt);
+      setRefineInput("");
+      setSandboxOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Refine failed");
+    } finally {
+      setRefining(false);
+    }
+  }
+
+  const busy = loading || refining;
   const currentContent = result?.files?.find((f) => f.path === selectedFile)?.content ?? "";
+  const lineNumbers = currentContent
+    ? Array.from({ length: currentContent.split("\n").length }, (_, i) => i + 1).join("\n")
+    : "1";
+
+  function copyCurrent() {
+    if (!currentContent) return;
+    navigator.clipboard.writeText(currentContent);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1200);
+  }
 
   return (
     <FeatureLayout
       title="Code Gen"
       description="Generate project files with Gemini or a local Ollama model, plus optional Context7 docs. OmniDev validates paths and sizes, then lets you preview web projects in StackBlitz or download a safe ZIP."
       icon="⚡"
-      endpoints={[{ method: "POST", path: "/api/codegen/generate" }]}
+      endpoints={[
+        { method: "POST", path: "/api/codegen/generate" },
+        { method: "POST", path: "/api/codegen/refine" },
+      ]}
     >
       <div className="codegenHero">
         <h1 className="codegenHeroTitle">Generate files, then run them safely</h1>
@@ -181,7 +277,7 @@ export default function CodeGenPage() {
         <span className="codegenHowArrow">→</span>
         <span className="codegenHowStep"><strong>2</strong> Validate files</span>
         <span className="codegenHowArrow">→</span>
-        <span className="codegenHowStep"><strong>3</strong> Preview or download</span>
+        <span className="codegenHowStep"><strong>3</strong> Preview, refine or download</span>
       </div>
 
       <div className="codegenSafetyStrip">
@@ -213,23 +309,43 @@ export default function CodeGenPage() {
               placeholder="e.g. A todo app with dark mode and local storage — or describe any app idea"
               rows={3}
             />
-          </div>
-          <div>
-            <label>Framework</label>
-            <div className="codegenFrameworkGrid">
-              {FRAMEWORKS.map((fw) => (
+            <div className="cgxExamples">
+              {EXAMPLE_PROMPTS.map((ex) => (
                 <button
-                  key={fw.id}
+                  key={ex}
                   type="button"
-                  className={`modePill ${framework === fw.id ? "active" : ""}`}
-                  onClick={() => setFramework(fw.id)}
+                  className="cgxExampleChip"
+                  onClick={() => setPrompt(ex)}
                 >
-                  {fw.label}
+                  {ex}
                 </button>
               ))}
             </div>
           </div>
-          <button type="submit" className="featureBtn featureBtnPrimary" disabled={loading || !prompt.trim()}>
+          <div>
+            <label>Framework</label>
+            <div className="cgxGroups">
+              {FRAMEWORK_GROUPS.map((group) => (
+                <div key={group.label} className="cgxGroup">
+                  <span className="cgxGroupLabel">{group.label}</span>
+                  <div className="codegenFrameworkGrid">
+                    {group.items.map((fw) => (
+                      <button
+                        key={fw.id}
+                        type="button"
+                        className={`cgxFwCard ${framework === fw.id ? "active" : ""}`}
+                        onClick={() => setFramework(fw.id)}
+                      >
+                        <span className="cgxFwLabel">{fw.label}</span>
+                        <span className="cgxFwDesc">{fw.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button type="submit" className="featureBtn featureBtnPrimary" disabled={busy || !prompt.trim()}>
             {loading ? <span className="loadingDot">Generating</span> : "Generate project"}
           </button>
         </form>
@@ -240,8 +356,22 @@ export default function CodeGenPage() {
           </div>
         )}
 
+        {!result && !loading && !error && (
+          <div className="cgxEmpty" style={{ marginTop: 20 }}>
+            <span className="cgxEmptyIcon">📁</span>
+            <span>Your generated project will appear here — files, live preview, and a refine box to iterate.</span>
+          </div>
+        )}
+
         {result && (
           <div className="codegenResult">
+            {result.summary && (
+              <div className="cgxSummary">
+                <span>✅</span>
+                <span>{result.summary}</span>
+              </div>
+            )}
+
             {/* Live preview showcase */}
             {canEmbed ? (
               <div className="codegenShowcase">
@@ -346,6 +476,44 @@ export default function CodeGenPage() {
               </div>
             )}
 
+            {/* Refine / iterate loop */}
+            <form className="cgxRefine" onSubmit={handleRefine}>
+              <h4 className="cgxRefineTitle">🔁 Refine this project</h4>
+              <p className="cgxRefineHint">
+                Iterate on the generated files with a natural-language instruction.
+                The backend re-runs the same path/secret validation and replaces the file set.
+              </p>
+              <div className="cgxRefineRow">
+                <input
+                  className="cgxRefineInput"
+                  value={refineInput}
+                  onChange={(e) => setRefineInput(e.target.value)}
+                  placeholder="e.g. add auth, convert to TypeScript, make it responsive"
+                  disabled={busy}
+                />
+                <button
+                  type="submit"
+                  className="featureBtn featureBtnPrimary"
+                  disabled={busy || !refineInput.trim()}
+                >
+                  {refining ? <span className="loadingDot">Refining</span> : "Refine"}
+                </button>
+              </div>
+              <div className="cgxRefineExamples">
+                {REFINE_EXAMPLES.map((ex) => (
+                  <button
+                    key={ex}
+                    type="button"
+                    className="cgxExampleChip"
+                    onClick={() => setRefineInput(ex)}
+                    disabled={busy}
+                  >
+                    {ex}
+                  </button>
+                ))}
+              </div>
+            </form>
+
             <div className="codegenGitHubSection">
               <h4>Add to GitHub</h4>
               <ol className="codegenGitHubSteps">
@@ -375,24 +543,32 @@ git push -u origin main`}
                     className={`codegenFileItem ${selectedFile === f.path ? "active" : ""}`}
                     onClick={() => setSelectedFile(f.path)}
                   >
-                    {f.path}
+                    <span className="cgxFileRow">
+                      <span>{f.path}</span>
+                      {f.path === result.entry && <span className="cgxEntryBadge">Entry</span>}
+                    </span>
                   </button>
                 ))}
               </div>
               <div className="codegenEditor">
-                <pre className="codegenPre">
-                  <code>{currentContent}</code>
-                </pre>
-                <button
-                  type="button"
-                  className="featureBtn featureBtnSecondary"
-                  style={{ marginTop: 8 }}
-                  onClick={() => {
-                    navigator.clipboard.writeText(currentContent);
-                  }}
-                >
-                  Copy file
-                </button>
+                <div className="cgxEditorHeader">
+                  <span className="cgxEditorPath">{selectedFile ?? ""}</span>
+                  <button
+                    type="button"
+                    className={`cgxCopyBtn ${copied ? "copied" : ""}`}
+                    onClick={copyCurrent}
+                  >
+                    {copied ? "Copied ✓" : "Copy file"}
+                  </button>
+                </div>
+                <div className="cgxCodeScroll">
+                  <div className="cgxCodeTable">
+                    <div className="cgxGutter">{lineNumbers}</div>
+                    <pre className="cgxCode">
+                      <code>{currentContent}</code>
+                    </pre>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

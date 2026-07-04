@@ -1,12 +1,22 @@
 import json
 
+import boto3
 import pytest
+from moto import mock_aws
 
 from app.config import settings
 from app.schemas.devops import ParsedIntent
 from app.routers import devops as devops_router
 from app.services import devops_agent
 from app.services.ai_service import AIConfigurationError
+
+
+@pytest.fixture(autouse=True)
+def _refill_bucket():
+    """Keep the destructive token bucket full between tests."""
+    devops_agent._refill_destructive_tokens()
+    yield
+    devops_agent._refill_destructive_tokens()
 
 
 @pytest.mark.asyncio
@@ -21,12 +31,13 @@ async def test_run_command_blocks_destructive(monkeypatch):
     monkeypatch.setattr(devops_agent, "parse_intent", fake_parse)
     result = await devops_agent.run_command("Stop instance", confirm_destructive=False)
     assert result["needs_confirmation"] is True
-    assert result["plan"] == {
-        "service": "ec2",
-        "operation": "stop_instances",
-        "params": {"instance_ids": ["i-123"]},
-        "destructive": True,
-    }
+    plan = result["plan"]
+    assert plan["service"] == "ec2"
+    assert plan["operation"] == "stop_instances"
+    assert plan["params"] == {"instance_ids": ["i-123"]}
+    assert plan["destructive"] is True
+    assert plan["read_only"] is False
+    assert "impact" in plan
 
 
 @pytest.mark.asyncio
@@ -64,12 +75,12 @@ async def test_run_command_success(monkeypatch):
     result = await devops_agent.run_command("List instances")
     assert result["summary"] == "No instances found"
     assert result["needs_confirmation"] is False
-    assert result["plan"] == {
-        "service": "ec2",
-        "operation": "describe_instances",
-        "params": {},
-        "destructive": False,
-    }
+    plan = result["plan"]
+    assert plan["service"] == "ec2"
+    assert plan["operation"] == "describe_instances"
+    assert plan["params"] == {}
+    assert plan["destructive"] is False
+    assert plan["read_only"] is True
 
 
 @pytest.mark.asyncio
@@ -231,3 +242,233 @@ async def test_devops_endpoint_returns_503_when_ollama_unreachable(client, monke
 
     assert resp.status_code == 503
     assert "Ollama" in resp.json()["detail"]
+
+
+# ── Enriched plan ───────────────────────────────────────────
+def test_build_plan_read_only_is_enriched():
+    intent = ParsedIntent(action="list_ec2", params={"region": "eu-west-1"})
+    plan = devops_agent.build_plan(intent)
+    assert plan["service"] == "ec2"
+    assert plan["operation"] == "describe_instances"
+    assert plan["destructive"] is False
+    assert plan["read_only"] is True
+    assert "Read-only" in plan["impact"]
+    assert plan["estimated_scope"]["region"] == "eu-west-1"
+
+
+def test_build_plan_destructive_scope_counts_targets():
+    intent = ParsedIntent(
+        action="terminate_ec2",
+        params={"instance_ids": ["i-1", "i-2", "i-3"]},
+        is_destructive=True,
+    )
+    plan = devops_agent.build_plan(intent)
+    assert plan["destructive"] is True
+    assert plan["read_only"] is False
+    assert "Irreversible" in plan["impact"]
+    assert plan["estimated_scope"]["target_count"] == 3
+
+
+def test_build_plan_new_readonly_action_maps():
+    intent = ParsedIntent(action="get_caller_identity", params={})
+    plan = devops_agent.build_plan(intent)
+    assert plan["service"] == "sts"
+    assert plan["operation"] == "get_caller_identity"
+    assert plan["read_only"] is True
+
+
+def test_new_actions_are_consistent():
+    """Every new read-only action is wired everywhere and non-destructive."""
+    new_actions = [
+        "list_ecs_clusters",
+        "list_ecs_services",
+        "list_elb",
+        "list_route53_zones",
+        "list_cloudfront_distributions",
+        "describe_s3_bucket",
+        "list_sns_topics",
+        "list_sqs_queues",
+        "list_ecr_repositories",
+        "get_caller_identity",
+    ]
+    for action in new_actions:
+        assert action in devops_agent.SUPPORTED_ACTIONS
+        assert action in devops_agent.ACTION_PLAN_MAP
+        assert action in devops_agent.ACTION_IMPACT
+        assert action not in devops_agent.DESTRUCTIVE_ACTIONS
+
+
+# ── New read-only dispatch (moto) ───────────────────────────
+@pytest.mark.asyncio
+async def test_dispatch_get_caller_identity(monkeypatch):
+    with mock_aws():
+        monkeypatch.setattr(settings, "aws_access_key_id", "test")
+        monkeypatch.setattr(settings, "aws_secret_access_key", "test")
+        intent = ParsedIntent(action="get_caller_identity", params={})
+        result = await devops_agent._dispatch(intent)
+        assert "account" in result
+        assert "arn" in result
+        assert "user_id" in result
+
+
+@pytest.mark.asyncio
+async def test_dispatch_list_sns_topics(monkeypatch):
+    with mock_aws():
+        monkeypatch.setattr(settings, "aws_access_key_id", "test")
+        monkeypatch.setattr(settings, "aws_secret_access_key", "test")
+        monkeypatch.setattr(settings, "aws_default_region", "us-east-1")
+        sns = boto3.client("sns", region_name="us-east-1")
+        sns.create_topic(Name="alerts")
+
+        intent = ParsedIntent(action="list_sns_topics", params={})
+        result = await devops_agent._dispatch(intent)
+        assert result["count"] == 1
+        assert result["topics"][0]["name"] == "alerts"
+
+
+@pytest.mark.asyncio
+async def test_dispatch_list_sqs_queues(monkeypatch):
+    with mock_aws():
+        monkeypatch.setattr(settings, "aws_access_key_id", "test")
+        monkeypatch.setattr(settings, "aws_secret_access_key", "test")
+        monkeypatch.setattr(settings, "aws_default_region", "us-east-1")
+        sqs = boto3.client("sqs", region_name="us-east-1")
+        sqs.create_queue(QueueName="jobs")
+
+        intent = ParsedIntent(action="list_sqs_queues", params={})
+        result = await devops_agent._dispatch(intent)
+        assert result["count"] == 1
+        assert result["queues"][0]["name"] == "jobs"
+
+
+@pytest.mark.asyncio
+async def test_dispatch_list_ecr_repositories(monkeypatch):
+    with mock_aws():
+        monkeypatch.setattr(settings, "aws_access_key_id", "test")
+        monkeypatch.setattr(settings, "aws_secret_access_key", "test")
+        monkeypatch.setattr(settings, "aws_default_region", "us-east-1")
+        ecr = boto3.client("ecr", region_name="us-east-1")
+        ecr.create_repository(repositoryName="my-app")
+
+        intent = ParsedIntent(action="list_ecr_repositories", params={})
+        result = await devops_agent._dispatch(intent)
+        assert result["count"] == 1
+        assert result["repositories"][0]["name"] == "my-app"
+
+
+@pytest.mark.asyncio
+async def test_dispatch_describe_s3_bucket(monkeypatch):
+    with mock_aws():
+        monkeypatch.setattr(settings, "aws_access_key_id", "test")
+        monkeypatch.setattr(settings, "aws_secret_access_key", "test")
+        monkeypatch.setattr(settings, "aws_default_region", "us-east-1")
+        s3 = boto3.client("s3", region_name="us-east-1")
+        s3.create_bucket(Bucket="detail-bucket")
+        s3.put_bucket_versioning(
+            Bucket="detail-bucket",
+            VersioningConfiguration={"Status": "Enabled"},
+        )
+
+        intent = ParsedIntent(
+            action="describe_s3_bucket", params={"bucket": "detail-bucket"}
+        )
+        result = await devops_agent._dispatch(intent)
+        assert result["bucket"] == "detail-bucket"
+        assert result["versioning"] == "Enabled"
+        assert "encrypted" in result
+
+
+@pytest.mark.asyncio
+async def test_dispatch_list_ecs_clusters(monkeypatch):
+    with mock_aws():
+        monkeypatch.setattr(settings, "aws_access_key_id", "test")
+        monkeypatch.setattr(settings, "aws_secret_access_key", "test")
+        monkeypatch.setattr(settings, "aws_default_region", "us-east-1")
+        ecs = boto3.client("ecs", region_name="us-east-1")
+        ecs.create_cluster(clusterName="prod")
+
+        intent = ParsedIntent(action="list_ecs_clusters", params={})
+        result = await devops_agent._dispatch(intent)
+        assert result["count"] == 1
+        assert result["clusters"][0]["name"] == "prod"
+
+
+@pytest.mark.asyncio
+async def test_run_command_readonly_new_action_end_to_end(monkeypatch):
+    async def fake_parse(message: str):
+        return ParsedIntent(action="get_caller_identity", params={})
+
+    async def fake_dispatch(intent):
+        return {"account": "123456789012", "arn": "arn:aws:iam::x:user/y", "user_id": "AIDA"}
+
+    async def fake_summarise(action, raw_result):
+        return "You are user y in account 123456789012."
+
+    monkeypatch.setattr(devops_agent, "parse_intent", fake_parse)
+    monkeypatch.setattr(devops_agent, "_dispatch", fake_dispatch)
+    monkeypatch.setattr(devops_agent, "summarise", fake_summarise)
+    result = await devops_agent.run_command("Who am I")
+    assert result["needs_confirmation"] is False
+    assert result["plan"]["read_only"] is True
+    assert result["plan"]["service"] == "sts"
+    assert result["raw_result"]["account"] == "123456789012"
+
+
+# ── Destructive throttle ────────────────────────────────────
+@pytest.mark.asyncio
+async def test_destructive_throttle_refuses_when_exhausted(monkeypatch):
+    async def fake_parse(message: str):
+        return ParsedIntent(
+            action="stop_ec2",
+            params={"instance_ids": ["i-1"]},
+            is_destructive=True,
+        )
+
+    dispatched = {"count": 0}
+
+    async def fake_dispatch(intent):
+        dispatched["count"] += 1
+        return {"stopped": True}
+
+    async def fake_summarise(action, raw_result):
+        return "stopped"
+
+    monkeypatch.setattr(devops_agent, "parse_intent", fake_parse)
+    monkeypatch.setattr(devops_agent, "_dispatch", fake_dispatch)
+    monkeypatch.setattr(devops_agent, "summarise", fake_summarise)
+
+    # Drain the whole bucket via confirmed destructive calls.
+    for _ in range(devops_agent._DESTRUCTIVE_BUCKET_CAPACITY):
+        res = await devops_agent.run_command("Stop it", confirm_destructive=True)
+        assert res["needs_confirmation"] is False
+
+    # Next one must be refused without dispatching.
+    before = dispatched["count"]
+    blocked = await devops_agent.run_command("Stop it", confirm_destructive=True)
+    assert "rate limit" in blocked["summary"].lower()
+    assert blocked["raw_result"] is None
+    assert dispatched["count"] == before
+
+
+@pytest.mark.asyncio
+async def test_destructive_throttle_does_not_touch_readonly(monkeypatch):
+    async def fake_parse(message: str):
+        return ParsedIntent(action="list_ec2", params={}, is_destructive=False)
+
+    async def fake_dispatch(intent):
+        return {"count": 0, "instances": []}
+
+    async def fake_summarise(action, raw_result):
+        return "none"
+
+    monkeypatch.setattr(devops_agent, "parse_intent", fake_parse)
+    monkeypatch.setattr(devops_agent, "_dispatch", fake_dispatch)
+    monkeypatch.setattr(devops_agent, "summarise", fake_summarise)
+
+    # Drain the destructive bucket manually; read-only must still pass.
+    for _ in range(devops_agent._DESTRUCTIVE_BUCKET_CAPACITY + 5):
+        devops_agent._consume_destructive_token()
+
+    result = await devops_agent.run_command("List instances")
+    assert result["needs_confirmation"] is False
+    assert result["raw_result"]["count"] == 0

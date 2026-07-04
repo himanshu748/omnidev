@@ -3,12 +3,17 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import FeatureLayout from "../components/FeatureLayout";
 import { api } from "@/lib/api";
+import "./devops.css";
 
 type DevOpsPlan = {
   service: string;
   operation: string;
   params: Record<string, unknown>;
   destructive: boolean;
+  /** Enriched, additive fields — older backends omit them. */
+  read_only?: boolean;
+  impact?: string;
+  estimated_scope?: Record<string, unknown> | null;
 };
 
 type DevOpsResult = {
@@ -57,6 +62,9 @@ const SUGGESTION_GROUPS = [
       "Describe security groups",
       "List IAM users",
       "Show my VPCs",
+      "List my load balancers",
+      "List Route53 hosted zones",
+      "List CloudFront distributions",
     ],
   },
   {
@@ -68,12 +76,37 @@ const SUGGESTION_GROUPS = [
     ],
   },
   {
+    label: "Containers",
+    icon: "🐳",
+    items: [
+      "List my ECS clusters",
+      "List services in cluster prod",
+      "List my ECR repositories",
+    ],
+  },
+  {
+    label: "Messaging",
+    icon: "📨",
+    items: [
+      "List my SNS topics",
+      "List my SQS queues",
+    ],
+  },
+  {
     label: "Monitoring",
     icon: "📊",
     items: [
       "List CloudWatch alarms",
       "Show alarms in ALARM state",
       "List my Lambda functions",
+    ],
+  },
+  {
+    label: "Identity",
+    icon: "🪪",
+    items: [
+      "Who am I",
+      "Describe bucket my-bucket",
     ],
   },
   {
@@ -456,7 +489,13 @@ export default function DevOpsPage() {
                 <div className="devopsResultWrap">
                   {/* Plan (optional, newer backends) */}
                   {activeEntry.result.plan && (
-                    <div className="devopsPlanBlock">
+                    <div
+                      className={`devopsPlanBlock ${
+                        activeEntry.result.plan.destructive
+                          ? "devopsPlanDestructive"
+                          : ""
+                      }`}
+                    >
                       <div className="devopsPlanHead">
                         <span className="devopsPlanTitle">Plan</span>
                         <span className="devopsPlanBadge service">
@@ -465,12 +504,49 @@ export default function DevOpsPage() {
                         <span className="devopsPlanBadge operation">
                           {activeEntry.result.plan.operation}
                         </span>
-                        {activeEntry.result.plan.destructive && (
+                        {activeEntry.result.plan.destructive ? (
                           <span className="devopsPlanBadge destructive">
-                            destructive
+                            ⚠ DESTRUCTIVE
+                          </span>
+                        ) : (
+                          <span className="devopsPlanBadge readonly">
+                            read-only
                           </span>
                         )}
                       </div>
+
+                      {/* Impact string (enriched) */}
+                      {activeEntry.result.plan.impact && (
+                        <div
+                          className={`devopsPlanImpact ${
+                            activeEntry.result.plan.destructive
+                              ? "danger"
+                              : ""
+                          }`}
+                        >
+                          {activeEntry.result.plan.impact}
+                        </div>
+                      )}
+
+                      {/* Estimated scope (enriched, trivially-known) */}
+                      {activeEntry.result.plan.estimated_scope &&
+                        Object.keys(
+                          activeEntry.result.plan.estimated_scope
+                        ).length > 0 && (
+                          <div className="devopsPlanScope">
+                            {Object.entries(
+                              activeEntry.result.plan.estimated_scope
+                            ).map(([k, v]) => (
+                              <span key={k} className="devopsScopeChip">
+                                <span className="devopsScopeKey">{k}</span>
+                                <span className="devopsScopeVal">
+                                  {String(v)}
+                                </span>
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
                       <pre className="devopsPlanParams">
                         {JSON.stringify(activeEntry.result.plan.params ?? {}, null, 2)}
                       </pre>

@@ -15,6 +15,8 @@ class ExtractMode(str, Enum):
     links = "links"
     metadata = "metadata"
     pdf = "pdf"
+    markdown = "markdown"
+    article = "article"
 
 
 # ── Request ─────────────────────────────────────────────────
@@ -76,6 +78,19 @@ class PageMetadata(BaseModel):
     meta_tags: dict[str, str] = {}
     word_count: int = 0
     load_time_ms: int = 0
+    # Enriched fields
+    og_tags: dict[str, str] = {}
+    twitter_tags: dict[str, str] = {}
+    json_ld: list[dict] = []
+
+
+# ── Article item ───────────────────────────────────────────
+class ArticleContent(BaseModel):
+    title: str = ""
+    byline: str = ""
+    excerpt: str = ""
+    text: str = ""
+    word_count: int = 0
 
 
 # ── Response ────────────────────────────────────────────────
@@ -88,5 +103,42 @@ class ScrapeResponse(BaseModel):
     pdf_b64: str | None = None
     links: list[LinkItem] | None = None
     metadata: PageMetadata | None = None
+    markdown: str | None = None
+    article: ArticleContent | None = None
     word_count: int | None = None
+    elapsed_ms: int | None = None
+
+
+# ── Crawl ───────────────────────────────────────────────────
+class CrawlRequest(BaseModel):
+    url: HttpUrl
+    max_pages: int = Field(
+        5,
+        ge=1,
+        le=10,
+        description="Maximum number of pages to visit (hard cap 10).",
+    )
+    max_depth: int = Field(
+        1,
+        ge=0,
+        le=2,
+        description="Maximum link depth from the start URL (hard cap 2).",
+    )
+    stealth: bool = True
+    timeout_ms: int = Field(20000, ge=1000, le=60000)
+
+
+class CrawlPage(BaseModel):
+    url: str
+    title: str = ""
+    excerpt: str = ""
+    depth: int = 0
+    status_code: int | None = None
+
+
+class CrawlResponse(BaseModel):
+    start_url: str
+    domain: str = ""
+    pages: list[CrawlPage] = []
+    pages_crawled: int = 0
     elapsed_ms: int | None = None

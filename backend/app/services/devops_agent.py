@@ -5,7 +5,8 @@ DevOps Agent service.
 3. Summarise the result with the AI provider
 
 Works with Gemini (cloud) or Ollama (local/offline) via ai_service.
-Supported AWS services: EC2, S3, VPC, IAM, RDS, CloudWatch, Lambda.
+Supported AWS services: EC2, S3, VPC, IAM, RDS, CloudWatch, Lambda,
+ECS, ELBv2, Route53, CloudFront, SNS, SQS, ECR, STS.
 """
 
 from __future__ import annotations
@@ -13,6 +14,8 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
+import threading
 from datetime import datetime, timezone
 from typing import Any
 
@@ -41,6 +44,17 @@ SUPPORTED_ACTIONS = [
     "describe_rds_instances",
     "list_cloudwatch_alarms",
     "list_lambda_functions",
+    # ── New read-only actions ──
+    "list_ecs_clusters",
+    "list_ecs_services",
+    "list_elb",
+    "list_route53_zones",
+    "list_cloudfront_distributions",
+    "describe_s3_bucket",
+    "list_sns_topics",
+    "list_sqs_queues",
+    "list_ecr_repositories",
+    "get_caller_identity",
 ]
 
 DESTRUCTIVE_ACTIONS = {
@@ -49,6 +63,36 @@ DESTRUCTIVE_ACTIONS = {
     "reboot_ec2",
     "launch_ec2",
     "create_s3_bucket",
+}
+
+# Human-readable, coarse impact strings per action for the enriched plan.
+# Read-only actions are safe; destructive ones spell out what changes.
+ACTION_IMPACT: dict[str, str] = {
+    "list_ec2": "Read-only: lists EC2 instances. No changes.",
+    "describe_ec2_instance": "Read-only: reads one EC2 instance. No changes.",
+    "launch_ec2": "Creates and starts a new EC2 instance (incurs cost).",
+    "stop_ec2": "Stops running EC2 instance(s); they can be started again.",
+    "terminate_ec2": "Permanently terminates EC2 instance(s). Irreversible.",
+    "reboot_ec2": "Reboots EC2 instance(s); brief downtime.",
+    "list_s3_buckets": "Read-only: lists S3 buckets. No changes.",
+    "list_s3_objects": "Read-only: lists objects in an S3 bucket. No changes.",
+    "create_s3_bucket": "Creates a new S3 bucket in the account.",
+    "describe_security_groups": "Read-only: reads security groups. No changes.",
+    "list_vpcs": "Read-only: lists VPCs. No changes.",
+    "list_iam_users": "Read-only: lists IAM users. No changes.",
+    "describe_rds_instances": "Read-only: reads RDS instances. No changes.",
+    "list_cloudwatch_alarms": "Read-only: lists CloudWatch alarms. No changes.",
+    "list_lambda_functions": "Read-only: lists Lambda functions. No changes.",
+    "list_ecs_clusters": "Read-only: lists ECS clusters. No changes.",
+    "list_ecs_services": "Read-only: lists ECS services in a cluster. No changes.",
+    "list_elb": "Read-only: lists load balancers and target health. No changes.",
+    "list_route53_zones": "Read-only: lists Route53 hosted zones. No changes.",
+    "list_cloudfront_distributions": "Read-only: lists CloudFront distributions. No changes.",
+    "describe_s3_bucket": "Read-only: reads one S3 bucket's config. No changes.",
+    "list_sns_topics": "Read-only: lists SNS topics. No changes.",
+    "list_sqs_queues": "Read-only: lists SQS queues. No changes.",
+    "list_ecr_repositories": "Read-only: lists ECR repositories. No changes.",
+    "get_caller_identity": "Read-only: returns the calling AWS identity. No changes.",
 }
 
 # ── Plan mapping: action -> (aws service, boto3 operation) ──
@@ -68,21 +112,104 @@ ACTION_PLAN_MAP: dict[str, tuple[str, str]] = {
     "describe_rds_instances": ("rds", "describe_db_instances"),
     "list_cloudwatch_alarms": ("cloudwatch", "describe_alarms"),
     "list_lambda_functions": ("lambda", "list_functions"),
+    "list_ecs_clusters": ("ecs", "list_clusters"),
+    "list_ecs_services": ("ecs", "list_services"),
+    "list_elb": ("elbv2", "describe_load_balancers"),
+    "list_route53_zones": ("route53", "list_hosted_zones"),
+    "list_cloudfront_distributions": ("cloudfront", "list_distributions"),
+    "describe_s3_bucket": ("s3", "get_bucket_encryption"),
+    "list_sns_topics": ("sns", "list_topics"),
+    "list_sqs_queues": ("sqs", "list_queues"),
+    "list_ecr_repositories": ("ecr", "describe_repositories"),
+    "get_caller_identity": ("sts", "get_caller_identity"),
 }
 
 
+def _estimated_scope(intent: ParsedIntent, service: str) -> dict[str, Any]:
+    """Best-effort, trivially-known scope hints for the plan preview.
+
+    Purely derived from the intent params — never calls AWS. Keeps the
+    plan cheap and deterministic. Only include keys we actually know.
+    """
+    params = intent.params
+    scope: dict[str, Any] = {}
+
+    # Region: explicit param, else the default (global services have none).
+    if service in ("iam", "s3", "route53", "cloudfront", "sts"):
+        # Global or region-agnostic control planes.
+        scope["region"] = params.get("region") or "global"
+    else:
+        scope["region"] = params.get("region") or settings.aws_default_region
+
+    # Count target when the action names specific resources.
+    for key in ("instance_ids", "group_ids", "vpc_ids", "alarm_names"):
+        val = params.get(key)
+        if isinstance(val, list):
+            scope["target_count"] = len(val)
+            break
+
+    # Named single-resource targets.
+    for key in ("instance_id", "bucket", "bucket_name", "db_instance_id", "cluster"):
+        if params.get(key):
+            scope["target"] = params[key]
+            break
+
+    return scope
+
+
 def build_plan(intent: ParsedIntent) -> dict[str, Any] | None:
-    """Preview of the boto3 call an intent would trigger, before execution."""
+    """Preview of the boto3 call an intent would trigger, before execution.
+
+    The dict is additive/backward-compatible: it always carries the original
+    service/operation/params/destructive keys, plus the enriched read_only,
+    impact, and estimated_scope keys.
+    """
     mapping = ACTION_PLAN_MAP.get(intent.action)
     if mapping is None:
         return None
     service, operation = mapping
+    destructive = intent.action in DESTRUCTIVE_ACTIONS or intent.is_destructive
     return {
         "service": service,
         "operation": operation,
         "params": intent.params,
-        "destructive": intent.action in DESTRUCTIVE_ACTIONS or intent.is_destructive,
+        "destructive": destructive,
+        "read_only": not destructive,
+        "impact": ACTION_IMPACT.get(
+            intent.action,
+            "Destructive: modifies AWS resources."
+            if destructive
+            else "Read-only: no changes.",
+        ),
+        "estimated_scope": _estimated_scope(intent, service),
     }
+
+
+# ── Destructive-action throttle (in-process token bucket) ───
+# A tiny deterministic guard so a runaway loop can't fire an unbounded
+# number of destructive AWS calls. No wall-clock: tokens are consumed per
+# call and only refilled explicitly (e.g. by tests). Module-level + locked
+# so it is shared across requests in one process.
+_DESTRUCTIVE_BUCKET_CAPACITY = int(os.getenv("DEVOPS_DESTRUCTIVE_BUCKET", "10"))
+_destructive_tokens = _DESTRUCTIVE_BUCKET_CAPACITY
+_destructive_lock = threading.Lock()
+
+
+def _consume_destructive_token() -> bool:
+    """Take one token for a destructive action. False when exhausted."""
+    global _destructive_tokens
+    with _destructive_lock:
+        if _destructive_tokens <= 0:
+            return False
+        _destructive_tokens -= 1
+        return True
+
+
+def _refill_destructive_tokens() -> None:
+    """Reset the destructive bucket to capacity (used by tests/ops)."""
+    global _destructive_tokens
+    with _destructive_lock:
+        _destructive_tokens = _DESTRUCTIVE_BUCKET_CAPACITY
 
 
 # ── Audit log ───────────────────────────────────────────────
@@ -141,6 +268,32 @@ CloudWatch:
 
 Lambda:
 - list_lambda_functions  -> {{}}
+
+ECS:
+- list_ecs_clusters      -> {{}}  (optional "region")
+- list_ecs_services      -> {{"cluster": "my-cluster"}}  (optional "region")
+
+Load balancers (ELBv2):
+- list_elb               -> {{}}  (optional "region"; includes target health)
+
+Route53:
+- list_route53_zones     -> {{}}
+
+CloudFront:
+- list_cloudfront_distributions -> {{}}
+
+S3 (detail):
+- describe_s3_bucket     -> {{"bucket": "my-bucket"}}  (region, versioning, public-access-block, encryption)
+
+Messaging:
+- list_sns_topics        -> {{}}  (optional "region")
+- list_sqs_queues        -> {{}}  (optional "region", "prefix")
+
+Containers:
+- list_ecr_repositories  -> {{}}  (optional "region")
+
+Identity:
+- get_caller_identity    -> {{}}  (whoami — account, ARN, user id)
 
 If the user's request doesn't map to a supported action, use action="unsupported".
 """
@@ -236,6 +389,18 @@ def _lambda_client(region: str | None = None):
         region_name=region or settings.aws_default_region,
         **_aws_client_kwargs(),
     )
+
+
+def _regional_client(service: str, region: str | None = None):
+    return boto3.client(
+        service,
+        region_name=region or settings.aws_default_region,
+        **_aws_client_kwargs(),
+    )
+
+
+def _sts_client():
+    return boto3.client("sts", **_aws_client_kwargs())
 
 
 # ── boto3 dispatch ──────────────────────────────────────────
@@ -520,6 +685,236 @@ async def _dispatch(intent: ParsedIntent) -> Any:
                 )
             return {"count": len(functions), "functions": functions}
 
+        if action == "list_ecs_clusters":
+            ecs = _regional_client("ecs", params.get("region"))
+            arns = ecs.list_clusters().get("clusterArns", [])
+            clusters = []
+            if arns:
+                desc = ecs.describe_clusters(clusters=arns)
+                for c in desc.get("clusters", []):
+                    clusters.append(
+                        {
+                            "name": c.get("clusterName", ""),
+                            "arn": c.get("clusterArn", ""),
+                            "status": c.get("status", ""),
+                            "running_tasks": c.get("runningTasksCount", 0),
+                            "pending_tasks": c.get("pendingTasksCount", 0),
+                            "active_services": c.get("activeServicesCount", 0),
+                            "registered_instances": c.get(
+                                "registeredContainerInstancesCount", 0
+                            ),
+                        }
+                    )
+            else:
+                clusters = [{"arn": a} for a in arns]
+            return {"count": len(clusters), "clusters": clusters}
+
+        if action == "list_ecs_services":
+            ecs = _regional_client("ecs", params.get("region"))
+            cluster = params.get("cluster", "default")
+            arns = ecs.list_services(cluster=cluster).get("serviceArns", [])
+            services = []
+            if arns:
+                # describe_services takes at most 10 at a time.
+                desc = ecs.describe_services(cluster=cluster, services=arns[:10])
+                for s in desc.get("services", []):
+                    services.append(
+                        {
+                            "name": s.get("serviceName", ""),
+                            "status": s.get("status", ""),
+                            "desired": s.get("desiredCount", 0),
+                            "running": s.get("runningCount", 0),
+                            "pending": s.get("pendingCount", 0),
+                            "launch_type": s.get("launchType", ""),
+                            "task_definition": s.get("taskDefinition", ""),
+                        }
+                    )
+            return {"cluster": cluster, "count": len(arns), "services": services}
+
+        if action == "list_elb":
+            elb = _regional_client("elbv2", params.get("region"))
+            resp = elb.describe_load_balancers()
+            load_balancers = []
+            for lb in resp.get("LoadBalancers", []):
+                lb_arn = lb.get("LoadBalancerArn", "")
+                targets = []
+                try:
+                    tg_resp = elb.describe_target_groups(LoadBalancerArn=lb_arn)
+                    for tg in tg_resp.get("TargetGroups", []):
+                        health = elb.describe_target_health(
+                            TargetGroupArn=tg["TargetGroupArn"]
+                        )
+                        states = [
+                            h["TargetHealth"]["State"]
+                            for h in health.get("TargetHealthDescriptions", [])
+                        ]
+                        healthy = sum(1 for s in states if s == "healthy")
+                        targets.append(
+                            {
+                                "target_group": tg.get("TargetGroupName", ""),
+                                "protocol": tg.get("Protocol", ""),
+                                "port": tg.get("Port", ""),
+                                "total_targets": len(states),
+                                "healthy_targets": healthy,
+                            }
+                        )
+                except Exception as exc:  # target health is best-effort
+                    logger.warning("ELB target health lookup failed: %s", exc)
+                load_balancers.append(
+                    {
+                        "name": lb.get("LoadBalancerName", ""),
+                        "arn": lb_arn,
+                        "dns_name": lb.get("DNSName", ""),
+                        "type": lb.get("Type", ""),
+                        "scheme": lb.get("Scheme", ""),
+                        "state": lb.get("State", {}).get("Code", ""),
+                        "vpc_id": lb.get("VpcId", ""),
+                        "target_groups": targets,
+                    }
+                )
+            return {"count": len(load_balancers), "load_balancers": load_balancers}
+
+        if action == "list_route53_zones":
+            r53 = boto3.client("route53", **_aws_client_kwargs())
+            resp = r53.list_hosted_zones()
+            zones = []
+            for z in resp.get("HostedZones", []):
+                zones.append(
+                    {
+                        "id": z.get("Id", "").replace("/hostedzone/", ""),
+                        "name": z.get("Name", ""),
+                        "private": z.get("Config", {}).get("PrivateZone", False),
+                        "record_count": z.get("ResourceRecordSetCount", 0),
+                        "comment": z.get("Config", {}).get("Comment", ""),
+                    }
+                )
+            return {"count": len(zones), "zones": zones}
+
+        if action == "list_cloudfront_distributions":
+            cf = boto3.client("cloudfront", **_aws_client_kwargs())
+            resp = cf.list_distributions()
+            dist_list = resp.get("DistributionList", {})
+            distributions = []
+            for d in dist_list.get("Items", []) or []:
+                origins = [
+                    o.get("DomainName", "")
+                    for o in d.get("Origins", {}).get("Items", [])
+                ]
+                distributions.append(
+                    {
+                        "id": d.get("Id", ""),
+                        "domain_name": d.get("DomainName", ""),
+                        "status": d.get("Status", ""),
+                        "enabled": d.get("Enabled", False),
+                        "aliases": d.get("Aliases", {}).get("Items", []) or [],
+                        "origins": origins,
+                        "comment": d.get("Comment", ""),
+                    }
+                )
+            return {"count": len(distributions), "distributions": distributions}
+
+        if action == "describe_s3_bucket":
+            s3 = _s3_client()
+            bucket = params["bucket"]
+
+            # Region
+            try:
+                loc = s3.get_bucket_location(Bucket=bucket)
+                region = loc.get("LocationConstraint") or "us-east-1"
+            except Exception:
+                region = ""
+
+            # Versioning
+            try:
+                ver = s3.get_bucket_versioning(Bucket=bucket)
+                versioning = ver.get("Status", "Disabled")
+            except Exception:
+                versioning = "Unknown"
+
+            # Public access block
+            public_access_block = None
+            try:
+                pab = s3.get_public_access_block(Bucket=bucket)
+                public_access_block = pab.get("PublicAccessBlockConfiguration", {})
+            except Exception:
+                public_access_block = None
+
+            # Encryption
+            encryption = None
+            try:
+                enc = s3.get_bucket_encryption(Bucket=bucket)
+                rules = enc.get("ServerSideEncryptionConfiguration", {}).get(
+                    "Rules", []
+                )
+                if rules:
+                    default = rules[0].get(
+                        "ApplyServerSideEncryptionByDefault", {}
+                    )
+                    encryption = {
+                        "algorithm": default.get("SSEAlgorithm", ""),
+                        "kms_key_id": default.get("KMSMasterKeyID", ""),
+                    }
+            except Exception:
+                encryption = None
+
+            return {
+                "bucket": bucket,
+                "region": region,
+                "versioning": versioning,
+                "public_access_block": public_access_block,
+                "encryption": encryption,
+                "encrypted": encryption is not None,
+            }
+
+        if action == "list_sns_topics":
+            sns = _regional_client("sns", params.get("region"))
+            resp = sns.list_topics()
+            topics = []
+            for t in resp.get("Topics", []):
+                arn = t.get("TopicArn", "")
+                topics.append({"arn": arn, "name": arn.rsplit(":", 1)[-1]})
+            return {"count": len(topics), "topics": topics}
+
+        if action == "list_sqs_queues":
+            sqs = _regional_client("sqs", params.get("region"))
+            kwargs = {}
+            if params.get("prefix"):
+                kwargs["QueueNamePrefix"] = params["prefix"]
+            resp = sqs.list_queues(**kwargs)
+            urls = resp.get("QueueUrls", []) or []
+            queues = [
+                {"url": u, "name": u.rsplit("/", 1)[-1]} for u in urls
+            ]
+            return {"count": len(queues), "queues": queues}
+
+        if action == "list_ecr_repositories":
+            ecr = _regional_client("ecr", params.get("region"))
+            resp = ecr.describe_repositories()
+            repos = []
+            for r in resp.get("repositories", []):
+                repos.append(
+                    {
+                        "name": r.get("repositoryName", ""),
+                        "uri": r.get("repositoryUri", ""),
+                        "arn": r.get("repositoryArn", ""),
+                        "created": str(r.get("createdAt", "")),
+                        "tag_mutability": r.get("imageTagMutability", ""),
+                        "scan_on_push": r.get(
+                            "imageScanningConfiguration", {}
+                        ).get("scanOnPush", False),
+                    }
+                )
+            return {"count": len(repos), "repositories": repos}
+
+        if action == "get_caller_identity":
+            sts = _sts_client()
+            resp = sts.get_caller_identity()
+            return {
+                "account": resp.get("Account", ""),
+                "arn": resp.get("Arn", ""),
+                "user_id": resp.get("UserId", ""),
+            }
+
         return {"error": f"Unsupported action: {action}"}
 
     return await asyncio.to_thread(_run)
@@ -530,9 +925,14 @@ async def summarise(action: str, raw_result: Any) -> str:
     return await generate_text(
         f"Action: {action}\nResult:\n{json.dumps(raw_result, default=str)}",
         system=(
-            "You are a DevOps expert. Summarise the following AWS API result "
-            "in a clear, concise, human-friendly way. Include counts, key data, "
-            "and any noteworthy details. Use plain text, no markdown."
+            "You are a senior AWS DevOps engineer. Summarise the following AWS "
+            "API result in a clear, concise, human-friendly way. Lead with the "
+            "headline count or the single most important fact. Call out anything "
+            "operationally noteworthy: stopped/terminated resources, unhealthy "
+            "load-balancer targets, buckets without encryption or public-access "
+            "block, alarms in ALARM state, or empty results. If the result is an "
+            "error, explain it plainly and suggest a likely cause. Keep it to a "
+            "few sentences. Use plain text, no markdown."
         ),
         temperature=0.3,
         max_tokens=512,
@@ -580,6 +980,22 @@ async def run_command(message: str, confirm_destructive: bool = False) -> dict:
             "summary": f"This is a destructive action ({intent.action}). "
             "Please enable 'Confirm destructive actions' and try again.",
             "needs_confirmation": True,
+            "plan": plan,
+        }
+
+    # Throttle confirmed destructive actions so a runaway caller can't fire
+    # an unbounded number of mutating AWS calls in one process lifetime.
+    if is_destructive and not _consume_destructive_token():
+        return {
+            "action": intent.action,
+            "params": intent.params,
+            "raw_result": None,
+            "summary": (
+                "Destructive-action rate limit reached "
+                f"(DEVOPS_DESTRUCTIVE_BUCKET={_DESTRUCTIVE_BUCKET_CAPACITY}). "
+                "Refused for safety; retry after the bucket is refilled."
+            ),
+            "needs_confirmation": False,
             "plan": plan,
         }
 

@@ -30,4 +30,8 @@ class DevOpsCommandResponse(BaseModel):
     raw_result: Any = None
     summary: str = ""
     needs_confirmation: bool = False
+    # Enriched, backward-compatible plan preview. May be absent for
+    # unsupported actions. New keys (impact, estimated_scope, read_only)
+    # are additive — older clients that only read service/operation/params
+    # /destructive keep working.
     plan: dict[str, Any] | None = None

@@ -5,9 +5,14 @@ from app.services.ai_service import AIConfigurationError
 from app.services.codegen_service import (
     MAX_FILES,
     MAX_PROMPT_CHARS,
+    MAX_REFINE_INSTRUCTION_CHARS,
+    SUPPORTED_FRAMEWORKS,
+    _detect_entry_file,
+    _normalize_framework,
     _safe_instructions,
     _sanitize_file_entries,
     generate_project,
+    refine_project,
 )
 
 
@@ -262,4 +267,205 @@ def test_codegen_rejects_hard_coded_secret_content():
                     "content": 'export const apiKey = "sk-live-1234567890abcdef1234567890abcdef";',
                 }
             ]
+        )
+
+
+# --- New first-class frameworks --------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "framework",
+    ["astro", "remix", "solid", "sveltekit", "django", "flask", "go", "html"],
+)
+def test_codegen_new_frameworks_are_supported(framework):
+    assert framework in SUPPORTED_FRAMEWORKS
+    assert _normalize_framework(framework) == framework
+
+
+@pytest.mark.parametrize(
+    "raw,normalized",
+    [("Astro", "astro"), ("Svelte Kit", "sveltekit"), ("  HTML ", "html"), ("Go", "go")],
+)
+def test_codegen_new_frameworks_normalize(raw, normalized):
+    assert _normalize_framework(raw) == normalized
+
+
+def test_codegen_rejects_unknown_framework():
+    with pytest.raises(ValueError, match="Unsupported framework"):
+        _normalize_framework("cobol")
+
+
+# --- Entry-file detection ---------------------------------------------------
+
+
+def test_codegen_detect_entry_prefers_priority_basename():
+    files = [
+        {"path": "src/utils.ts", "content": "x"},
+        {"path": "index.html", "content": "<html></html>"},
+        {"path": "README.md", "content": "docs"},
+    ]
+    assert _detect_entry_file(files) == "index.html"
+
+
+def test_codegen_detect_entry_prefers_shallowest_match():
+    files = [
+        {"path": "src/app/main.py", "content": "x"},
+        {"path": "main.py", "content": "y"},
+    ]
+    assert _detect_entry_file(files) == "main.py"
+
+
+def test_codegen_detect_entry_falls_back_to_first_file():
+    files = [{"path": "weird.xyz", "content": "x"}, {"path": "other.abc", "content": "y"}]
+    assert _detect_entry_file(files) == "weird.xyz"
+
+
+# --- Refine loop ------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_refine_endpoint(client, monkeypatch, coverage_tracker):
+    async def fake_refine_project(files, instruction, framework):
+        return {
+            "files": [{"path": "app.py", "content": "print('refined')"}],
+            "instructions": "run app.py",
+            "summary": "Refined project.",
+            "entry": "app.py",
+        }
+
+    monkeypatch.setattr(codegen_router, "refine_project", fake_refine_project)
+    resp = await client.post(
+        "/api/codegen/refine",
+        json={
+            "files": [{"path": "app.py", "content": "print('ok')"}],
+            "instruction": "add a greeting",
+            "framework": "python",
+        },
+    )
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["files"][0]["content"] == "print('refined')"
+    assert payload["entry"] == "app.py"
+    assert payload["summary"] == "Refined project."
+    coverage_tracker("POST /api/codegen/refine")
+
+
+@pytest.mark.asyncio
+async def test_refine_validation_error_returns_400(client, monkeypatch):
+    async def fake_refine_project(files, instruction, framework):
+        raise ValueError("Unsupported framework 'rails'")
+
+    monkeypatch.setattr(codegen_router, "refine_project", fake_refine_project)
+    resp = await client.post(
+        "/api/codegen/refine",
+        json={
+            "files": [{"path": "app.py", "content": "print('ok')"}],
+            "instruction": "convert to rails",
+            "framework": "rails",
+        },
+    )
+    assert resp.status_code == 400
+    assert "Unsupported framework" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_refine_empty_files_rejected_by_schema(client):
+    resp = await client.post(
+        "/api/codegen/refine",
+        json={"files": [], "instruction": "add auth", "framework": "react"},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_refine_sanitizes_and_returns_validated_output(monkeypatch):
+    async def fake_generate_structured(*args, **kwargs):
+        return {
+            "files": [
+                {"path": "src/App.tsx", "content": "export default function App(){return null;}"},
+                {"path": "src/auth.ts", "content": "export const login = () => {};"},
+            ],
+            "instructions": "npm install && npm run dev",
+        }
+
+    async def fake_fetch_docs(framework, prompt):
+        return ""
+
+    monkeypatch.setattr(
+        "app.services.codegen_service.generate_structured", fake_generate_structured
+    )
+    monkeypatch.setattr(
+        "app.services.codegen_service._fetch_docs_for_framework", fake_fetch_docs
+    )
+
+    result = await refine_project(
+        files=[{"path": "src/App.tsx", "content": "export default function App(){return null;}"}],
+        instruction="add auth",
+        framework="react",
+    )
+    assert {f["path"] for f in result["files"]} == {"src/App.tsx", "src/auth.ts"}
+    assert result["entry"] == "src/App.tsx"
+    assert "isolated" in result["instructions"] or "Safety" in result["instructions"]
+
+
+@pytest.mark.asyncio
+async def test_refine_blocks_unsafe_path_in_model_output(monkeypatch):
+    async def fake_generate_structured(*args, **kwargs):
+        return {
+            "files": [{"path": "../../etc/passwd", "content": "root:x:0:0"}],
+            "instructions": "run",
+        }
+
+    async def fake_fetch_docs(framework, prompt):
+        return ""
+
+    monkeypatch.setattr(
+        "app.services.codegen_service.generate_structured", fake_generate_structured
+    )
+    monkeypatch.setattr(
+        "app.services.codegen_service._fetch_docs_for_framework", fake_fetch_docs
+    )
+
+    with pytest.raises(ValueError):
+        await refine_project(
+            files=[{"path": "app.py", "content": "print('ok')"}],
+            instruction="add auth",
+            framework="python",
+        )
+
+
+@pytest.mark.asyncio
+async def test_refine_blocks_unsafe_path_in_input_files(monkeypatch):
+    async def fake_fetch_docs(framework, prompt):
+        return ""
+
+    monkeypatch.setattr(
+        "app.services.codegen_service._fetch_docs_for_framework", fake_fetch_docs
+    )
+
+    with pytest.raises(ValueError):
+        await refine_project(
+            files=[{"path": "../secrets.txt", "content": "x"}],
+            instruction="add auth",
+            framework="python",
+        )
+
+
+@pytest.mark.asyncio
+async def test_refine_rejects_empty_instruction():
+    with pytest.raises(ValueError, match="instruction must not be empty"):
+        await refine_project(
+            files=[{"path": "app.py", "content": "print('ok')"}],
+            instruction="   ",
+            framework="python",
+        )
+
+
+@pytest.mark.asyncio
+async def test_refine_rejects_too_long_instruction():
+    with pytest.raises(ValueError, match="too long"):
+        await refine_project(
+            files=[{"path": "app.py", "content": "print('ok')"}],
+            instruction="x" * (MAX_REFINE_INSTRUCTION_CHARS + 1),
+            framework="python",
         )

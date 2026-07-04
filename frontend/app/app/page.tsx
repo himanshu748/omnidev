@@ -13,7 +13,6 @@ import {
   CircleDot,
   Cloud,
   Code2,
-  Command,
   Copy,
   Cpu,
   Database,
@@ -26,7 +25,7 @@ import {
   LayoutDashboard,
   Loader2,
   LockKeyhole,
-  Play,
+  Moon,
   Search,
   Send,
   Server,
@@ -40,11 +39,15 @@ import {
 } from "lucide-react";
 import { API_BASE } from "@/lib/api";
 import ModelManager from "@/app/components/ModelManager";
+import "./cockpit.css";
+
+type StepStatus = "completed" | "active" | "pending";
 
 type SetupStep = {
   id: number;
   label: string;
-  status: "completed" | "active" | "pending";
+  detail: string;
+  status: StepStatus;
 };
 
 type Approval = {
@@ -55,17 +58,6 @@ type Approval = {
   updated: string;
   dryRun: string;
 };
-
-const setupSteps: SetupStep[] = [
-  { id: 1, label: "Install OmniDev", status: "completed" },
-  { id: 2, label: "Start Local API", status: "completed" },
-  { id: 3, label: "Pull AI Models", status: "completed" },
-  { id: 4, label: "Configure AWS Profile", status: "completed" },
-  { id: 5, label: "Test Connection", status: "active" },
-  { id: 6, label: "Enable Optional Tools", status: "pending" },
-  { id: 7, label: "Set Up Notifications", status: "pending" },
-  { id: 8, label: "Review & Finish", status: "pending" },
-];
 
 const modules = [
   {
@@ -115,29 +107,32 @@ const modules = [
   },
 ];
 
+// Illustrative approval queue — clearly labelled as examples in the UI so the
+// cockpit never presents fabricated infrastructure state as real. Real
+// approvals flow through the DevOps Agent once a plan has been run.
 const approvals: Approval[] = [
   {
     risk: "Medium",
     action: "Modify IAM Policy",
-    resource: "acme-saas-readonly",
+    resource: "example-readonly",
     service: "IAM",
-    updated: "1m ago",
+    updated: "example",
     dryRun: "No changes",
   },
   {
     risk: "Low",
     action: "Create S3 Bucket",
-    resource: "acme-saas-assets",
+    resource: "example-assets",
     service: "S3",
-    updated: "3m ago",
+    updated: "example",
     dryRun: "1 to create",
   },
   {
     risk: "Low",
     action: "Update Security Group",
-    resource: "sg-acme-web",
+    resource: "sg-example-web",
     service: "EC2",
-    updated: "5m ago",
+    updated: "example",
     dryRun: "2 to modify",
   },
 ];
@@ -161,6 +156,15 @@ type HealthInfo = {
   service?: string;
   ai_provider?: string;
   ai_model?: string;
+};
+
+// Minimal slice of GET /api/models we need to derive honest setup progress.
+type ModelsInfo = {
+  provider: string;
+  text_model: string;
+  text_model_ready: boolean;
+  vision_model_ready: boolean;
+  reachable: boolean;
 };
 
 type DevRoute = {
@@ -243,7 +247,9 @@ export default function HomePage() {
   const [command, setCommand] = useState("");
   const [approved, setApproved] = useState(false);
   const [health, setHealth] = useState<HealthInfo | null>(null);
+  const [models, setModels] = useState<ModelsInfo | null>(null);
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [devPanelOpen, setDevPanelOpen] = useState(false);
   const [answer, setAnswer] = useState("");
@@ -321,6 +327,17 @@ export default function HomePage() {
           setBackendOnline(false);
         }
       }
+
+      // Model readiness feeds the honest setup-progress signal below. It is a
+      // best-effort read; a failure just leaves the last known state in place.
+      try {
+        const res = await fetch(`${API_BASE}/api/models`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const body = await res.json();
+        if (!cancelled) setModels(body?.status ?? null);
+      } catch {
+        if (!cancelled) setModels(null);
+      }
     }
 
     checkHealth();
@@ -330,6 +347,17 @@ export default function HomePage() {
       clearInterval(timer);
     };
   }, []);
+
+  // Cheap light/dark affordance: toggles a class on the cockpit shell. The
+  // cockpit's own palette is already light; the class flips the surrounding
+  // page chrome so the toggle is honest rather than decorative.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.documentElement.dataset.cockpitTheme = theme;
+    return () => {
+      delete document.documentElement.dataset.cockpitTheme;
+    };
+  }, [theme]);
 
   function copyText(text: string, key: string) {
     navigator.clipboard
@@ -341,8 +369,91 @@ export default function HomePage() {
       .catch(() => {});
   }
 
+  // Setup progress is derived from live signals only — never a hardcoded
+  // "4/8". Each step maps to a real, observable condition so the bar reflects
+  // the actual state of the local stack. The first not-yet-done step is
+  // surfaced as "active" so there is always a clear next action.
+  const setupSteps = useMemo<SetupStep[]>(() => {
+    const providerReady = backendOnline === true && !!health?.ai_provider;
+    const usingOllama = models?.provider === "ollama";
+    // Non-local providers (e.g. a hosted API) don't need a local pull; treat a
+    // reachable provider as model-ready in that case so the step is honest.
+    const modelReady = usingOllama
+      ? !!models?.text_model_ready
+      : providerReady;
+
+    const raw: Array<{ label: string; detail: string; done: boolean }> = [
+      {
+        label: "Local API online",
+        detail: backendOnline
+          ? "OmniDev backend is reachable."
+          : "Start the backend to connect the cockpit.",
+        done: backendOnline === true,
+      },
+      {
+        label: "AI provider configured",
+        detail: providerReady
+          ? `${health?.ai_provider} · ${health?.ai_model ?? "model set"}`
+          : "No AI provider is reporting yet.",
+        done: providerReady,
+      },
+      {
+        label: "Default model ready",
+        detail: modelReady
+          ? usingOllama
+            ? `${models?.text_model ?? "Model"} installed and offline-ready.`
+            : "Provider model is available."
+          : usingOllama
+            ? `Pull ${models?.text_model ?? "the default model"} to run offline.`
+            : "Waiting on provider.",
+        done: modelReady,
+      },
+    ];
+
+    let activeAssigned = false;
+    return raw.map((step, index) => {
+      let status: StepStatus;
+      if (step.done) {
+        status = "completed";
+      } else if (!activeAssigned) {
+        status = "active";
+        activeAssigned = true;
+      } else {
+        status = "pending";
+      }
+      return { id: index + 1, label: step.label, detail: step.detail, status };
+    });
+  }, [backendOnline, health, models]);
+
   const completedCount = setupSteps.filter((step) => step.status === "completed").length;
   const progress = Math.round((completedCount / setupSteps.length) * 100);
+  const setupDone = completedCount === setupSteps.length;
+
+  // Honest "recent activity": reflects the live health poll rather than
+  // fabricated timestamps. Empty until the first successful check.
+  const recentActivity = useMemo(() => {
+    const items: Array<{ label: string; state: "ok" | "warn" | "idle" }> = [];
+    if (backendOnline === true) {
+      items.push({ label: "Backend health check passed", state: "ok" });
+    } else if (backendOnline === false) {
+      items.push({ label: "Backend unreachable — retrying", state: "warn" });
+    }
+    if (health?.ai_provider) {
+      items.push({
+        label: `Provider ${health.ai_provider} reporting`,
+        state: "ok",
+      });
+    }
+    if (models?.provider === "ollama") {
+      items.push({
+        label: models.text_model_ready
+          ? `${models.text_model} ready offline`
+          : `${models.text_model} not installed`,
+        state: models.text_model_ready ? "ok" : "warn",
+      });
+    }
+    return items;
+  }, [backendOnline, health, models]);
 
   const commandHint = useMemo(() => {
     if (mode === "agent") {
@@ -504,8 +615,14 @@ export default function HomePage() {
           </div>
 
           <div className="topbarActions">
-            <button type="button" aria-label="Switch theme">
-              <Sun size={18} />
+            <button
+              type="button"
+              aria-label={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+              aria-pressed={theme === "light"}
+              onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+              title={theme === "dark" ? "Switch to light" : "Switch to dark"}
+            >
+              {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             <button type="button" aria-label="Notifications">
               <Bell size={18} />
@@ -628,23 +745,51 @@ export default function HomePage() {
                 <div className="panelHeader">
                   <div>
                     <h2>OmniDev Setup</h2>
-                    <span>{completedCount} / {setupSteps.length} completed</span>
+                    <span>
+                      {setupDone
+                        ? "All systems ready"
+                        : `${completedCount} / ${setupSteps.length} ready`}
+                    </span>
                   </div>
                 </div>
-                <ol className="setupList">
-                  {setupSteps.map((step) => (
-                    <li key={step.id} className={step.status}>
-                      <span className="stepIndex">
-                        {step.status === "completed" ? <Check size={15} /> : step.id}
-                      </span>
-                      <strong>{step.label}</strong>
-                      <em>{step.status === "completed" ? "Completed" : step.status === "active" ? "In progress" : "Pending"}</em>
-                    </li>
-                  ))}
-                </ol>
-                <button type="button" className="primaryButton">
-                  Start setup
-                </button>
+
+                {backendOnline === null ? (
+                  <div className="setupLoading" role="status">
+                    <Loader2 size={15} className="askSpin" />
+                    Checking local stack…
+                  </div>
+                ) : (
+                  <ol className="setupList">
+                    {setupSteps.map((step) => (
+                      <li key={step.id} className={step.status}>
+                        <span className="stepIndex">
+                          {step.status === "completed" ? <Check size={15} /> : step.id}
+                        </span>
+                        <div className="stepBody">
+                          <strong>{step.label}</strong>
+                          <small>{step.detail}</small>
+                        </div>
+                        <em>
+                          {step.status === "completed"
+                            ? "Ready"
+                            : step.status === "active"
+                              ? "Next up"
+                              : "Pending"}
+                        </em>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+
+                {setupDone ? (
+                  <div className="setupComplete" role="status">
+                    <ShieldCheck size={15} /> Local stack ready — pick a feature agent below.
+                  </div>
+                ) : (
+                  <a className="primaryButton setupCta" href="#modules">
+                    Continue setup
+                  </a>
+                )}
                 <a className="docsLink" href={API_BASE + "/docs"} target="_blank" rel="noreferrer">
                   View setup docs <ExternalLink size={14} />
                 </a>
@@ -699,43 +844,48 @@ export default function HomePage() {
                   <span>Human approval required before execution</span>
                 </div>
 
-                <div className="agentStats">
-                  <div>
-                    <CircleDot size={16} />
-                    <span>Active plan</span>
-                    <strong>acme-saas-infra.json</strong>
+                <div className="activityPanel" aria-label="Recent activity">
+                  <div className="activityHead">
+                    <FileClock size={15} aria-hidden="true" />
+                    <span>Recent activity</span>
+                    <small>live signals</small>
                   </div>
-                  <div>
-                    <FileClock size={16} />
-                    <span>Last run</span>
-                    <strong>2m ago</strong>
-                  </div>
-                  <div>
-                    <ShieldCheck size={16} />
-                    <span>Success rate</span>
-                    <strong>98.7%</strong>
-                  </div>
-                  <div>
-                    <Cloud size={16} />
-                    <span>Est. monthly cost</span>
-                    <strong>$18.42</strong>
-                  </div>
+                  {recentActivity.length === 0 ? (
+                    <p className="activityEmpty">
+                      Waiting for the first health check — activity will appear here.
+                    </p>
+                  ) : (
+                    <ul className="activityList">
+                      {recentActivity.map((item) => (
+                        <li key={item.label} className={item.state}>
+                          <i aria-hidden="true" />
+                          {item.label}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
 
                 <div className="approvalsPanel" id="approvals">
                   <div className="panelHeader slim">
                     <div>
-                      <h2>Approvals</h2>
+                      <h2>
+                        Approvals <span className="exampleTag">Example</span>
+                      </h2>
                       <nav aria-label="Approval filters">
                         <button type="button" className="active">Pending (3)</button>
                         <button type="button">Approved</button>
                         <button type="button">History</button>
                       </nav>
                     </div>
-                    <button type="button" className="secondaryButton">
-                      View all approvals <ExternalLink size={14} />
-                    </button>
+                    <Link href="/devops" className="secondaryButton">
+                      Open DevOps Agent <ExternalLink size={14} />
+                    </Link>
                   </div>
+                  <p className="approvalsNote">
+                    Illustrative queue. Run a real plan in the DevOps Agent to populate
+                    live, approvable actions.
+                  </p>
 
                   <div className="approvalTable" role="table" aria-label="Pending approvals">
                     <div className="approvalRow header" role="row">
@@ -772,30 +922,36 @@ export default function HomePage() {
               </div>
             </section>
 
-            <section className="modulesPanel">
+            <section className="modulesPanel" id="modules">
               <div className="panelHeader slim">
                 <h2>Feature Agents</h2>
+                <span>Launch any module — each runs against your local backend.</span>
               </div>
-              <div className="moduleRows">
+              <div className="moduleCardGrid">
                 {modules.map((module) => {
                   const Icon = module.icon;
                   return (
-                    <Link key={module.name} href={module.href} className={`moduleRow ${module.accent}`}>
-                      <span className="moduleIcon">
-                        <Icon size={22} />
+                    <Link
+                      key={module.name}
+                      href={module.href}
+                      className={`moduleCard ${module.accent}`}
+                    >
+                      <span className="moduleCardTop">
+                        <span className="moduleIcon">
+                          <Icon size={20} />
+                        </span>
+                        {module.status === "Flagship" ? (
+                          <em className="moduleCardTag flagship">Flagship</em>
+                        ) : (
+                          <em className="moduleCardTag">{module.status}</em>
+                        )}
                       </span>
-                      <span className="moduleCopy">
-                        <strong>
-                          {module.name}
-                          {module.status === "Flagship" && <em>Flagship</em>}
-                        </strong>
-                        <span className="moduleAgent">{module.agent}</span>
-                        <small>{module.detail}</small>
+                      <strong>{module.name}</strong>
+                      <span className="moduleCardAgent">{module.agent}</span>
+                      <small>{module.detail}</small>
+                      <span className="moduleCardOpen">
+                        Open <ChevronRight size={15} />
                       </span>
-                      <span className={module.status === "Archived" ? "moduleState archived" : "moduleState"}>
-                        {module.status === "Archived" ? "Archived" : "Open"}
-                      </span>
-                      <ChevronRight size={18} />
                     </Link>
                   );
                 })}
@@ -861,6 +1017,7 @@ export default function HomePage() {
                 {selectedApproval.risk} risk
               </span>
               <span className="serviceBadge">{selectedApproval.service}</span>
+              <span className="exampleTag">Example</span>
             </header>
 
             <section className="drawerSection">
