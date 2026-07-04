@@ -54,6 +54,13 @@ Thumbs.db
 test-results/
 playwright-report/
 
+# ── Local screenshot / QA scratch output (never commit) ─────────
+output/
+snapshots/
+design-qa*.png
+design-qa.md
+/omnidev-*.png
+
 # ── Misc ────────────────────────────────────────────────────────
 *.log
 *.pid
