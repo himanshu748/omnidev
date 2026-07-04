@@ -1,6 +1,7 @@
 import pytest
 
 from app.routers import codegen as codegen_router
+from app.services.ai_service import AIConfigurationError
 from app.services.codegen_service import MAX_FILES, _safe_instructions, _sanitize_file_entries
 
 
@@ -26,7 +27,7 @@ async def test_codegen_endpoint(client, monkeypatch, coverage_tracker):
 @pytest.mark.asyncio
 async def test_codegen_missing_provider_key_returns_503(client, monkeypatch):
     async def fake_generate_project(prompt: str, framework: str):
-        raise ValueError("GEMINI_API_KEY is not set")
+        raise AIConfigurationError("GEMINI_API_KEY is not set")
 
     monkeypatch.setattr(codegen_router, "generate_project", fake_generate_project)
     resp = await client.post(

@@ -34,22 +34,19 @@ The generated app is written to:
 dist/mac/OmniDev.app
 ```
 
-## Build the Website Download
+## Package a Release Zip
 
-The landing page download button serves this package:
-
-```text
-frontend/public/downloads/OmniDev-macOS.zip
-```
-
-Generate or refresh it with:
+The landing page "Get the app" buttons point to GitHub Releases
+(`https://github.com/himanshu748/omnidev/releases/latest`). Build the zip to
+attach to a release with:
 
 ```bash
 scripts/macos/package-download.sh
 ```
 
-The package is a native macOS shell for this local project checkout. It is not
-yet a signed, notarized, portable installer.
+This writes `frontend/public/downloads/OmniDev-macOS.zip` locally (the path is
+not committed). The package is a native macOS shell for this local project
+checkout. It is not yet a signed, notarized, portable installer.
 
 ## Launch
 

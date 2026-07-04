@@ -58,7 +58,20 @@ def create_app() -> FastAPI:
 
     @app.get("/health", tags=["System"])
     async def health():
-        return {"status": "ok", "service": "omnidev"}
+        from app.services.ai_service import AIConfigurationError, get_model, get_provider
+
+        try:
+            ai_provider = get_provider()
+            ai_model = get_model()
+        except AIConfigurationError:
+            ai_provider = "unconfigured"
+            ai_model = ""
+        return {
+            "status": "ok",
+            "service": "omnidev",
+            "ai_provider": ai_provider,
+            "ai_model": ai_model,
+        }
 
     return app
 

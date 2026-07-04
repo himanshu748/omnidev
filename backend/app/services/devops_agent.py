@@ -1,9 +1,10 @@
 """
-DevOps Agent service — v3 (Gemini).
-1. Parse natural-language command via Gemini -> structured intent
+DevOps Agent service.
+1. Parse natural-language command via the AI provider -> structured intent
 2. Dispatch to the matching boto3 AWS call
-3. Summarise the result with Gemini
+3. Summarise the result with the AI provider
 
+Works with Gemini (cloud) or Ollama (local/offline) via ai_service.
 Supported AWS services: EC2, S3, VPC, IAM, RDS, CloudWatch, Lambda.
 """
 
@@ -14,15 +15,10 @@ import json
 from typing import Any
 
 import boto3
-from google.genai import types
 
 from app.config import settings
 from app.schemas.devops import ParsedIntent
-from app.services.ai_service import (
-    extract_function_call,
-    generate_text,
-    generate_with_tool,
-)
+from app.services.ai_service import generate_structured, generate_text
 
 # ── Supported actions ───────────────────────────────────────
 SUPPORTED_ACTIONS = [
@@ -91,41 +87,39 @@ Lambda:
 If the user's request doesn't map to a supported action, use action="unsupported".
 """
 
-INTENT_TOOL = types.FunctionDeclaration(
-    name="return_intent",
-    description="Extract a supported AWS action, params, and destructive flag from the user's request.",
-    parameters=types.Schema(
-        type="OBJECT",
-        properties={
-            "action": types.Schema(
-                type="STRING",
-                description="The AWS action to perform",
-                enum=[*SUPPORTED_ACTIONS, "unsupported"],
-            ),
-            "params": types.Schema(
-                type="OBJECT",
-                description="Parameters for the action as key-value pairs",
-            ),
-            "is_destructive": types.Schema(
-                type="BOOLEAN",
-                description="Whether the action is destructive",
-            ),
+INTENT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "action": {
+            "type": "string",
+            "description": "The AWS action to perform",
+            "enum": [*SUPPORTED_ACTIONS, "unsupported"],
         },
-        required=["action", "params", "is_destructive"],
-    ),
-)
+        "params": {
+            "type": "object",
+            "description": "Parameters for the action as key-value pairs",
+        },
+        "is_destructive": {
+            "type": "boolean",
+            "description": "Whether the action is destructive",
+        },
+    },
+    "required": ["action", "params", "is_destructive"],
+}
 
 
 # ── Intent parsing ──────────────────────────────────────────
 async def parse_intent(message: str) -> ParsedIntent:
-    resp = await generate_with_tool(
+    data = await generate_structured(
         message,
         system=SYSTEM_PROMPT,
-        tools=[INTENT_TOOL],
-        forced_function="return_intent",
+        schema=INTENT_SCHEMA,
+        tool_name="return_intent",
+        tool_description=(
+            "Extract a supported AWS action, params, and destructive flag from the user's request."
+        ),
         max_tokens=1024,
     )
-    data = extract_function_call(resp, "return_intent")
     return ParsedIntent(**data)
 
 

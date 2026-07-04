@@ -15,7 +15,17 @@ Deploy OmniDev to production using Render, Docker, or split frontend/backend hos
 Create a `.env` file in the `backend/` directory:
 
 ```env
-# Google Gemini
+# AI provider: auto | gemini | ollama
+# "auto" uses Gemini when GEMINI_API_KEY is set, otherwise local Ollama.
+# For hosted deployments use Gemini; Ollama mode assumes a local server.
+AI_PROVIDER=auto
+
+# Ollama (local, offline) — gemma4:e4b covers text + vision in one model
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=gemma4:e4b
+OLLAMA_VISION_MODEL=gemma4:e4b
+
+# Google Gemini (cloud)
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.0-flash
 

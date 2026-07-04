@@ -11,14 +11,7 @@ import re
 from pathlib import PurePosixPath
 from typing import Any
 
-from google.genai import types
-
-from app.config import settings
-from app.services.ai_service import (
-    extract_function_call,
-    generate_with_tool,
-    get_response_text,
-)
+from app.services.ai_service import AIResponseError, generate_structured
 from app.services.context7_service import get_context
 
 FRAMEWORK_CONTEXT7: dict[str, list[tuple[str, str]]] = {
@@ -80,32 +73,28 @@ SECRET_ASSIGNMENT_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-PROJECT_TOOL = types.FunctionDeclaration(
-    name="return_project",
-    description="Return the generated project files and run instructions.",
-    parameters=types.Schema(
-        type="OBJECT",
-        properties={
-            "files": types.Schema(
-                type="ARRAY",
-                description="List of project files",
-                items=types.Schema(
-                    type="OBJECT",
-                    properties={
-                        "path": types.Schema(type="STRING", description="File path"),
-                        "content": types.Schema(type="STRING", description="File content"),
-                    },
-                    required=["path", "content"],
-                ),
-            ),
-            "instructions": types.Schema(
-                type="STRING",
-                description="Instructions on how to run the project",
-            ),
+PROJECT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "properties": {
+        "files": {
+            "type": "array",
+            "description": "List of project files",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "File path"},
+                    "content": {"type": "string", "description": "File content"},
+                },
+                "required": ["path", "content"],
+            },
         },
-        required=["files", "instructions"],
-    ),
-)
+        "instructions": {
+            "type": "string",
+            "description": "Instructions on how to run the project",
+        },
+    },
+    "required": ["files", "instructions"],
+}
 
 
 async def _fetch_docs_for_framework(framework: str, prompt: str) -> str:
@@ -271,24 +260,19 @@ Rules:
         user += f"Relevant documentation (use for correct APIs and patterns):\n\n{docs_block}\n\n"
     user += "Generate the project now."
 
-    resp = await generate_with_tool(
-        user,
-        system=system,
-        tools=[PROJECT_TOOL],
-        forced_function="return_project",
-        max_tokens=8192,
-    )
-
     try:
-        data = extract_function_call(resp, "return_project")
-    except ValueError:
-        raw = get_response_text(resp)
-        try:
-            data = json.loads(raw)
-        except json.JSONDecodeError:
-            return _safe_failure_project("Gemini returned text that could not be parsed as a project payload.")
+        data = await generate_structured(
+            user,
+            system=system,
+            schema=PROJECT_SCHEMA,
+            tool_name="return_project",
+            tool_description="Return the generated project files and run instructions.",
+            max_tokens=8192,
+        )
+    except AIResponseError:
+        return _safe_failure_project("The model returned text that could not be parsed as a project payload.")
     if not isinstance(data, dict):
-        return _safe_failure_project("Gemini returned an unexpected payload shape.")
+        return _safe_failure_project("The model returned an unexpected payload shape.")
     files = _sanitize_file_entries(data.get("files") or [])
     instructions = _safe_instructions(data.get("instructions"))
     instructions = (

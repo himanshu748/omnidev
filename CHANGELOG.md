@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] — 2026-07-03
+
+### ✨ Added
+- **Ollama provider** — every AI-backed module (DevOps Agent, Code Gen, Vision Lab) can now run fully offline against a local Ollama server. New settings: `AI_PROVIDER` (`auto`/`gemini`/`ollama`), `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`. `auto` uses Gemini when a key is set and falls back to Ollama otherwise. Default model is `gemma4:e4b` — Google's edge model (AI Edge Gallery) covering text, structured output, and vision in one ~9.6GB download.
+- Provider-agnostic AI layer (`ai_service.py`) with structured-output support on both providers and typed `AIConfigurationError`/`AIResponseError` handling; `/health` now reports the active provider and model.
+- Provider-layer test suite (mocked Ollama transport, provider selection, schema conversion).
+
+### 🎨 Changed
+- README and docs repositioned around the native macOS app with offline-first AI.
+- Landing page rebuilt as a dark, premium product page: privacy-first hero with a real cockpit screenshot, module bento, Gemma 4 offline section, and GitHub Releases download CTA. Replaces the old glassmorphism landing and its div-built fake app preview.
+
+### 🗑️ Removed
+- Stale `frontend/public/downloads/OmniDev-macOS.zip` build artifact and local `dist/` output (the path is now gitignored; packages attach to GitHub Releases).
+
+---
+
 ## [0.2.0] — 2026-02-15
 
 ### ✨ Added

@@ -1,6 +1,7 @@
 import pytest
 
 from app.routers import vision as vision_router
+from app.services.ai_service import AIConfigurationError
 
 
 @pytest.mark.asyncio
@@ -38,7 +39,9 @@ async def test_vision_success(client, monkeypatch, coverage_tracker):
 @pytest.mark.asyncio
 async def test_vision_missing_gemini_key_returns_503(client, monkeypatch):
     async def fake_analyze(**kwargs):
-        raise ValueError("GEMINI_API_KEY is not set. Get a free key at https://aistudio.google.com/apikey")
+        raise AIConfigurationError(
+            "GEMINI_API_KEY is not set. Get a free key at https://aistudio.google.com/apikey"
+        )
 
     monkeypatch.setattr(vision_router, "analyze_image", fake_analyze)
     files = {"image": ("sample.png", b"pngdata", "image/png")}

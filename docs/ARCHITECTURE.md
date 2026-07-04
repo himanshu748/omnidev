@@ -30,7 +30,7 @@
 │  └───────────────────────┬──────────────────────────────────┘    │
 │  ┌───────────────────────┴──────────────────────────────────┐    │
 │  │                   SERVICES (Business Logic)                │    │
-│  │       Gemini, boto3, Playwright, StackBlitz handoff        │    │
+│  │    AI provider layer, boto3, Playwright, StackBlitz        │    │
 │  └───────────────────────┬──────────────────────────────────┘    │
 │  ┌───────────────────────┴──────────────────────────────────┐    │
 │  │                    SCHEMAS (Pydantic Models)               │    │
@@ -39,8 +39,8 @@
           │                  │                    │
           ▼                  ▼                    ▼
     ┌──────────┐       ┌──────────┐        ┌──────────┐
-    │ Gemini   │       │Playwright│        │ AWS/S3   │
-    │ AI       │       │Chromium  │        │ boto3    │
+    │ Ollama / │       │Playwright│        │ AWS/S3   │
+    │ Gemini AI│       │Chromium  │        │ boto3    │
     └──────────┘       └──────────┘        └──────────┘
 ```
 
@@ -137,7 +137,8 @@ All styling flows from `globals.css` via CSS custom properties:
 
 | Service | Usage | Config |
 |---------|-------|--------|
-| **Google Gemini** | DevOps NLU, code generation, and Vision analysis | `GEMINI_API_KEY`, `GEMINI_MODEL` |
+| **Ollama** (local, offline) | DevOps NLU, code generation, and Vision analysis without any API key | `AI_PROVIDER`, `OLLAMA_BASE_URL`, `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL` |
+| **Google Gemini** (cloud) | Same AI workloads when a key is configured | `GEMINI_API_KEY`, `GEMINI_MODEL` |
 | **Context7** | Optional docs grounding for Code Gen prompts | `CONTEXT7_API_KEY` |
 | **StackBlitz** | Browser-isolated preview for generated web projects; OmniDev backend does not execute generated code | None |
 | **AWS** | EC2/S3 management via boto3 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` |

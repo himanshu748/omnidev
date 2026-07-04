@@ -1,48 +1,89 @@
 # OmniDev
 
-Local-first AI developer workbench for shipping, inspecting, and operating software from one cockpit.
+Native macOS AI developer app. Ship, inspect, and operate software from one local cockpit — fully offline with Ollama, or connected with Gemini.
 
-[Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [Deployment](docs/DEPLOYMENT.md) · [Contributing](CONTRIBUTING.md)
+[Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [macOS App](docs/MACOS_APP.md) · [Contributing](CONTRIBUTING.md)
 
+![macOS](https://img.shields.io/badge/macOS-SwiftUI%20%2B%20WebKit-000000?logo=apple&logoColor=white)
+![Ollama](https://img.shields.io/badge/AI-Ollama%20(offline)-222222?logo=ollama&logoColor=white)
+![Google Gemini](https://img.shields.io/badge/AI-Gemini%20(cloud)-4285F4?logo=google&logoColor=white)
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
 ![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white)
-![Google Gemini](https://img.shields.io/badge/AI-Gemini-4285F4?logo=google&logoColor=white)
-![AWS boto3](https://img.shields.io/badge/AWS-boto3-FF9900?logo=amazonaws&logoColor=white)
 ![License MIT](https://img.shields.io/badge/License-MIT-green)
 
-OmniDev is a full-stack local developer toolkit built with a FastAPI backend and a Next.js frontend. It brings together AI-assisted code generation, AWS operations, browser automation, visual analysis, and S3 file management in one place.
+OmniDev is a native macOS app: a SwiftUI/WebKit shell that launches and supervises a local FastAPI backend and Next.js cockpit as sidecar processes. It brings together AI-assisted code generation, AWS operations, browser automation, visual analysis, and S3 file management in one place.
 
-The product direction is a polished local-first developer cockpit: run it on your machine, keep credentials under your control, ask it questions about real infrastructure, and require human confirmation before risky agent actions.
+Everything runs on your machine. With a local [Ollama](https://ollama.com) server, every AI-backed module — DevOps Agent, Code Gen, and Vision Lab — works completely offline with no API key and no data leaving your Mac. Prefer a hosted model? Set a free `GEMINI_API_KEY` and OmniDev uses Gemini instead. Risky agent actions always require human confirmation.
 
 ## What It Does
 
 | Module | Purpose | Backend |
 |--------|---------|---------|
-| DevOps Agent | Parse natural-language AWS requests, inspect resources, and gate destructive actions behind confirmation. | Gemini + boto3 |
-| Code Gen | Generate project files for common web/backend frameworks with validation and browser-isolated preview/download flows. | Gemini + optional Context7 |
+| DevOps Agent | Parse natural-language AWS requests, inspect resources, and gate destructive actions behind confirmation. | Ollama or Gemini + boto3 |
+| Code Gen | Generate project files for common web/backend frameworks with validation and browser-isolated preview/download flows. | Ollama or Gemini + optional Context7 |
 | Web Scraper | Extract text, HTML, metadata, links, PDFs, or screenshots from authorized pages with Playwright-powered browser automation. | Playwright |
-| Vision Lab | Analyze images, run OCR-style prompts, and ask custom visual questions. | Gemini multimodal |
+| Vision Lab | Analyze images, run OCR-style prompts, and ask custom visual questions. | Ollama vision or Gemini multimodal |
 | Cloud Storage | Browse S3 buckets, list objects, upload files, delete objects, and generate presigned download URLs. | boto3 S3 |
+
+## AI Providers: Offline by Default
+
+OmniDev picks its AI provider through one setting, `AI_PROVIDER`:
+
+| Mode | Behaviour |
+|------|-----------|
+| `auto` (default) | Uses Gemini when `GEMINI_API_KEY` is set; otherwise falls back to local Ollama. |
+| `ollama` | Forces local Ollama — every AI service runs offline. |
+| `gemini` | Forces Google Gemini (cloud). |
+
+### Run fully offline with Ollama
+
+```bash
+# 1. Install Ollama (https://ollama.com), then:
+ollama serve
+
+# 2. Pull the default model — one model covers everything
+ollama pull gemma4:e4b        # text, structured intents, vision & OCR (~9.6GB)
+```
+
+No API keys required. [Gemma 4 E4B](https://ollama.com/library/gemma4:e4b) — the same edge model featured in Google's AI Edge Gallery — handles DevOps intent parsing, code generation, and Vision Lab image analysis in a single download, with a 128K context window. On lower-memory machines, `ollama pull gemma4:e2b` and set both model vars to it. Override models and endpoint via `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`, and `OLLAMA_BASE_URL` in `backend/.env`; any Ollama model with structured-output support works.
+
+The `/health` endpoint reports the active provider and model.
+
+## The macOS App
+
+OmniDev ships as a native macOS `.app`: a SwiftUI/WebKit shell (`macos/`) that starts the FastAPI backend (port 8010) and Next.js frontend (port 3010) as managed sidecars, waits for both health checks, and presents the cockpit in a native window with sidebar navigation.
+
+```bash
+# Build and run the macOS app from source
+./script/build_and_run.sh
+```
+
+Stop the sidecars any time with `scripts/macos/stop-omnidev.sh`. See [docs/MACOS_APP.md](docs/MACOS_APP.md) for packaging details. Windows and Linux packages are planned next.
 
 ## Product Surface
 
-- `/` is the product landing page: positioning, modules, local-first story, platform direction, and calls to launch the app.
+- `/` is the product landing page: positioning, modules, local-first story, platform direction.
 - `/app` is the main cockpit: setup status, command center, agent mode, approvals, and module launcher.
 - Feature pages live under `frontend/app/` and share API helpers through `frontend/lib/api.ts`.
-
-The current app includes a native macOS SwiftUI/WebKit shell around the Next.js frontend, with the FastAPI backend and frontend dev server managed as local sidecars. Windows and Linux packages are planned next.
 
 ## Architecture
 
 ```text
 omnidev/
+├── macos/                       # native SwiftUI/WebKit shell
+│   └── Sources/OmniDevMac/
+│       ├── App/                 # app entry
+│       ├── Services/            # sidecar lifecycle (LocalStackManager)
+│       └── Views/               # native window, sidebar, web cockpit
 ├── backend/
 │   ├── app/
 │   │   ├── main.py              # FastAPI app and Playwright lifespan
-│   │   ├── config.py            # env/.env-backed settings
+│   │   ├── config.py            # env/.env-backed settings (AI provider, models)
 │   │   ├── routers/             # HTTP endpoints
-│   │   ├── services/            # Gemini, boto3, and Playwright logic
+│   │   ├── services/
+│   │   │   ├── ai_service.py    # provider layer: Ollama (local) / Gemini (cloud)
+│   │   │   └── ...              # boto3, Playwright, codegen, vision logic
 │   │   └── schemas/             # Pydantic request/response models
 │   ├── requirements.txt
 │   └── .env.example
@@ -58,8 +99,8 @@ omnidev/
 │   │   └── storage/page.tsx
 │   ├── lib/api.ts
 │   └── package.json
+├── scripts/macos/               # launch/stop/package sidecar scripts
 ├── docs/
-├── AGENTS.md
 └── README.md
 ```
 
@@ -67,11 +108,22 @@ omnidev/
 
 ### Prerequisites
 
+- macOS with Xcode command-line tools (for the native app), or any OS for the dev stack.
 - Python 3.11+; Python 3.13 is used for local verification.
 - Node.js 20.9+; Node 22 works with Next.js 16.
-- npm.
+- [Ollama](https://ollama.com) for offline AI (or a `GEMINI_API_KEY` for cloud AI).
 
-### Backend
+### Option A — Native macOS app
+
+```bash
+./script/build_and_run.sh
+```
+
+This builds the SwiftUI shell, starts both sidecars, and opens the cockpit in a native window.
+
+### Option B — Dev stack (any OS)
+
+Backend:
 
 ```bash
 cd backend
@@ -83,9 +135,7 @@ cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-If `python3.13` is not available, use any supported Python 3.11+ interpreter.
-
-### Frontend
+Frontend:
 
 ```bash
 cd frontend
@@ -93,20 +143,22 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:3000`. If that port is occupied, run:
-
-```bash
-npm run dev -- -p 3001
-```
-
-The backend API docs are available at `http://localhost:8000/docs`.
+Open `http://localhost:3000`. Backend API docs are at `http://localhost:8000/docs`.
 
 ## Configuration
 
 Create `backend/.env` from `backend/.env.example`.
 
 ```bash
-# Required for DevOps Agent, Code Gen, and Vision Lab
+# AI provider: auto | gemini | ollama  (auto = Gemini if key set, else local Ollama)
+AI_PROVIDER=auto
+
+# Ollama (local, offline) — gemma4:e4b covers text + vision in one model
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=gemma4:e4b
+OLLAMA_VISION_MODEL=gemma4:e4b
+
+# Gemini (cloud, optional — free key at https://aistudio.google.com/apikey)
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.0-flash
 
@@ -126,21 +178,21 @@ CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,h
 
 Credential needs by module:
 
-| Module | Gemini | AWS | Context7 |
-|--------|--------|-----|----------|
-| DevOps Agent | Required | Required through boto3 chain | No |
-| Code Gen | Required | No | Optional |
+| Module | AI (Ollama or Gemini) | AWS | Context7 |
+|--------|----------------------|-----|----------|
+| DevOps Agent | Required (offline OK with Ollama) | Required through boto3 chain | No |
+| Code Gen | Required (offline OK with Ollama) | No | Optional |
 | Web Scraper | No | No | No |
-| Vision Lab | Required | No | No |
+| Vision Lab | Required (offline OK with Ollama) | No | No |
 | Cloud Storage | No | Required through boto3 chain | No |
 
 ## API Snapshot
 
-All backend routes are served from `http://localhost:8000` by default.
+All backend routes are served from `http://localhost:8000` by default (`8010` under the macOS app).
 
 | Method | Endpoint | Notes |
 |--------|----------|-------|
-| `GET` | `/health` | Service health check. |
+| `GET` | `/health` | Service health check; reports active AI provider and model. |
 | `POST` | `/api/devops/command` | Natural-language AWS command; destructive operations require `confirm_destructive: true`. |
 | `POST` | `/api/codegen/generate` | Returns validated generated files and instructions. Backend does not execute generated code. |
 | `POST` | `/api/scraper/scrape` | Browser-based extraction for text, HTML, screenshots, links, metadata, and PDFs. |
@@ -161,6 +213,7 @@ See [docs/API.md](docs/API.md) for request and response examples.
 - DevOps operations are mapped to explicit boto3 actions before execution.
 - Destructive DevOps actions require a confirmation flag.
 - AWS credentials stay local and are resolved by boto3; no credential values should be committed to the repo.
+- In Ollama mode, prompts and images never leave your machine.
 
 ## Verification
 
@@ -172,36 +225,13 @@ cd frontend && npm run build
 cd backend && pytest
 ```
 
-Local verification on June 18, 2026:
-
-| Check | Result |
-|-------|--------|
-| Frontend typecheck | Passed via `npm run lint`. |
-| Frontend production build | Passed via `npm run build`. |
-| Backend tests | Passed: 58 tests. |
-| Live `/health` | Passed. |
-| Live scraper/preview probes | Passed against local frontend. |
-| Live S3 bucket listing | Passed through local AWS profile with zero bucket names printed. |
-| AI-only endpoints without `GEMINI_API_KEY` | Return service-unavailable responses instead of crashing. |
-
-## Desktop Packaging Direction
-
-OmniDev includes a native macOS `.app` shell for local developer use. See [docs/MACOS_APP.md](docs/MACOS_APP.md).
-
-The broader packaging plan is:
-
-- macOS native shell now; Windows and Linux builds next.
-- Local FastAPI sidecar process managed by the desktop shell.
-- Next.js frontend loaded inside the macOS shell, with a future path to bundled static/runtime assets.
-- Local credential discovery through the user's existing AWS/Gemini environment.
-- Human-in-the-loop approval UI for agent actions before infrastructure changes.
-
 ## Documentation
 
 | Document | Description |
 |----------|-------------|
 | [Architecture](docs/ARCHITECTURE.md) | System design and project structure. |
 | [API Reference](docs/API.md) | REST endpoints and examples. |
+| [macOS App](docs/MACOS_APP.md) | Native shell build and packaging. |
 | [Deployment](docs/DEPLOYMENT.md) | Docker, Render, and Vercel notes. |
 | [Design System](docs/DESIGN.md) | Visual system and UI references. |
 | [Contributing](CONTRIBUTING.md) | Contribution guide. |

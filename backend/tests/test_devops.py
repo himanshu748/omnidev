@@ -1,8 +1,10 @@
 import pytest
 
+from app.config import settings
 from app.schemas.devops import ParsedIntent
 from app.routers import devops as devops_router
 from app.services import devops_agent
+from app.services.ai_service import AIConfigurationError
 
 
 @pytest.mark.asyncio
@@ -58,9 +60,9 @@ async def test_run_command_success(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_devops_endpoint(client, monkeypatch, coverage_tracker):
-    monkeypatch.setattr(devops_router.settings, "gemini_api_key", "test-gemini-key")
-    monkeypatch.setattr(devops_router.settings, "aws_access_key_id", "test-access-key")
-    monkeypatch.setattr(devops_router.settings, "aws_secret_access_key", "test-secret-key")
+    monkeypatch.setattr(settings, "gemini_api_key", "test-gemini-key")
+    monkeypatch.setattr(settings, "aws_access_key_id", "test-access-key")
+    monkeypatch.setattr(settings, "aws_secret_access_key", "test-secret-key")
 
     async def fake_run_command(message: str, confirm_destructive: bool = False):
         return {
@@ -84,9 +86,10 @@ async def test_devops_endpoint(client, monkeypatch, coverage_tracker):
 
 @pytest.mark.asyncio
 async def test_devops_endpoint_returns_503_without_gemini_key(client, monkeypatch):
-    monkeypatch.setattr(devops_router.settings, "gemini_api_key", "")
-    monkeypatch.setattr(devops_router.settings, "aws_access_key_id", "test-access-key")
-    monkeypatch.setattr(devops_router.settings, "aws_secret_access_key", "test-secret-key")
+    monkeypatch.setattr(settings, "ai_provider", "gemini")
+    monkeypatch.setattr(settings, "gemini_api_key", "")
+    monkeypatch.setattr(settings, "aws_access_key_id", "test-access-key")
+    monkeypatch.setattr(settings, "aws_secret_access_key", "test-secret-key")
 
     resp = await client.post(
         "/api/devops/command",
@@ -95,3 +98,19 @@ async def test_devops_endpoint_returns_503_without_gemini_key(client, monkeypatc
 
     assert resp.status_code == 503
     assert "GEMINI_API_KEY" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_devops_endpoint_returns_503_when_ollama_unreachable(client, monkeypatch):
+    async def fake_run_command(message: str, confirm_destructive: bool = False):
+        raise AIConfigurationError("Cannot reach Ollama at http://localhost:11434.")
+
+    monkeypatch.setattr(devops_router, "run_command", fake_run_command)
+
+    resp = await client.post(
+        "/api/devops/command",
+        json={"message": "List instances", "confirm_destructive": False},
+    )
+
+    assert resp.status_code == 503
+    assert "Ollama" in resp.json()["detail"]

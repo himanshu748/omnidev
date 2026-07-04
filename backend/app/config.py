@@ -17,9 +17,20 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    # ── Google Gemini (free tier) ──────────────────────────
+    # ── AI provider ─────────────────────────────────────────
+    # "auto" uses Gemini when GEMINI_API_KEY is set, otherwise local Ollama.
+    ai_provider: str = "auto"  # auto | gemini | ollama
+
+    # ── Google Gemini (cloud, free tier) ────────────────────
     gemini_api_key: str = ""
     gemini_model: str = "gemini-2.0-flash"
+
+    # ── Ollama (local, fully offline) ───────────────────────
+    # gemma4:e4b handles text, structured output, and vision in one model.
+    # Use gemma4:e2b on lower-memory machines.
+    ollama_base_url: str = "http://localhost:11434"
+    ollama_model: str = "gemma4:e4b"
+    ollama_vision_model: str = "gemma4:e4b"
 
     # ── AWS ─────────────────────────────────────────────────
     aws_access_key_id: str = ""

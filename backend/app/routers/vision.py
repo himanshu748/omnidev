@@ -1,10 +1,11 @@
-"""Vision Lab router — image analysis & OCR via Gemini."""
+"""Vision Lab router — image analysis & OCR via the active AI provider."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.schemas.vision import VisionMode, VisionResponse
+from app.services.ai_service import AIConfigurationError
 from app.services.vision_service import analyze_image
 from app.routers.errors import internal_error, service_unavailable
 
@@ -46,9 +47,9 @@ async def vision_analyze(
             custom_prompt=prompt if mode == VisionMode.custom else None,
         )
         return VisionResponse(**result)
+    except AIConfigurationError as exc:
+        raise service_unavailable(str(exc)) from exc
     except ValueError as exc:
-        if "GEMINI_API_KEY" in str(exc):
-            raise service_unavailable(str(exc)) from exc
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise internal_error("Vision analysis failed.") from exc

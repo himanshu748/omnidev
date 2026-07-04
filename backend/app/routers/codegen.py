@@ -1,10 +1,11 @@
-"""Code Gen router — generate safe project files with Gemini and optional Context7 docs."""
+"""Code Gen router — generate safe project files with the active AI provider and optional Context7 docs."""
 
 from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
 from app.schemas.codegen import CodeGenRequest, CodeGenResponse, FileEntry
+from app.services.ai_service import AIConfigurationError
 from app.services.codegen_service import generate_project
 
 router = APIRouter()
@@ -23,8 +24,9 @@ async def codegen_generate(body: CodeGenRequest):
             files=[FileEntry(path=f["path"], content=f["content"]) for f in result["files"]],
             instructions=result.get("instructions", ""),
         )
+    except AIConfigurationError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
     except ValueError as exc:
-        status_code = 503 if "GEMINI_API_KEY" in str(exc) else 400
-        raise HTTPException(status_code=status_code, detail=str(exc))
+        raise HTTPException(status_code=400, detail=str(exc))
     except Exception:
         raise HTTPException(status_code=500, detail="Code generation failed")

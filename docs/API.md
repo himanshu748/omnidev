@@ -223,7 +223,7 @@ DELETE /api/storage/files?bucket={bucket}&key={key}
 
 ## 🔐 Authentication
 
-OmniDev keeps external service keys in backend environment variables. Gemini, AWS, and Context7 credentials are configured server-side and are never exposed to the frontend.
+OmniDev keeps external service keys in backend environment variables. Gemini, AWS, and Context7 credentials are configured server-side and are never exposed to the frontend. In Ollama mode no AI credential is needed at all — requests go to the local Ollama server.
 
 ## ⚠️ Error Handling
 
