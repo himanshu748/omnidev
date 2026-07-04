@@ -6599,3 +6599,78 @@ input[type=range]::-webkit-slider-runnable-track {
     transform: rotate(360deg);
   }
 }
+
+/* ── Ask OmniDev (streaming chat) ── */
+.commandSearch {
+  cursor: text;
+}
+.askSpin {
+  animation: modelSpin 0.9s linear infinite;
+  color: var(--cockpit-blue);
+}
+.askPanel {
+  border: 1px solid var(--cockpit-border);
+  background: var(--cockpit-surface);
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+}
+.askPanelHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.askPanelQ {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cockpit-blue);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.askPanelClose {
+  flex: none;
+  border: none;
+  background: transparent;
+  color: var(--cockpit-faint);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 6px;
+}
+.askPanelClose:hover {
+  color: var(--cockpit-text);
+  background: var(--cockpit-surface-soft);
+}
+.askPanelBody {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--cockpit-text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.askPanelError {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--cockpit-red);
+}
+.askCaret {
+  display: inline-block;
+  width: 7px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--cockpit-blue);
+  animation: askBlink 1s steps(2, start) infinite;
+}
+@keyframes askBlink {
+  to {
+    opacity: 0;
+  }
+}

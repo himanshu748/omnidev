@@ -24,6 +24,7 @@ import {
   Globe2,
   HardDrive,
   LayoutDashboard,
+  Loader2,
   LockKeyhole,
   Play,
   Search,
@@ -245,6 +246,61 @@ export default function HomePage() {
   const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [devPanelOpen, setDevPanelOpen] = useState(false);
+  const [answer, setAnswer] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [askError, setAskError] = useState<string | null>(null);
+  const [askedQuestion, setAskedQuestion] = useState("");
+
+  async function askOmniDev(message: string) {
+    const question = message.trim();
+    if (!question || asking) return;
+    setAsking(true);
+    setAnswer("");
+    setAskError(null);
+    setAskedQuestion(question);
+    try {
+      const res = await fetch(`${API_BASE}/api/chat/stream`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: question }),
+      });
+      if (!res.ok || !res.body) {
+        let detail = `HTTP ${res.status}`;
+        try {
+          detail = (await res.json())?.detail ?? detail;
+        } catch {
+          /* keep default */
+        }
+        setAskError(detail);
+        return;
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          let ev: Record<string, unknown>;
+          try {
+            ev = JSON.parse(line);
+          } catch {
+            continue;
+          }
+          if (typeof ev.delta === "string") setAnswer((prev) => prev + ev.delta);
+          else if (ev.error) setAskError(String(ev.error));
+        }
+      }
+    } catch (err) {
+      setAskError(String(err));
+    } finally {
+      setAsking(false);
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -413,16 +469,22 @@ export default function HomePage() {
 
       <section className="cockpitStage">
         <header className="cockpitTopbar">
-          <label className="commandSearch">
+          <form
+            className="commandSearch"
+            onSubmit={(event) => {
+              event.preventDefault();
+              askOmniDev(command);
+            }}
+          >
             <Search size={18} aria-hidden="true" />
             <input
               value={command}
               onChange={(event) => setCommand(event.target.value)}
-              placeholder='Ask OmniDev anything... e.g. "Create an S3 bucket for prod assets"'
+              placeholder='Ask OmniDev anything... e.g. "How do I make a boto3 client?"'
               aria-label="Ask OmniDev anything"
             />
-            <kbd>⌘ K</kbd>
-          </label>
+            {asking ? <Loader2 size={15} className="askSpin" /> : <kbd>⏎</kbd>}
+          </form>
 
           <div className="modeSwitch" aria-label="Assistant mode">
             <button
@@ -488,6 +550,36 @@ export default function HomePage() {
             </section>
 
             <ModelManager />
+
+            {(asking || answer || askError) && (
+              <section className="askPanel" aria-label="OmniDev answer" aria-live="polite">
+                <div className="askPanelHead">
+                  <span className="askPanelQ">
+                    <Sparkles size={14} aria-hidden="true" /> {askedQuestion}
+                  </span>
+                  <button
+                    type="button"
+                    className="askPanelClose"
+                    onClick={() => {
+                      setAnswer("");
+                      setAskError(null);
+                      setAskedQuestion("");
+                    }}
+                    aria-label="Dismiss answer"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                {askError ? (
+                  <p className="askPanelError">{askError}</p>
+                ) : (
+                  <div className="askPanelBody">
+                    {answer}
+                    {asking && <span className="askCaret" aria-hidden="true" />}
+                  </div>
+                )}
+              </section>
+            )}
 
             <section className="cockpitIntro">
               <div>

@@ -15,7 +15,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
-from typing import Any
+from typing import Any, AsyncIterator
 
 import httpx
 from google import genai
@@ -220,6 +220,87 @@ async def generate_text(
         config=config,
     )
     return response.text or ""
+
+
+# ── Streaming text generation ───────────────────────────────
+async def stream_text(
+    prompt: str,
+    *,
+    system: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int = 2048,
+) -> AsyncIterator[str]:
+    """
+    Yield text deltas as the active provider generates them.
+
+    Ollama streams via /api/chat (stream=True); Gemini streams via the SDK's
+    generate_content_stream. Callers wrap this in an SSE/NDJSON response.
+    """
+    if get_provider() == "ollama":
+        payload = {
+            "model": settings.ollama_model,
+            "messages": _ollama_messages(system, prompt),
+            "stream": True,
+            "options": {"num_predict": max_tokens},
+        }
+        if temperature is not None:
+            payload["options"]["temperature"] = temperature
+        url = settings.ollama_base_url.rstrip("/") + "/api/chat"
+        try:
+            async with _get_ollama_client().stream("POST", url, json=payload) as resp:
+                if resp.status_code == 404:
+                    raise AIConfigurationError(
+                        f"Ollama model {settings.ollama_model!r} is not available locally. "
+                        f"Run 'ollama pull {settings.ollama_model}'."
+                    )
+                if resp.status_code >= 400:
+                    body = (await resp.aread()).decode("utf-8", "ignore")[:200]
+                    raise AIResponseError(f"Ollama request failed ({resp.status_code}): {body}")
+                async for line in resp.aiter_lines():
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        chunk = json.loads(line)
+                    except json.JSONDecodeError:
+                        continue
+                    delta = (chunk.get("message") or {}).get("content", "")
+                    if delta:
+                        yield delta
+                    if chunk.get("done"):
+                        break
+        except httpx.HTTPError as exc:
+            raise AIConfigurationError(
+                f"Cannot reach Ollama at {settings.ollama_base_url}. "
+                + OLLAMA_INSTALL_HINT.format(model=settings.ollama_model)
+            ) from exc
+        return
+
+    # Gemini: the SDK stream is a sync generator; pull it off-thread chunk by chunk.
+    config = types.GenerateContentConfig(
+        max_output_tokens=max_tokens,
+        system_instruction=system,
+    )
+    if temperature is not None:
+        config.temperature = temperature
+
+    def _open_stream():
+        return get_client().models.generate_content_stream(
+            model=settings.gemini_model,
+            contents=prompt,
+            config=config,
+        )
+
+    stream = await asyncio.to_thread(_open_stream)
+    iterator = iter(stream)
+    sentinel = object()
+    while True:
+        chunk = await asyncio.to_thread(next, iterator, sentinel)
+        if chunk is sentinel:
+            break
+        text = getattr(chunk, "text", "") or ""
+        if text:
+            yield text
 
 
 # ── Structured generation ───────────────────────────────────

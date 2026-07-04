@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 from app.config import settings
-from app.routers import codegen, devops, location, models, preview, scraper, storage, vision
+from app.routers import chat, codegen, devops, location, models, preview, scraper, storage, vision
 
 START_TIME = time.time()
 COVERED: set[str] = set()
@@ -33,6 +33,7 @@ EXPECTED_ENDPOINTS = [
     "POST /api/preview/check",
     "GET /api/models",
     "POST /api/models/pull",
+    "POST /api/chat/stream",
 ]
 
 
@@ -57,6 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(codegen.router, prefix="/api/codegen", tags=["Code Gen"])
     app.include_router(preview.router, prefix="/api/preview", tags=["Site Preview"])
     app.include_router(models.router, prefix="/api/models", tags=["Models"])
+    app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
     app.state.browser = object()
 
     @app.get("/health", tags=["System"])
