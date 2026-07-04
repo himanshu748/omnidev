@@ -2,7 +2,13 @@ import pytest
 
 from app.routers import codegen as codegen_router
 from app.services.ai_service import AIConfigurationError
-from app.services.codegen_service import MAX_FILES, _safe_instructions, _sanitize_file_entries
+from app.services.codegen_service import (
+    MAX_FILES,
+    MAX_PROMPT_CHARS,
+    _safe_instructions,
+    _sanitize_file_entries,
+    generate_project,
+)
 
 
 @pytest.mark.asyncio
@@ -52,6 +58,23 @@ async def test_codegen_validation_error_returns_400(client, monkeypatch):
 
     assert resp.status_code == 400
     assert "Unsupported framework" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_codegen_rejects_too_long_prompt():
+    with pytest.raises(ValueError, match="too long"):
+        await generate_project(prompt="x" * (MAX_PROMPT_CHARS + 1), framework="python")
+
+
+@pytest.mark.asyncio
+async def test_codegen_too_long_prompt_rejected_over_http(client):
+    # Schema max_length (2000) rejects first; the service cap is defence in depth.
+    resp = await client.post(
+        "/api/codegen/generate",
+        json={"prompt": "x" * (MAX_PROMPT_CHARS + 1), "framework": "python"},
+    )
+
+    assert resp.status_code in (400, 422)
 
 
 @pytest.mark.asyncio

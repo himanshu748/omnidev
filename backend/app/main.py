@@ -16,6 +16,7 @@ from playwright.async_api import async_playwright, Playwright, Browser
 
 from app.config import settings
 from app.routers import codegen, devops, location, preview, scraper, storage, vision
+from app.services.ai_service import close_ai_clients
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +63,10 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             await pw.stop()
         except Exception:
             pass
+    try:
+        await close_ai_clients()
+    except Exception:
+        pass
 
 
 # ── App ─────────────────────────────────────────────────────

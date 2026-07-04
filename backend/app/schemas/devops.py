@@ -30,3 +30,4 @@ class DevOpsCommandResponse(BaseModel):
     raw_result: Any = None
     summary: str = ""
     needs_confirmation: bool = False
+    plan: dict[str, Any] | None = None

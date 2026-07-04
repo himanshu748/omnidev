@@ -37,6 +37,12 @@ class Settings(BaseSettings):
     aws_secret_access_key: str = ""
     aws_default_region: str = "us-east-1"
 
+    # ── DevOps safety ───────────────────────────────────────
+    # Read-only mode refuses all destructive AWS actions.
+    devops_read_only: bool = False
+    # When set, executed DevOps actions are appended as JSON lines.
+    audit_log_path: str = ""
+
     # ── IPInfo ──────────────────────────────────────────────
     ipinfo_token: str = ""
 
@@ -58,6 +64,9 @@ class Settings(BaseSettings):
             "http://127.0.0.1:3000",
             "http://localhost:3001",
             "http://127.0.0.1:3001",
+            # Native macOS app runs the frontend sidecar on 3010.
+            "http://localhost:3010",
+            "http://127.0.0.1:3010",
         ]
         # Keep configured values first, then add missing local dev origins.
         return list(dict.fromkeys([*configured, *local_defaults]))

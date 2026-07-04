@@ -112,6 +112,27 @@ def _to_gemini_schema(schema: dict[str, Any]) -> types.Schema:
 
 
 # ── Ollama client ───────────────────────────────────────────
+_ollama_client: httpx.AsyncClient | None = None
+
+
+def _get_ollama_client() -> httpx.AsyncClient:
+    """Lazily create a shared AsyncClient reused across requests."""
+    global _ollama_client
+    if _ollama_client is None or _ollama_client.is_closed:
+        _ollama_client = httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=10.0))
+    return _ollama_client
+
+
+async def close_ai_clients() -> None:
+    """Close shared HTTP clients (called from the app lifespan on shutdown)."""
+    global _ollama_client
+    if _ollama_client is not None:
+        try:
+            await _ollama_client.aclose()
+        finally:
+            _ollama_client = None
+
+
 async def _ollama_chat(
     messages: list[dict[str, Any]],
     *,
@@ -134,8 +155,7 @@ async def _ollama_chat(
 
     url = settings.ollama_base_url.rstrip("/") + "/api/chat"
     try:
-        async with httpx.AsyncClient(timeout=httpx.Timeout(600.0, connect=10.0)) as client:
-            resp = await client.post(url, json=payload)
+        resp = await _get_ollama_client().post(url, json=payload)
     except httpx.HTTPError as exc:
         raise AIConfigurationError(
             f"Cannot reach Ollama at {settings.ollama_base_url}. "

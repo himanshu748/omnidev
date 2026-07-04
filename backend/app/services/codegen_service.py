@@ -28,6 +28,7 @@ FRAMEWORK_CONTEXT7: dict[str, list[tuple[str, str]]] = {
 }
 
 SUPPORTED_FRAMEWORKS = set(FRAMEWORK_CONTEXT7)
+MAX_PROMPT_CHARS = 4000
 MAX_FILES = 40
 MAX_FILE_BYTES = 200_000
 MAX_TOTAL_BYTES = 1_000_000
@@ -242,6 +243,10 @@ async def generate_project(prompt: str, framework: str) -> dict[str, Any]:
     Generate a full project (multiple files) for the given prompt and framework.
     Uses Context7 docs when CONTEXT7_API_KEY is set.
     """
+    if len(prompt) > MAX_PROMPT_CHARS:
+        raise ValueError(
+            f"Prompt is too long ({len(prompt)} chars). Maximum allowed is {MAX_PROMPT_CHARS} characters."
+        )
     framework_key = _normalize_framework(framework)
     docs_block = await _fetch_docs_for_framework(framework_key, prompt)
     system = """You are an expert full-stack developer. Generate a complete, runnable project based on the user's request and the framework they chose.

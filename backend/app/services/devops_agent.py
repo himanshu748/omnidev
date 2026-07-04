@@ -12,9 +12,13 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
+from datetime import datetime, timezone
 from typing import Any
 
 import boto3
+
+logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.schemas.devops import ParsedIntent
@@ -46,6 +50,60 @@ DESTRUCTIVE_ACTIONS = {
     "launch_ec2",
     "create_s3_bucket",
 }
+
+# ── Plan mapping: action -> (aws service, boto3 operation) ──
+ACTION_PLAN_MAP: dict[str, tuple[str, str]] = {
+    "list_ec2": ("ec2", "describe_instances"),
+    "describe_ec2_instance": ("ec2", "describe_instances"),
+    "launch_ec2": ("ec2", "run_instances"),
+    "stop_ec2": ("ec2", "stop_instances"),
+    "terminate_ec2": ("ec2", "terminate_instances"),
+    "reboot_ec2": ("ec2", "reboot_instances"),
+    "list_s3_buckets": ("s3", "list_buckets"),
+    "list_s3_objects": ("s3", "list_objects_v2"),
+    "create_s3_bucket": ("s3", "create_bucket"),
+    "describe_security_groups": ("ec2", "describe_security_groups"),
+    "list_vpcs": ("ec2", "describe_vpcs"),
+    "list_iam_users": ("iam", "list_users"),
+    "describe_rds_instances": ("rds", "describe_db_instances"),
+    "list_cloudwatch_alarms": ("cloudwatch", "describe_alarms"),
+    "list_lambda_functions": ("lambda", "list_functions"),
+}
+
+
+def build_plan(intent: ParsedIntent) -> dict[str, Any] | None:
+    """Preview of the boto3 call an intent would trigger, before execution."""
+    mapping = ACTION_PLAN_MAP.get(intent.action)
+    if mapping is None:
+        return None
+    service, operation = mapping
+    return {
+        "service": service,
+        "operation": operation,
+        "params": intent.params,
+        "destructive": intent.action in DESTRUCTIVE_ACTIONS or intent.is_destructive,
+    }
+
+
+# ── Audit log ───────────────────────────────────────────────
+def _audit_log(action: str, params: dict[str, Any], destructive: bool, ok: bool, error: str | None) -> None:
+    """Append one JSON line per executed action. Never breaks the request."""
+    path = settings.audit_log_path
+    if not path:
+        return
+    entry = {
+        "ts": datetime.now(timezone.utc).isoformat(),
+        "action": action,
+        "params": params,
+        "destructive": destructive,
+        "ok": ok,
+        "error": error,
+    }
+    try:
+        with open(path, "a", encoding="utf-8") as fh:
+            fh.write(json.dumps(entry, default=str) + "\n")
+    except Exception as exc:
+        logger.warning("Failed to write DevOps audit log to %s: %s", path, exc)
 
 SYSTEM_PROMPT = f"""\
 You are an AWS DevOps assistant. The user gives you a natural-language command
@@ -484,6 +542,7 @@ async def summarise(action: str, raw_result: Any) -> str:
 # ── Public orchestrator ─────────────────────────────────────
 async def run_command(message: str, confirm_destructive: bool = False) -> dict:
     intent = await parse_intent(message)
+    plan = build_plan(intent)
 
     if intent.action == "unsupported":
         return {
@@ -495,9 +554,23 @@ async def run_command(message: str, confirm_destructive: bool = False) -> dict:
                 "Supported services: EC2, S3, VPC, IAM, RDS, CloudWatch, Lambda."
             ),
             "needs_confirmation": False,
+            "plan": None,
         }
 
     is_destructive = intent.action in DESTRUCTIVE_ACTIONS or intent.is_destructive
+
+    if is_destructive and settings.devops_read_only:
+        return {
+            "action": intent.action,
+            "params": intent.params,
+            "raw_result": None,
+            "summary": (
+                "OmniDev is in read-only mode (DEVOPS_READ_ONLY=1). "
+                f"Destructive action ({intent.action}) was not executed."
+            ),
+            "needs_confirmation": False,
+            "plan": plan,
+        }
 
     if is_destructive and not confirm_destructive:
         return {
@@ -507,21 +580,30 @@ async def run_command(message: str, confirm_destructive: bool = False) -> dict:
             "summary": f"This is a destructive action ({intent.action}). "
             "Please enable 'Confirm destructive actions' and try again.",
             "needs_confirmation": True,
+            "plan": plan,
         }
 
     try:
         raw_result = await _dispatch(intent)
     except Exception as exc:
         error_msg = str(exc)
+        _audit_log(intent.action, intent.params, is_destructive, ok=False, error=error_msg)
         return {
             "action": intent.action,
             "params": intent.params,
             "raw_result": {"error": error_msg},
             "summary": f"AWS call failed: {error_msg}",
             "needs_confirmation": False,
+            "plan": plan,
         }
 
-    summary = await summarise(intent.action, raw_result)
+    _audit_log(intent.action, intent.params, is_destructive, ok=True, error=None)
+
+    try:
+        summary = await summarise(intent.action, raw_result)
+    except Exception as exc:
+        logger.warning("Summarise failed for %s: %s", intent.action, exc)
+        summary = f"Action {intent.action} completed. See raw result."
 
     return {
         "action": intent.action,
@@ -529,4 +611,5 @@ async def run_command(message: str, confirm_destructive: bool = False) -> dict:
         "raw_result": raw_result,
         "summary": summary,
         "needs_confirmation": False,
+        "plan": plan,
     }

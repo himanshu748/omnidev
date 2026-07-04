@@ -18,8 +18,16 @@ from app.services.ai_service import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _reset_shared_ollama_client():
+    """Drop the shared client so each test builds one from its own transport."""
+    ai_service._ollama_client = None
+    yield
+    ai_service._ollama_client = None
+
+
 def _install_mock_ollama(monkeypatch, handler):
-    """Route ai_service's httpx.AsyncClient through a mock transport."""
+    """Route ai_service's shared httpx.AsyncClient through a mock transport."""
     transport = httpx.MockTransport(handler)
     real_client = httpx.AsyncClient
 
@@ -162,6 +170,25 @@ async def test_ollama_vision_uses_vision_model(monkeypatch):
     assert result["result"] == "a cat"
     assert result["model"] == settings.ollama_vision_model
     assert result["tokens_used"] == 12
+
+
+# ── Shared client lifecycle ─────────────────────────────────
+@pytest.mark.asyncio
+async def test_ollama_client_is_reused_and_closed(monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"message": {"role": "assistant", "content": "ok"}})
+
+    _install_mock_ollama(monkeypatch, handler)
+    await generate_text("one")
+    first = ai_service._ollama_client
+    assert first is not None
+    await generate_text("two")
+    assert ai_service._ollama_client is first
+    await ai_service.close_ai_clients()
+    assert ai_service._ollama_client is None
+    assert first.is_closed
 
 
 # ── Gemini schema conversion ────────────────────────────────
