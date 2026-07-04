@@ -14,6 +14,8 @@ from typing import Optional
 from playwright.async_api import Browser, BrowserContext, Page
 from playwright_stealth import Stealth
 
+from app.services.url_guard import validate_public_url
+
 _stealth = Stealth()
 
 DESKTOP_VIEWPORT = {"width": 1440, "height": 900}
@@ -33,6 +35,8 @@ async def capture_preview(
     Load a URL, capture screenshot(s) at desktop and/or mobile viewport,
     and return base64 image(s) plus title, status_code, elapsed_ms.
     """
+    # SSRF guard: reject private/reserved/metadata targets before navigating.
+    url = validate_public_url(url)
     start = time.time()
     ctx_opts: dict = {
         "viewport": DESKTOP_VIEWPORT,

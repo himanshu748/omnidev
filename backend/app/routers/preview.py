@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.schemas.preview import PreviewRequest, PreviewResponse
 from app.services.preview_service import capture_preview
+from app.services.url_guard import BlockedURLError
 from app.routers.errors import internal_error
 
 router = APIRouter()
@@ -37,5 +38,7 @@ async def preview_check(body: PreviewRequest, request: Request):
             wait_seconds=body.wait_seconds,
         )
         return PreviewResponse(**result)
+    except BlockedURLError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise internal_error("Website preview failed.") from exc

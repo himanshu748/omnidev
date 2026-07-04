@@ -22,6 +22,7 @@ from playwright.async_api import Browser, BrowserContext, Page
 from playwright_stealth import Stealth
 
 from app.schemas.scraper import ExtractMode, LinkItem, PageMetadata
+from app.services.url_guard import validate_proxy, validate_public_url
 
 _stealth = Stealth()
 
@@ -47,6 +48,9 @@ async def scrape(
     Open a page, optionally apply stealth, extract content, and close.
     Returns dict matching ScrapeResponse fields.
     """
+    # SSRF guard: reject private/reserved/metadata targets before navigating.
+    url = validate_public_url(url)
+    proxy = validate_proxy(proxy)
     start_time = time.time()
 
     # Build context options

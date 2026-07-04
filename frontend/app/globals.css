@@ -6394,3 +6394,208 @@ input[type=range]::-webkit-slider-runnable-track {
   color: var(--text-muted);
   font-size: 12px;
 }
+
+/* ── Model manager (cockpit) ── */
+.modelManager {
+  border: 1px solid var(--cockpit-border);
+  background: var(--cockpit-surface);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.modelManagerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.modelManagerHead h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--cockpit-text);
+}
+.modelRefresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--cockpit-border);
+  border-radius: 8px;
+  background: var(--cockpit-surface-soft);
+  color: var(--cockpit-muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+.modelRefresh:hover {
+  border-color: var(--cockpit-border-strong);
+  color: var(--cockpit-text);
+}
+.modelHint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.modelHint code {
+  font-family: var(--font-mono), monospace;
+  background: var(--cockpit-surface-soft);
+  border: 1px solid var(--cockpit-border);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 12px;
+}
+.modelHintWarn {
+  color: var(--cockpit-amber);
+}
+.modelHintOk {
+  color: var(--cockpit-green);
+}
+.modelPull {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--cockpit-border);
+  border-radius: 10px;
+  background: var(--cockpit-surface-soft);
+}
+.modelPull.failed {
+  border-color: var(--cockpit-red);
+}
+.modelPullTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  color: var(--cockpit-text);
+}
+.modelPullTop span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-variant-numeric: tabular-nums;
+}
+.modelPullTrack {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--cockpit-border);
+  overflow: hidden;
+}
+.modelPullFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cockpit-blue);
+  transition: width 0.3s ease;
+}
+.modelList {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.modelRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px;
+  border: 1px solid var(--cockpit-border);
+  border-radius: 10px;
+  background: var(--cockpit-surface-soft);
+}
+.modelRowInfo {
+  min-width: 0;
+}
+.modelRowTitle {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--cockpit-text);
+}
+.modelRowTitle code {
+  font-family: var(--font-mono), monospace;
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--cockpit-muted);
+  background: var(--cockpit-surface);
+  border: 1px solid var(--cockpit-border);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+.modelTag {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--cockpit-blue);
+  background: rgba(37, 99, 235, 0.1);
+  border-radius: 5px;
+  padding: 2px 6px;
+}
+.modelRowInfo p {
+  margin: 5px 0 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--cockpit-muted);
+}
+.modelRoles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.modelRoles span {
+  font-size: 11px;
+  color: var(--cockpit-faint);
+  border: 1px solid var(--cockpit-border);
+  border-radius: 5px;
+  padding: 1px 7px;
+}
+.modelInstalled {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  font-size: 12.5px;
+  color: var(--cockpit-green);
+  font-weight: 600;
+}
+.modelPullBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--cockpit-blue);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.modelPullBtn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.modelPullBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.modelManager .spin {
+  animation: modelSpin 0.9s linear infinite;
+}
+@keyframes modelSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}

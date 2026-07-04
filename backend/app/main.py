@@ -73,7 +73,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="OmniDev",
     description="All-in-One AI Developer Platform",
-    version="0.1.0",
+    version="0.3.0",
     lifespan=lifespan,
 )
 

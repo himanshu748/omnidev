@@ -38,6 +38,7 @@ import {
   X,
 } from "lucide-react";
 import { API_BASE } from "@/lib/api";
+import ModelManager from "@/app/components/ModelManager";
 
 type SetupStep = {
   id: number;
@@ -485,6 +486,8 @@ export default function HomePage() {
                 </button>
               </span>
             </section>
+
+            <ModelManager />
 
             <section className="cockpitIntro">
               <div>

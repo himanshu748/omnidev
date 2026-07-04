@@ -39,8 +39,8 @@ EXPECTED_ENDPOINTS = [
 def create_app() -> FastAPI:
     app = FastAPI(
         title="OmniDev",
-        description="All-in-One AI Developer Platform",
-        version="0.1.0",
+        description="Local-first AI developer cockpit",
+        version="0.3.0",
     )
     app.add_middleware(
         CORSMiddleware,

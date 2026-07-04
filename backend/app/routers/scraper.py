@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, Request
 
 from app.schemas.scraper import ScrapeRequest, ScrapeResponse
 from app.services.scraper_service import scrape
+from app.services.url_guard import BlockedURLError
 from app.routers.errors import internal_error
 
 router = APIRouter()
@@ -50,5 +51,7 @@ async def scrape_url(body: ScrapeRequest, request: Request):
             block_resources=body.block_resources,
         )
         return ScrapeResponse(**result)
+    except BlockedURLError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise internal_error("Web scraping failed.") from exc

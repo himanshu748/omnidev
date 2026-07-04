@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### ✨ Added
+- **Local model manager** — `GET /api/models` reports provider status (which default text/vision models are installed) plus a curated recommended list, and `POST /api/models/pull` streams `ollama pull` progress as NDJSON. The cockpit surfaces a first-run banner and one-click pull so a new user reaches a working offline setup without a terminal.
+- **SSRF guard** — the Web Scraper and Site Preview now validate every target URL and refuse loopback, private, link-local, reserved, and cloud-metadata addresses (`169.254.169.254`, `localhost`, `10/8`, …); the scraper proxy parameter is validated too.
+- Project trust & contributor infrastructure: GitHub Actions CI (backend pytest, frontend typecheck/build, macOS swift build), `SECURITY.md`, issue/PR templates, a `Makefile` one-command bootstrap, and `ROADMAP.md`.
+
+### 🔧 Fixed
+- **License mismatch** — `LICENSE` now matches the MIT declared in the README badge/footer (was Apache 2.0 text).
+- **Version drift** — backend, frontend, and tests now report `0.3.0` (was hardcoded `0.1.0`).
+- `backend/README.md` updated to describe the dual-provider (Ollama + Gemini) layer instead of Gemini-only.
+
 ## [0.3.0] — 2026-07-03
 
 ### ✨ Added
