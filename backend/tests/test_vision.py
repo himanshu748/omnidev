@@ -13,6 +13,17 @@ async def test_vision_rejects_bad_type(client):
 
 
 @pytest.mark.asyncio
+async def test_vision_rejects_oversized_image(client):
+    from app.routers.vision import MAX_IMAGE_BYTES
+
+    big = b"\x89PNG" + b"0" * (MAX_IMAGE_BYTES + 1)
+    files = {"image": ("big.png", big, "image/png")}
+    data = {"mode": "analyze", "prompt": ""}
+    resp = await client.post("/api/vision/analyze", files=files, data=data)
+    assert resp.status_code == 413
+
+
+@pytest.mark.asyncio
 async def test_vision_success(client, monkeypatch, coverage_tracker):
     async def fake_analyze(
         image_bytes: bytes,

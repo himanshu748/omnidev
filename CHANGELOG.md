@@ -7,8 +7,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### ✨ Added
+- **Streaming chat** — `POST /api/chat/stream` streams the answer token by token (Ollama or Gemini) as NDJSON, and the cockpit's "Ask OmniDev anything" bar renders it live with a blinking caret. Watch the model think instead of waiting for a full response.
 - **Local model manager** — `GET /api/models` reports provider status (which default text/vision models are installed) plus a curated recommended list, and `POST /api/models/pull` streams `ollama pull` progress as NDJSON. The cockpit surfaces a first-run banner and one-click pull so a new user reaches a working offline setup without a terminal.
-- **SSRF guard** — the Web Scraper and Site Preview now validate every target URL and refuse loopback, private, link-local, reserved, and cloud-metadata addresses (`169.254.169.254`, `localhost`, `10/8`, …); the scraper proxy parameter is validated too.
+- **SSRF guard** — the Web Scraper and Site Preview now validate every target URL and refuse loopback, private, link-local, reserved, and cloud-metadata addresses (`169.254.169.254`, `localhost`, `10/8`, …); the scraper proxy parameter is validated too. Injected page JavaScript may no longer use network primitives (`fetch`/`XMLHttpRequest`/`WebSocket`/…) — closing an SSRF bypass through the page context — and the Vision endpoint caps uploads at 10 MB.
 - Project trust & contributor infrastructure: GitHub Actions CI (backend pytest, frontend typecheck/build, macOS swift build), `SECURITY.md`, issue/PR templates, a `Makefile` one-command bootstrap, and `ROADMAP.md`.
 
 ### 🔧 Fixed

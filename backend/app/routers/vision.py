@@ -12,6 +12,7 @@ from app.routers.errors import internal_error, service_unavailable
 router = APIRouter()
 
 ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/gif"}
+MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB
 
 
 @router.post("/analyze", response_model=VisionResponse)
@@ -38,6 +39,11 @@ async def vision_analyze(
     image_bytes = await image.read()
     if not image_bytes:
         raise HTTPException(status_code=400, detail="Empty image file")
+    if len(image_bytes) > MAX_IMAGE_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Image exceeds the {MAX_IMAGE_BYTES // (1024 * 1024)} MB limit.",
+        )
 
     try:
         result = await analyze_image(

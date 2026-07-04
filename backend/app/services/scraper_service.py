@@ -22,9 +22,30 @@ from playwright.async_api import Browser, BrowserContext, Page
 from playwright_stealth import Stealth
 
 from app.schemas.scraper import ExtractMode, LinkItem, PageMetadata
-from app.services.url_guard import validate_proxy, validate_public_url
+from app.services.url_guard import BlockedURLError, validate_proxy, validate_public_url
 
 _stealth = Stealth()
+
+# Injected page JS runs inside a headless browser on the SERVER's network, so a
+# fetch to an internal host would bypass the URL guard. Reject the network
+# primitives that could exfiltrate data or reach internal services.
+import re as _re
+
+_DANGEROUS_JS = _re.compile(
+    r"\b(?:fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|importScripts)\b|"
+    r"\bimport\s*\(",
+    _re.IGNORECASE,
+)
+
+
+def _reject_dangerous_js(code: str) -> None:
+    if len(code) > 20_000:
+        raise BlockedURLError("Injected JavaScript is too large.")
+    if _DANGEROUS_JS.search(code):
+        raise BlockedURLError(
+            "Injected JavaScript may not use network primitives "
+            "(fetch, XMLHttpRequest, sendBeacon, WebSocket, EventSource, dynamic import)."
+        )
 
 
 async def scrape(
@@ -139,9 +160,16 @@ async def scrape(
             pass  # Page is still usable even without full DOM ready
 
         if wait_for:
-            await page.wait_for_selector(wait_for, timeout=timeout_ms)
+            # A bad or slow selector should not hang forever or 500 the request.
+            if len(wait_for) > 1000:
+                raise BlockedURLError("wait_for selector is too long.")
+            try:
+                await page.wait_for_selector(wait_for, timeout=min(timeout_ms, 15000))
+            except Exception:
+                pass  # selector never matched — continue with what loaded
 
         if javascript:
+            _reject_dangerous_js(javascript)
             await page.evaluate(javascript)
 
         if wait_seconds > 0:
