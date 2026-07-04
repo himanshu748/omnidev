@@ -6076,3 +6076,321 @@ input[type=range]::-webkit-slider-runnable-track {
   overflow: hidden;
   max-height: 65vh;
 }
+
+/* ── Cockpit dev tools ── */
+
+/* Backend status strip (light cockpit theme) */
+.backendStrip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.backendChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border: 1px solid var(--cockpit-border);
+  border-radius: 999px;
+  background: var(--cockpit-surface);
+  color: var(--cockpit-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.backendChip.status i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--cockpit-faint);
+  flex: none;
+}
+
+.backendChip.status.checking i {
+  background: var(--cockpit-amber);
+}
+
+.backendChip.status.online {
+  color: var(--cockpit-green);
+  border-color: rgba(22, 163, 74, 0.35);
+}
+
+.backendChip.status.online i {
+  background: var(--cockpit-green);
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.15);
+}
+
+.backendChip.status.offline {
+  color: var(--cockpit-red);
+  border-color: rgba(220, 38, 38, 0.35);
+}
+
+.backendChip.status.offline i {
+  background: var(--cockpit-red);
+}
+
+.backendChip.apiBase code {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  color: var(--cockpit-text);
+}
+
+.backendChip.apiBase button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  margin: -3px -4px -3px 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--cockpit-muted);
+}
+
+.backendChip.apiBase button:hover {
+  background: var(--cockpit-bg);
+  color: var(--cockpit-blue);
+}
+
+/* For-developers panel (light cockpit theme) */
+.devToolsPanel {
+  border: 1px solid var(--cockpit-border);
+  border-radius: 14px;
+  background: var(--cockpit-surface);
+  overflow: hidden;
+}
+
+.devToolsToggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 16px;
+  border: none;
+  background: transparent;
+  color: var(--cockpit-text);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.devToolsToggle:hover {
+  background: var(--cockpit-surface-soft);
+}
+
+.devToolsToggle small {
+  margin-left: auto;
+  color: var(--cockpit-faint);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.devToolsChevron {
+  flex: none;
+  color: var(--cockpit-muted);
+  transition: transform 0.16s ease;
+}
+
+.devToolsChevron.open {
+  transform: rotate(180deg);
+}
+
+.devRouteList {
+  border-top: 1px solid var(--cockpit-border);
+  padding: 6px 8px 8px;
+  display: flex;
+  flex-direction: column;
+}
+
+.devRoute {
+  display: grid;
+  grid-template-columns: 52px minmax(140px, auto) 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 8px;
+  border-radius: 8px;
+}
+
+.devRoute:hover {
+  background: var(--cockpit-surface-soft);
+}
+
+.devMethod {
+  justify-self: start;
+  padding: 2px 7px;
+  border-radius: 6px;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.devMethod.get {
+  color: var(--cockpit-green);
+  background: rgba(22, 163, 74, 0.1);
+}
+
+.devMethod.post {
+  color: var(--cockpit-blue);
+  background: rgba(37, 99, 235, 0.1);
+}
+
+.devRoutePath {
+  font-family: var(--font-mono), monospace;
+  font-size: 12.5px;
+  color: var(--cockpit-text);
+  white-space: nowrap;
+}
+
+.devRouteLabel {
+  color: var(--cockpit-faint);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.devRouteCopy {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--cockpit-border);
+  border-radius: 7px;
+  background: var(--cockpit-surface);
+  color: var(--cockpit-muted);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.devRouteCopy:hover {
+  border-color: var(--cockpit-border-strong);
+  color: var(--cockpit-blue);
+}
+
+@media (max-width: 860px) {
+  .devRoute {
+    grid-template-columns: 52px 1fr auto;
+  }
+
+  .devRouteLabel {
+    display: none;
+  }
+}
+
+/* DevOps plan block (dark theme) */
+.devopsPlanBlock {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  padding: 12px 14px;
+  margin-bottom: 14px;
+}
+
+.devopsPlanHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.devopsPlanTitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-right: 2px;
+}
+
+.devopsPlanBadge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-family: var(--font-mono), monospace;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.devopsPlanBadge.service {
+  color: var(--accent2);
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.devopsPlanBadge.operation {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid rgba(20, 184, 166, 0.3);
+}
+
+.devopsPlanBadge.destructive {
+  color: var(--rose);
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 10.5px;
+}
+
+.devopsPlanParams {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: rgba(0, 0, 0, 0.3);
+  color: var(--text);
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  overflow: auto;
+  max-height: 220px;
+}
+
+/* CodeGen sandboxed preview (dark theme) */
+.codegenSandbox {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  padding: 12px 14px;
+}
+
+.codegenSandboxHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.codegenSandboxHead strong {
+  color: var(--text);
+  font-size: 13.5px;
+}
+
+.codegenSandboxHead code {
+  font-family: var(--font-mono), monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.codegenSandboxFrame {
+  display: block;
+  width: 100%;
+  height: 480px;
+  max-height: 480px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xs);
+  background: #fff;
+}
+
+.codegenSandboxNote {
+  margin: 8px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}

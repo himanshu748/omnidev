@@ -4,12 +4,21 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import FeatureLayout from "../components/FeatureLayout";
 import { api } from "@/lib/api";
 
+type DevOpsPlan = {
+  service: string;
+  operation: string;
+  params: Record<string, unknown>;
+  destructive: boolean;
+};
+
 type DevOpsResult = {
   action: string;
   params: Record<string, unknown>;
   raw_result: unknown;
   summary: string;
   needs_confirmation: boolean;
+  /** Optional additive field — older backends omit it. */
+  plan?: DevOpsPlan | null;
 };
 
 type HistoryEntry = {
@@ -445,6 +454,29 @@ export default function DevOpsPage() {
               {/* RESULT STATE */}
               {activeEntry && (
                 <div className="devopsResultWrap">
+                  {/* Plan (optional, newer backends) */}
+                  {activeEntry.result.plan && (
+                    <div className="devopsPlanBlock">
+                      <div className="devopsPlanHead">
+                        <span className="devopsPlanTitle">Plan</span>
+                        <span className="devopsPlanBadge service">
+                          {activeEntry.result.plan.service}
+                        </span>
+                        <span className="devopsPlanBadge operation">
+                          {activeEntry.result.plan.operation}
+                        </span>
+                        {activeEntry.result.plan.destructive && (
+                          <span className="devopsPlanBadge destructive">
+                            destructive
+                          </span>
+                        )}
+                      </div>
+                      <pre className="devopsPlanParams">
+                        {JSON.stringify(activeEntry.result.plan.params ?? {}, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+
                   {/* Summary */}
                   <div className="devopsSummaryBlock">
                     <div className="devopsAIAvatar">

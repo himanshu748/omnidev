@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -14,6 +14,7 @@ import {
   Cloud,
   Code2,
   Command,
+  Copy,
   Cpu,
   Database,
   ExternalLink,
@@ -153,11 +154,135 @@ const systems = [
   { label: "Settings", icon: Settings },
 ];
 
+type HealthInfo = {
+  status?: string;
+  service?: string;
+  ai_provider?: string;
+  ai_model?: string;
+};
+
+type DevRoute = {
+  method: "GET" | "POST";
+  path: string;
+  label: string;
+  curl: (base: string) => string;
+};
+
+const jsonCurl = (base: string, path: string, body: Record<string, unknown>) =>
+  `curl -X POST ${base}${path} -H 'Content-Type: application/json' -d '${JSON.stringify(body)}'`;
+
+const devRoutes: DevRoute[] = [
+  {
+    method: "GET",
+    path: "/health",
+    label: "Service + AI provider status",
+    curl: (base) => `curl ${base}/health`,
+  },
+  {
+    method: "POST",
+    path: "/api/devops/command",
+    label: "Natural-language AWS command",
+    curl: (base) =>
+      jsonCurl(base, "/api/devops/command", {
+        message: "List my EC2 instances",
+        confirm_destructive: false,
+      }),
+  },
+  {
+    method: "POST",
+    path: "/api/codegen/generate",
+    label: "Generate project files",
+    curl: (base) =>
+      jsonCurl(base, "/api/codegen/generate", {
+        prompt: "A todo app with dark mode",
+        framework: "react",
+      }),
+  },
+  {
+    method: "POST",
+    path: "/api/scraper/scrape",
+    label: "Scrape a web page",
+    curl: (base) =>
+      jsonCurl(base, "/api/scraper/scrape", {
+        url: "https://example.com",
+        extract: "text",
+        stealth: false,
+      }),
+  },
+  {
+    method: "POST",
+    path: "/api/vision/analyze",
+    label: "Analyze an image (multipart)",
+    curl: (base) =>
+      `curl -X POST ${base}/api/vision/analyze -F 'image=@screenshot.png' -F 'mode=describe'`,
+  },
+  {
+    method: "GET",
+    path: "/api/storage/buckets",
+    label: "List S3 buckets",
+    curl: (base) => `curl ${base}/api/storage/buckets`,
+  },
+  {
+    method: "POST",
+    path: "/api/preview/check",
+    label: "Screenshot + check a website",
+    curl: (base) =>
+      jsonCurl(base, "/api/preview/check", {
+        url: "https://example.com",
+        desktop: true,
+        mobile: false,
+      }),
+  },
+];
+
 export default function HomePage() {
   const [mode, setMode] = useState<"ask" | "agent">("agent");
   const [selectedApproval, setSelectedApproval] = useState(approvals[0]);
   const [command, setCommand] = useState("");
   const [approved, setApproved] = useState(false);
+  const [health, setHealth] = useState<HealthInfo | null>(null);
+  const [backendOnline, setBackendOnline] = useState<boolean | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [devPanelOpen, setDevPanelOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkHealth() {
+      try {
+        const res = await fetch(`${API_BASE}/health`, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = (await res.json()) as HealthInfo;
+        if (!cancelled) {
+          setHealth(data);
+          setBackendOnline(true);
+        }
+      } catch {
+        // Backend unreachable — show Offline, no console spam.
+        if (!cancelled) {
+          setHealth(null);
+          setBackendOnline(false);
+        }
+      }
+    }
+
+    checkHealth();
+    const timer = setInterval(checkHealth, 30_000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, []);
+
+  function copyText(text: string, key: string) {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopiedKey(key);
+        setTimeout(() => setCopiedKey((prev) => (prev === key ? null : prev)), 1600);
+      })
+      .catch(() => {});
+  }
 
   const completedCount = setupSteps.filter((step) => step.status === "completed").length;
   const progress = Math.round((completedCount / setupSteps.length) * 100);
@@ -331,6 +456,36 @@ export default function HomePage() {
 
         <div className="cockpitMain">
           <div className="cockpitContent">
+            <section className="backendStrip" aria-label="Backend status">
+              <span
+                className={`backendChip status ${
+                  backendOnline === null ? "checking" : backendOnline ? "online" : "offline"
+                }`}
+              >
+                <i aria-hidden="true" />
+                Backend{" "}
+                {backendOnline === null ? "Checking…" : backendOnline ? "Online" : "Offline"}
+              </span>
+              <span className="backendChip">
+                <Cpu size={14} aria-hidden="true" />
+                {backendOnline && health?.ai_provider
+                  ? `${health.ai_provider} · ${health.ai_model ?? "unknown model"}`
+                  : "AI provider unavailable"}
+              </span>
+              <span className="backendChip apiBase">
+                <Server size={14} aria-hidden="true" />
+                <code>{API_BASE}</code>
+                <button
+                  type="button"
+                  onClick={() => copyText(API_BASE, "api-base")}
+                  aria-label="Copy API base URL"
+                  title="Copy API base URL"
+                >
+                  {copiedKey === "api-base" ? <Check size={13} /> : <Copy size={13} />}
+                </button>
+              </span>
+            </section>
+
             <section className="cockpitIntro">
               <div>
                 <p className="eyebrow">Command cockpit</p>
@@ -550,6 +705,54 @@ export default function HomePage() {
                   );
                 })}
               </div>
+            </section>
+
+            <section className="devToolsPanel">
+              <button
+                type="button"
+                className="devToolsToggle"
+                onClick={() => setDevPanelOpen((open) => !open)}
+                aria-expanded={devPanelOpen}
+              >
+                <TerminalSquare size={16} aria-hidden="true" />
+                <span>For developers</span>
+                <small>{devRoutes.length} API routes · copy-paste curl</small>
+                <ChevronDown
+                  size={15}
+                  className={`devToolsChevron ${devPanelOpen ? "open" : ""}`}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {devPanelOpen && (
+                <div className="devRouteList">
+                  {devRoutes.map((route) => (
+                    <div key={route.path} className="devRoute">
+                      <span className={`devMethod ${route.method.toLowerCase()}`}>
+                        {route.method}
+                      </span>
+                      <code className="devRoutePath">{route.path}</code>
+                      <span className="devRouteLabel">{route.label}</span>
+                      <button
+                        type="button"
+                        className="devRouteCopy"
+                        onClick={() => copyText(route.curl(API_BASE), route.path)}
+                        aria-label={`Copy curl for ${route.path}`}
+                      >
+                        {copiedKey === route.path ? (
+                          <>
+                            <Check size={12} /> Copied
+                          </>
+                        ) : (
+                          <>
+                            <Copy size={12} /> curl
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
 

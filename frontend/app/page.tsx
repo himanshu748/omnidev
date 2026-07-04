@@ -31,18 +31,21 @@ const smallModules = [
     href: "/codegen",
     icon: Code2,
     body: "Full project scaffolds for React, Next.js, FastAPI, and more. Validated, sandboxed, never executed on your machine.",
+    shot: "/screenshots/codegen.png",
   },
   {
     title: "Web Scraper",
     href: "/scraper",
     icon: Globe,
     body: "Playwright-powered extraction of text, links, metadata, PDFs, and screenshots.",
+    shot: null,
   },
   {
     title: "Cloud Storage",
     href: "/storage",
     icon: Database,
     body: "Browse S3 buckets, upload and delete objects, generate presigned links.",
+    shot: null,
   },
 ] as const;
 
@@ -182,6 +185,15 @@ export default function LandingPage() {
                 </p>
               </Link>
               <Link href="/vision" className="lpCell lpCellTall lpCellTint">
+                <div className="lpCellShot" aria-hidden="true">
+                  <Image
+                    src="/screenshots/vision.png"
+                    alt=""
+                    width={1440}
+                    height={900}
+                    style={{ objectPosition: "50% 62%" }}
+                  />
+                </div>
                 <ArrowUpRight size={18} className="lpCellArrow" aria-hidden="true" />
                 <h3>
                   <Eye size={19} aria-hidden="true" />
@@ -192,8 +204,19 @@ export default function LandingPage() {
                   infrastructure never need to leave the room.
                 </p>
               </Link>
-              {smallModules.map(({ title, href, icon: Icon, body }) => (
+              {smallModules.map(({ title, href, icon: Icon, body, shot }) => (
                 <Link key={title} href={href} className="lpCell">
+                  {shot && (
+                    <div className="lpCellShot" aria-hidden="true">
+                      <Image
+                        src={shot}
+                        alt=""
+                        width={1440}
+                        height={900}
+                        style={{ objectPosition: "50% 12%", opacity: 0.22 }}
+                      />
+                    </div>
+                  )}
                   <ArrowUpRight size={18} className="lpCellArrow" aria-hidden="true" />
                   <h3>
                     <Icon size={19} aria-hidden="true" />

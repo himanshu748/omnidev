@@ -60,6 +60,18 @@ function getSafePackageJson(files: FileEntry[]): { parsed: Record<string, unknow
   }
 }
 
+function findHtmlEntry(files: FileEntry[] | undefined): FileEntry | null {
+  if (!files?.length) return null;
+  const indexHtml = files.find(
+    (f) => f.path === "index.html" || f.path.endsWith("/index.html")
+  );
+  if (indexHtml) return indexHtml;
+  if (files.length === 1 && files[0].path.toLowerCase().endsWith(".html")) {
+    return files[0];
+  }
+  return null;
+}
+
 function buildStackBlitzFiles(files: FileEntry[]): Record<string, string> {
   const out: Record<string, string> = {};
   for (const f of files) {
@@ -85,9 +97,11 @@ export default function CodeGenPage() {
   const [result, setResult] = useState<CodeGenResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [embedReady, setEmbedReady] = useState(false);
+  const [sandboxOpen, setSandboxOpen] = useState(false);
   const embedRef = useRef<HTMLDivElement>(null);
 
   const canEmbed = Boolean(result && WEB_FRAMEWORKS.includes(result.framework) && getSafePackageJson(result.files));
+  const htmlEntry = findHtmlEntry(result?.files);
 
   useEffect(() => {
     if (!canEmbed || !result || !embedRef.current) return;
@@ -121,6 +135,7 @@ export default function CodeGenPage() {
     setError(null);
     setResult(null);
     setSelectedFile(null);
+    setSandboxOpen(false);
     try {
       const res = await fetch(api("/api/codegen/generate"), {
         method: "POST",
@@ -301,7 +316,35 @@ export default function CodeGenPage() {
               >
                 Open in StackBlitz →
               </button>
+              {htmlEntry && (
+                <button
+                  type="button"
+                  className="featureBtn featureBtnSecondary"
+                  onClick={() => setSandboxOpen((open) => !open)}
+                >
+                  {sandboxOpen ? "Hide sandboxed preview" : "🔒 Sandboxed preview"}
+                </button>
+              )}
             </div>
+
+            {htmlEntry && sandboxOpen && (
+              <div className="codegenSandbox">
+                <div className="codegenSandboxHead">
+                  <strong>Sandboxed preview</strong>
+                  <code>{htmlEntry.path}</code>
+                </div>
+                <iframe
+                  className="codegenSandboxFrame"
+                  sandbox="allow-scripts"
+                  srcDoc={htmlEntry.content}
+                  title="Sandboxed preview of generated HTML"
+                />
+                <p className="codegenSandboxNote">
+                  Runs in a locked-down iframe: no network to your backend, no
+                  cookies, no storage.
+                </p>
+              </div>
+            )}
 
             <div className="codegenGitHubSection">
               <h4>Add to GitHub</h4>
