@@ -257,7 +257,7 @@ cd backend && pytest
 | [Architecture](docs/ARCHITECTURE.md) | System design and project structure. |
 | [API Reference](docs/API.md) | REST endpoints and examples. |
 | [macOS App](docs/MACOS_APP.md) | Native shell build and packaging. |
-| [Deployment](docs/DEPLOYMENT.md) | Docker, Render, and Vercel notes. |
+| [Deployment](docs/DEPLOYMENT.md) | Local-first policy; marketing-site and app releases. |
 | [Design System](docs/DESIGN.md) | Visual system and UI references. |
 | [Contributing](CONTRIBUTING.md) | Contribution guide. |
 | [Changelog](CHANGELOG.md) | Release notes. |

@@ -7,8 +7,7 @@ struct SidebarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                LogoMarkView(size: 30)
-                    .frame(width: 38, height: 38)
+                LogoMarkView(size: 38)
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text("OmniDev")

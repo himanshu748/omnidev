@@ -57,7 +57,7 @@ See [`.env.example`](.env.example). Key ones:
 - `DEVOPS_READ_ONLY`, `AUDIT_LOG_PATH` — DevOps safety controls
 - `CORS_ORIGINS` — allowed browser origins
 
-For AWS setup steps, see [CREDENTIALS.md](CREDENTIALS.md).
+For provider and AWS setup steps, see the [Configuration section of the main README](../README.md#configuration).
 
 ## Tests
 

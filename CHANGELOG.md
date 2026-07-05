@@ -22,6 +22,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **SSRF guard** — the Web Scraper and Site Preview now validate every target URL and refuse loopback, private, link-local, reserved, and cloud-metadata addresses (`169.254.169.254`, `localhost`, `10/8`, …); the scraper proxy parameter is validated too. Injected page JavaScript may no longer use network primitives (`fetch`/`XMLHttpRequest`/`WebSocket`/…) — closing an SSRF bypass through the page context — and the Vision endpoint caps uploads at 10 MB.
 - Project trust & contributor infrastructure: GitHub Actions CI (backend pytest, frontend typecheck/build, macOS swift build), `SECURITY.md`, issue/PR templates, a `Makefile` one-command bootstrap, and `ROADMAP.md`.
 
+### 🗑️ Removed
+- **Stale files** — `render.yaml` and the Render sections of `docs/DEPLOYMENT.md` (hosting the backend publicly contradicts the local-first non-goals and would expose the scraper and AWS credentials), `backend/CREDENTIALS.md` (pre-Ollama, Gemini-required era; superseded by the README Configuration section), and a personal grant-application draft that didn't belong in the repo.
+
 ### 🔧 Fixed
 - **License mismatch** — `LICENSE` now matches the MIT declared in the README badge/footer (was Apache 2.0 text).
 - **Version drift** — backend, frontend, and tests now report `0.3.0` (was hardcoded `0.1.0`).
