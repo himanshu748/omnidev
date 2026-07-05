@@ -42,6 +42,10 @@ frontend: ## Run the Next.js cockpit (http://localhost:3000)
 models: ## Pull the default local model for fully-offline use
 	ollama pull gemma4:e4b
 
+.PHONY: mcp
+mcp: ## Run the MCP server on stdio (register with: claude mcp add omnidev)
+	cd $(BACKEND) && .venv/bin/python -m app.mcp
+
 .PHONY: test
 test: test-backend test-frontend ## Run all checks
 

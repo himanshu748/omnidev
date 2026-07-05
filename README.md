@@ -50,6 +50,30 @@ No API keys required. [Gemma 4 E4B](https://ollama.com/library/gemma4:e4b) — t
 
 The `/health` endpoint reports the active provider and model.
 
+## Use OmniDev from Claude Code (MCP)
+
+OmniDev ships an [MCP](https://modelcontextprotocol.io) server, so Claude Code, Claude Desktop, Cursor — any MCP client — can delegate work to your **free, private, on-device model** and the rest of the local engine.
+
+```bash
+# From the repo root, with the backend set up (make setup) and running (make backend):
+claude mcp add omnidev -- "$PWD/backend/.venv/bin/python" "$PWD/backend/mcp_server.py"
+```
+
+Then, inside a Claude Code session:
+
+> Use the omnidev local_llm tool to write a haiku about local models.
+
+| Tool | What it does |
+|------|--------------|
+| `local_llm` | Text generation on the local Gemma 4 model — zero cloud calls, zero cost. |
+| `local_vision` | Analyze or OCR a local image with the on-device vision model. |
+| `scrape_url` / `crawl_site` | SSRF-guarded Playwright scraping and bounded same-domain crawling. |
+| `generate_project` / `refine_project` | Validated multi-file codegen — files are returned as data, never written or executed. |
+| `aws_plan` | Preview the boto3 plan for a natural-language AWS command. **Never executes** — approval stays in the OmniDev UI. |
+| `list_models` / `pull_model` | Inspect provider status and pull local models. |
+
+The server is a thin stdio bridge to the running backend (set `OMNIDEV_BACKEND_URL` if yours isn't on `http://127.0.0.1:8000`). From `backend/` you can also run it directly with `python -m app.mcp` or `make mcp`.
+
 ## The macOS App
 
 OmniDev ships as a native macOS `.app`: a SwiftUI/WebKit shell (`macos/`) that starts the FastAPI backend (port 8010) and Next.js frontend (port 3010) as managed sidecars, waits for both health checks, and presents the cockpit in a native window with sidebar navigation.
@@ -194,6 +218,7 @@ All backend routes are served from `http://localhost:8000` by default (`8010` un
 |--------|----------|-------|
 | `GET` | `/health` | Service health check; reports active AI provider and model. |
 | `POST` | `/api/devops/command` | Natural-language AWS command; destructive operations require `confirm_destructive: true`. |
+| `POST` | `/api/devops/plan` | Plan preview for a natural-language AWS command — never executes (used by the MCP `aws_plan` tool). |
 | `POST` | `/api/codegen/generate` | Returns validated generated files and instructions. Backend does not execute generated code. |
 | `POST` | `/api/scraper/scrape` | Browser-based extraction for text, HTML, screenshots, links, metadata, and PDFs. |
 | `POST` | `/api/preview/check` | Captures page preview and basic metadata. |
