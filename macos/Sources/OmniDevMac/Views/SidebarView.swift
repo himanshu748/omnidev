@@ -7,16 +7,13 @@ struct SidebarView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 10) {
-                Image(systemName: "terminal.fill")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.white)
+                LogoMarkView(size: 30)
                     .frame(width: 38, height: 38)
-                    .background(.blue.gradient, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
 
                 VStack(alignment: .leading, spacing: 1) {
                     Text("OmniDev")
                         .font(.headline)
-                    Text("Native macOS shell")
+                    Text("Local-first AI cockpit")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

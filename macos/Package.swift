@@ -11,6 +11,11 @@ let package = Package(
         .executable(name: "OmniDev", targets: ["OmniDevMac"])
     ],
     targets: [
-        .executableTarget(name: "OmniDevMac")
+        .executableTarget(
+            name: "OmniDevMac",
+            resources: [
+                .copy("Resources/AppIcon.png")
+            ]
+        )
     ]
 )

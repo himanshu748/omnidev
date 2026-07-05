@@ -2,6 +2,7 @@ import Foundation
 
 enum OmniDevRoute: String, CaseIterable, Identifiable {
     case cockpit
+    case chat
     case devops
     case codegen
     case scraper
@@ -14,6 +15,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
         switch self {
         case .cockpit:
             return "Command Center"
+        case .chat:
+            return "Chat"
         case .devops:
             return "DevOps Agent"
         case .codegen:
@@ -30,7 +33,9 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
     var subtitle: String {
         switch self {
         case .cockpit:
-            return "Setup, approvals, and overview"
+            return "Status, models, and modules"
+        case .chat:
+            return "Stream the local model"
         case .devops:
             return "AWS plans and boto3 actions"
         case .codegen:
@@ -47,6 +52,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
     var path: String {
         switch self {
         case .cockpit:
+            return "/app"
+        case .chat:
             return "/app"
         case .devops:
             return "/devops"
@@ -65,6 +72,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
         switch self {
         case .cockpit:
             return "rectangle.grid.2x2"
+        case .chat:
+            return "bubble.left.and.text.bubble.right"
         case .devops:
             return "flowchart"
         case .codegen:
@@ -75,6 +84,16 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
             return "eye"
         case .storage:
             return "externaldrive"
+        }
+    }
+
+    /// Native SwiftUI surfaces; the rest render in the webview bridge.
+    var isNative: Bool {
+        switch self {
+        case .cockpit, .chat:
+            return true
+        default:
+            return false
         }
     }
 }

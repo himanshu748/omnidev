@@ -7,12 +7,18 @@ final class LocalStackManager: ObservableObject {
     @Published private(set) var backendHealthy = false
     @Published private(set) var frontendReady = false
     @Published private(set) var message = "Preparing local services."
+    @Published private(set) var aiProvider = ""
+    @Published private(set) var aiModel = ""
 
     let rootURL: URL
-    let backendPort: String
-    let frontendPort: String
-    let backendURL: URL
-    let frontendURL: URL
+    private(set) var backendPort: String
+    private(set) var frontendPort: String
+    private(set) var backendURL: URL
+    private(set) var frontendURL: URL
+
+    var backendClient: BackendClient {
+        BackendClient(baseURL: backendURL)
+    }
 
     var launcherLogURL: URL {
         rootURL.appendingPathComponent(".omnidev-macos/launcher.log")
@@ -20,9 +26,17 @@ final class LocalStackManager: ObservableObject {
 
     init(rootURL: URL = ProjectPaths.detectProjectRoot()) {
         self.rootURL = rootURL
-        let environment = ProcessInfo.processInfo.environment
-        backendPort = environment["OMNIDEV_BACKEND_PORT"] ?? "8010"
-        frontendPort = environment["OMNIDEV_FRONTEND_PORT"] ?? "3010"
+        backendPort = AppSettings.backendPort
+        frontendPort = AppSettings.frontendPort
+        backendURL = URL(string: "http://127.0.0.1:\(backendPort)")!
+        frontendURL = URL(string: "http://127.0.0.1:\(frontendPort)")!
+    }
+
+    /// Re-read Settings-window values; called before (re)starting services so
+    /// port changes take effect without relaunching the app.
+    private func reloadConfiguration() {
+        backendPort = AppSettings.backendPort
+        frontendPort = AppSettings.frontendPort
         backendURL = URL(string: "http://127.0.0.1:\(backendPort)")!
         frontendURL = URL(string: "http://127.0.0.1:\(frontendPort)")!
     }
@@ -33,6 +47,7 @@ final class LocalStackManager: ObservableObject {
 
     func startServicesIfNeeded() {
         guard state != .starting && state != .ready else { return }
+        reloadConfiguration()
         state = .starting
         message = "Starting FastAPI sidecar and Next.js cockpit."
 
@@ -85,6 +100,10 @@ final class LocalStackManager: ObservableObject {
                     "OMNIDEV_OPEN_BROWSER": "0",
                     "OMNIDEV_BACKEND_PORT": backendPort,
                     "OMNIDEV_FRONTEND_PORT": frontendPort,
+                    // Settings-window values; inherited by the uvicorn sidecar,
+                    // where they take precedence over backend/.env.
+                    "AI_PROVIDER": AppSettings.aiProvider,
+                    "DEVOPS_READ_ONLY": AppSettings.devopsReadOnly ? "1" : "0",
                 ]
             )
         } catch {
@@ -104,6 +123,7 @@ final class LocalStackManager: ObservableObject {
                 if backend && frontend {
                     state = .ready
                     message = "Local services are running on loopback."
+                    await refreshHealthInfo()
                     break breakPoll
                 }
 
@@ -118,6 +138,12 @@ final class LocalStackManager: ObservableObject {
             }
             return
         }
+    }
+
+    func refreshHealthInfo() async {
+        guard let health = try? await backendClient.health() else { return }
+        aiProvider = health.aiProvider
+        aiModel = health.aiModel
     }
 
     private func checkHTTP(_ url: URL) async -> Bool {
