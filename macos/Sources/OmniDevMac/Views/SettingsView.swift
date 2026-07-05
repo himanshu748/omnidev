@@ -5,7 +5,6 @@ struct SettingsView: View {
     @AppStorage(AppSettings.aiProviderKey) private var aiProvider = AppSettings.defaultAIProvider
     @AppStorage(AppSettings.devopsReadOnlyKey) private var devopsReadOnly = false
     @AppStorage(AppSettings.backendPortKey) private var backendPort = AppSettings.defaultBackendPort
-    @AppStorage(AppSettings.frontendPortKey) private var frontendPort = AppSettings.defaultFrontendPort
 
     var body: some View {
         Form {
@@ -26,9 +25,8 @@ struct SettingsView: View {
 
             Section {
                 TextField("Backend port", text: $backendPort)
-                TextField("Frontend port", text: $frontendPort)
             } header: {
-                Text("Ports")
+                Text("Engine Port")
             }
 
             Section {

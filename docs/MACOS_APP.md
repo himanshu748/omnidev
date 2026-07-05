@@ -1,95 +1,69 @@
 # macOS App
 
-OmniDev can be launched on macOS through a native SwiftUI/WebKit `.app` shell. The app starts the FastAPI backend and Next.js frontend as local sidecars, waits for both to become reachable, then loads the OmniDev cockpit inside the native window.
+OmniDev is a **fully native SwiftUI app**. Every surface — Command Center, Chat, DevOps Agent, Code Gen, Web Scraper, Vision Lab, Cloud Storage — is native; there is no embedded web view for app UI. The app supervises one sidecar, the local FastAPI engine, and talks to it over loopback. The Next.js frontend is **not** required by the app: it remains the dev-stack web UI and the hosted marketing site.
 
-This is a developer-friendly native shell for a local checkout, not a signed production installer.
+This is a developer-friendly native app for a local checkout, not yet a signed production installer.
+
+## Surfaces
+
+| Surface | What it does |
+|---------|--------------|
+| Command Center | Engine status, active provider/model, local model manager (one-click pull with progress), module launcher. |
+| Chat | Token streaming from `POST /api/chat/stream` via URLSession — watch the local model think. |
+| DevOps Agent | Natural-language AWS commands with the enriched boto3 plan preview; destructive actions require an explicit in-app confirmation. |
+| Code Gen | Generate validated project files, browse/copy them, refine iteratively, preview HTML output in an isolated `WKWebView` (no base URL, non-persistent data store), and save files to a folder you choose. |
+| Web Scraper | All extract modes (text/markdown/article/links/metadata/html/screenshot/pdf) plus the bounded same-domain crawl — every navigation SSRF-guarded by the backend. |
+| Vision Lab | Analyze/OCR/custom-prompt a local image (10 MB cap, matching the backend). |
+| Cloud Storage | Browse S3 buckets/objects, upload, presigned-URL download, confirmed delete. |
+
+First run opens a native onboarding window: it checks the engine, then Ollama, then the default model — and pulls `gemma4:e4b` with live progress. A menu-bar extra shows engine health and quick actions. The Settings window (⌘,) controls the AI provider, read-only DevOps mode, and the engine port; values reach the sidecar as environment variables when services restart.
 
 ## Prerequisites
 
-- macOS
-- Python dependencies installed in `backend/`
-- Node dependencies installed in `frontend/`
-- Playwright Chromium installed for the backend
+- macOS 13+
+- Python dependencies installed in `backend/` (`make setup-backend`)
+- [Ollama](https://ollama.com) for offline AI (the onboarding window handles the model pull)
 
-Use the normal local setup first:
+Node is **not** needed to run the app — only for the web dev stack and marketing site.
 
-```bash
-cd backend
-pip install -r requirements.txt
-python -m playwright install chromium
-
-cd ../frontend
-npm install
-```
-
-## Build the Native App
+## Build & Launch
 
 ```bash
-scripts/macos/build-app.sh
+scripts/macos/build-app.sh     # writes dist/mac/OmniDev.app
+open dist/mac/OmniDev.app
 ```
 
-The generated app is written to:
+Or during development:
 
-```text
-dist/mac/OmniDev.app
+```bash
+make mac                       # swift run from macos/
 ```
+
+The app owns loopback port `8010` for the engine by default (change it in Settings). The launcher writes logs and PIDs under `.omnidev-macos/`; the app menu has Open Logs and Restart Local Services.
 
 ## Package a Release Zip
 
-The landing page "Get the app" buttons point to GitHub Releases
-(`https://github.com/himanshu748/omnidev/releases/latest`). Build the zip to
-attach to a release with:
+The landing page "Get the app" buttons point to GitHub Releases (`https://github.com/himanshu748/omnidev/releases/latest`). Build the zip to attach to a release with:
 
 ```bash
 scripts/macos/package-download.sh
 ```
 
-This writes `frontend/public/downloads/OmniDev-macOS.zip` locally (the path is
-not committed). The package is a native macOS shell for this local project
-checkout. It is not yet a signed, notarized, portable installer.
+Signing, notarization, DMG, and a Homebrew cask are tracked in [ROADMAP.md](../ROADMAP.md).
 
-## Launch
+## Scripted Launch (no app)
 
-Open the generated app in Finder, or run:
+`scripts/macos/launch-omnidev.sh` starts the backend (and, unless `OMNIDEV_SKIP_FRONTEND=1`, the web frontend) with health checks:
 
 ```bash
-open dist/mac/OmniDev.app
+OMNIDEV_BACKEND_PORT=8010 scripts/macos/launch-omnidev.sh   # backend + web UI
+OMNIDEV_SKIP_FRONTEND=1 scripts/macos/launch-omnidev.sh     # engine only (what the app does)
+scripts/macos/stop-omnidev.sh                               # stop everything
 ```
 
-The native shell uses app-owned loopback ports by default:
+## Architecture Notes
 
-- Backend sidecar: `127.0.0.1:8010`
-- Frontend sidecar: `127.0.0.1:3010`
-
-This avoids common development-port collisions such as another app already using
-`3000`. The native shell starts local services without opening a separate
-browser. For the old browser-opening launcher flow, run:
-
-```bash
-scripts/macos/launch-omnidev.sh
-```
-
-The launcher writes logs and process IDs under:
-
-```text
-.omnidev-macos/
-```
-
-## Stop Local Services
-
-```bash
-scripts/macos/stop-omnidev.sh
-```
-
-## Ports
-
-Defaults:
-
-- Backend: `127.0.0.1:8000`
-- Frontend: `127.0.0.1:3000`
-
-Override them when launching from the shell:
-
-```bash
-OMNIDEV_BACKEND_PORT=8010 OMNIDEV_FRONTEND_PORT=3010 scripts/macos/launch-omnidev.sh
-```
+- `Services/LocalStackManager.swift` — sidecar lifecycle, health polling, provider/model info.
+- `Services/BackendClient.swift` + `BackendModules.swift` — thin URLSession bridge to the engine; NDJSON streaming for chat and model pulls; multipart for vision/storage uploads.
+- `Views/` — one SwiftUI view per module plus shared chrome in `ModuleKit.swift`; the brand badge is `LogoMarkView` (terminal glyph, matching `frontend/public/brand/omnidev-logo.png`).
+- Generated code is never executed: Code Gen writes files only where you choose, and its preview loads HTML strings into an isolated, non-persistent `WKWebView` with no base URL.

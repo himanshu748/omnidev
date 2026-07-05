@@ -3,7 +3,6 @@ import SwiftUI
 struct ContentView: View {
     @ObservedObject var manager: LocalStackManager
     @State private var selectedRoute: OmniDevRoute = .cockpit
-    @State private var webLoading = false
     @State private var showOnboarding = false
     @AppStorage(AppSettings.onboardingCompletedKey) private var onboardingCompleted = false
 
@@ -16,11 +15,6 @@ struct ContentView: View {
                 .background(.background)
                 .toolbar {
                     ToolbarItemGroup {
-                        if webLoading && !selectedRoute.isNative {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-
                         Button {
                             manager.restartServices()
                         } label: {
@@ -28,9 +22,9 @@ struct ContentView: View {
                         }
 
                         Button {
-                            manager.openInBrowser(path: selectedRoute.path)
+                            manager.openAPIDocs()
                         } label: {
-                            Label("Open in Browser", systemImage: "safari")
+                            Label("API Docs", systemImage: "doc.text.magnifyingglass")
                         }
                     }
                 }
@@ -52,19 +46,25 @@ struct ContentView: View {
 
     @ViewBuilder
     private var detail: some View {
-        switch selectedRoute {
-        case .cockpit:
-            CockpitView(manager: manager, selectedRoute: $selectedRoute)
-        case .chat:
-            ChatView(manager: manager)
-        default:
-            ZStack {
-                WebCockpitView(url: manager.pageURL(for: selectedRoute), isLoading: $webLoading)
-                    .opacity(manager.frontendReady ? 1 : 0)
-
-                if !manager.frontendReady {
-                    StartingView(manager: manager)
-                }
+        if !manager.backendHealthy && selectedRoute != .cockpit {
+            StartingView(manager: manager)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            switch selectedRoute {
+            case .cockpit:
+                CockpitView(manager: manager, selectedRoute: $selectedRoute)
+            case .chat:
+                ChatView(manager: manager)
+            case .devops:
+                DevOpsView(manager: manager)
+            case .codegen:
+                CodeGenView(manager: manager)
+            case .scraper:
+                ScraperView(manager: manager)
+            case .vision:
+                VisionView(manager: manager)
+            case .storage:
+                StorageView(manager: manager)
             }
         }
     }

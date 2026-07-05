@@ -5,21 +5,15 @@ import Foundation
 /// keep working; changes apply when local services restart.
 enum AppSettings {
     static let backendPortKey = "backendPort"
-    static let frontendPortKey = "frontendPort"
     static let aiProviderKey = "aiProvider"
     static let devopsReadOnlyKey = "devopsReadOnly"
     static let onboardingCompletedKey = "onboardingCompleted"
 
     static let defaultBackendPort = "8010"
-    static let defaultFrontendPort = "3010"
     static let defaultAIProvider = "auto"
 
     static var backendPort: String {
         resolve(env: "OMNIDEV_BACKEND_PORT", key: backendPortKey, fallback: defaultBackendPort)
-    }
-
-    static var frontendPort: String {
-        resolve(env: "OMNIDEV_FRONTEND_PORT", key: frontendPortKey, fallback: defaultFrontendPort)
     }
 
     static var aiProvider: String {

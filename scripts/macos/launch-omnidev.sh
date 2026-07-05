@@ -56,7 +56,9 @@ python_is_usable() {
   ) &
   local pid="$!"
 
-  for _ in $(seq 1 20); do
+  # Cold imports (playwright, boto3, google-genai) can take >5s on first
+  # launch or under load — probe for up to 15s before skipping a candidate.
+  for _ in $(seq 1 60); do
     if ! kill -0 "$pid" >/dev/null 2>&1; then
       wait "$pid"
       return "$?"
@@ -162,6 +164,19 @@ start_frontend() {
 main() {
   log "Launching OmniDev from $ROOT_DIR"
   start_backend
+
+  # The native app is fully SwiftUI and only needs the backend; the Next.js
+  # frontend is the dev-stack web UI and the hosted marketing site.
+  if [[ "${OMNIDEV_SKIP_FRONTEND:-0}" == "1" ]]; then
+    log "Frontend skipped (OMNIDEV_SKIP_FRONTEND=1); native app talks to $BACKEND_URL directly"
+    if [[ "${OMNIDEV_KEEP_ALIVE:-0}" == "1" ]]; then
+      trap '"$ROOT_DIR/scripts/macos/stop-omnidev.sh" "$ROOT_DIR"; exit 0' INT TERM
+      log "Supervisor mode enabled"
+      wait "$(cat "$STATE_DIR/backend.pid")"
+    fi
+    return 0
+  fi
+
   start_frontend
   if [[ "${OMNIDEV_OPEN_BROWSER:-1}" == "1" ]]; then
     open "$FRONTEND_URL/app"

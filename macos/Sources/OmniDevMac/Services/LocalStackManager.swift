@@ -5,16 +5,13 @@ import Foundation
 final class LocalStackManager: ObservableObject {
     @Published private(set) var state: LocalStackState = .idle
     @Published private(set) var backendHealthy = false
-    @Published private(set) var frontendReady = false
-    @Published private(set) var message = "Preparing local services."
+    @Published private(set) var message = "Preparing the local engine."
     @Published private(set) var aiProvider = ""
     @Published private(set) var aiModel = ""
 
     let rootURL: URL
     private(set) var backendPort: String
-    private(set) var frontendPort: String
     private(set) var backendURL: URL
-    private(set) var frontendURL: URL
 
     var backendClient: BackendClient {
         BackendClient(baseURL: backendURL)
@@ -27,29 +24,21 @@ final class LocalStackManager: ObservableObject {
     init(rootURL: URL = ProjectPaths.detectProjectRoot()) {
         self.rootURL = rootURL
         backendPort = AppSettings.backendPort
-        frontendPort = AppSettings.frontendPort
         backendURL = URL(string: "http://127.0.0.1:\(backendPort)")!
-        frontendURL = URL(string: "http://127.0.0.1:\(frontendPort)")!
     }
 
     /// Re-read Settings-window values; called before (re)starting services so
     /// port changes take effect without relaunching the app.
     private func reloadConfiguration() {
         backendPort = AppSettings.backendPort
-        frontendPort = AppSettings.frontendPort
         backendURL = URL(string: "http://127.0.0.1:\(backendPort)")!
-        frontendURL = URL(string: "http://127.0.0.1:\(frontendPort)")!
-    }
-
-    func pageURL(for route: OmniDevRoute) -> URL {
-        URL(string: route.path, relativeTo: frontendURL)!.absoluteURL
     }
 
     func startServicesIfNeeded() {
         guard state != .starting && state != .ready else { return }
         reloadConfiguration()
         state = .starting
-        message = "Starting FastAPI sidecar and Next.js cockpit."
+        message = "Starting the FastAPI engine sidecar."
 
         Task {
             await runLaunchScript()
@@ -60,12 +49,11 @@ final class LocalStackManager: ObservableObject {
     func restartServices() {
         guard state != .stopping else { return }
         state = .stopping
-        message = "Restarting local services."
+        message = "Restarting the local engine."
 
         Task {
             try? await runProcess(rootURL.appendingPathComponent("scripts/macos/stop-omnidev.sh"))
             backendHealthy = false
-            frontendReady = false
             state = .idle
             startServicesIfNeeded()
         }
@@ -83,9 +71,8 @@ final class LocalStackManager: ObservableObject {
         process.waitUntilExit()
     }
 
-    func openInBrowser(path: String) {
-        let url = URL(string: path, relativeTo: frontendURL)!.absoluteURL
-        NSWorkspace.shared.open(url)
+    func openAPIDocs() {
+        NSWorkspace.shared.open(backendURL.appendingPathComponent("docs"))
     }
 
     func openLogs() {
@@ -98,8 +85,9 @@ final class LocalStackManager: ObservableObject {
                 rootURL.appendingPathComponent("scripts/macos/launch-omnidev.sh"),
                 environment: [
                     "OMNIDEV_OPEN_BROWSER": "0",
+                    // The native app is fully SwiftUI; only the backend runs.
+                    "OMNIDEV_SKIP_FRONTEND": "1",
                     "OMNIDEV_BACKEND_PORT": backendPort,
-                    "OMNIDEV_FRONTEND_PORT": frontendPort,
                     // Settings-window values; inherited by the uvicorn sidecar,
                     // where they take precedence over backend/.env.
                     "AI_PROVIDER": AppSettings.aiProvider,
@@ -114,27 +102,23 @@ final class LocalStackManager: ObservableObject {
 
     private func pollServices() async {
         guard case .failed = state else {
-            breakPoll: for _ in 0..<120 {
+            for _ in 0..<120 {
                 let backend = await checkHTTP(backendURL.appendingPathComponent("health"))
-                let frontend = await checkHTTP(frontendURL)
                 backendHealthy = backend
-                frontendReady = frontend
 
-                if backend && frontend {
+                if backend {
                     state = .ready
-                    message = "Local services are running on loopback."
+                    message = "Local engine is running on loopback."
                     await refreshHealthInfo()
-                    break breakPoll
+                    break
                 }
 
                 try? await Task.sleep(nanoseconds: 1_000_000_000)
             }
 
             if state != .ready {
-                state = backendHealthy || frontendReady ? .degraded : .failed("Services did not become reachable.")
-                message = backendHealthy || frontendReady
-                    ? "Only part of the local stack is reachable."
-                    : "Local services did not become reachable."
+                state = .failed("The engine did not become reachable.")
+                message = "The local engine did not become reachable."
             }
             return
         }

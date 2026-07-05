@@ -58,8 +58,6 @@ struct CockpitView: View {
             VStack(alignment: .leading, spacing: 10) {
                 StatusRow(label: "Backend API", ready: manager.backendHealthy,
                           detail: "127.0.0.1:\(manager.backendPort)")
-                StatusRow(label: "Web modules", ready: manager.frontendReady,
-                          detail: "127.0.0.1:\(manager.frontendPort)")
                 if !manager.aiProvider.isEmpty {
                     StatusRow(label: "AI provider", ready: true,
                               detail: manager.aiProvider == "ollama"
@@ -159,7 +157,7 @@ struct CockpitView: View {
     private var modulesCard: some View {
         CockpitCard(title: "Modules", systemImage: "square.grid.2x2") {
             LazyVGrid(columns: [GridItem(.adaptive(minimum: 190), spacing: 10)], spacing: 10) {
-                ForEach(OmniDevRoute.allCases.filter { !$0.isNative }) { route in
+                ForEach(OmniDevRoute.modules) { route in
                     Button {
                         selectedRoute = route
                     } label: {

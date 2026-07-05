@@ -11,6 +11,9 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// The feature modules, excluding the cockpit and chat surfaces.
+    static let modules: [OmniDevRoute] = [.devops, .codegen, .scraper, .vision, .storage]
+
     var title: String {
         switch self {
         case .cockpit:
@@ -20,13 +23,13 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
         case .devops:
             return "DevOps Agent"
         case .codegen:
-            return "Code Gen Agent"
+            return "Code Gen"
         case .scraper:
-            return "Browser Agent"
+            return "Web Scraper"
         case .vision:
-            return "Vision Agent"
+            return "Vision Lab"
         case .storage:
-            return "Storage Agent"
+            return "Cloud Storage"
         }
     }
 
@@ -39,32 +42,13 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
         case .devops:
             return "AWS plans and boto3 actions"
         case .codegen:
-            return "Generate and inspect projects"
+            return "Generate and refine projects"
         case .scraper:
-            return "Authorized browser extraction"
+            return "Guarded browser extraction"
         case .vision:
             return "Image analysis and OCR"
         case .storage:
             return "S3 buckets and objects"
-        }
-    }
-
-    var path: String {
-        switch self {
-        case .cockpit:
-            return "/app"
-        case .chat:
-            return "/app"
-        case .devops:
-            return "/devops"
-        case .codegen:
-            return "/codegen"
-        case .scraper:
-            return "/scraper"
-        case .vision:
-            return "/vision"
-        case .storage:
-            return "/storage"
         }
     }
 
@@ -84,16 +68,6 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
             return "eye"
         case .storage:
             return "externaldrive"
-        }
-    }
-
-    /// Native SwiftUI surfaces; the rest render in the webview bridge.
-    var isNative: Bool {
-        switch self {
-        case .cockpit, .chat:
-            return true
-        default:
-            return false
         }
     }
 }

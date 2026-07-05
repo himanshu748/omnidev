@@ -102,10 +102,70 @@ struct BackendClient {
         }
     }
 
-    // MARK: - Internals
+    // MARK: - Request helpers (shared with BackendModules)
 
-    private func get<T: Decodable>(_ path: String) async throws -> T {
-        let (data, response) = try await URLSession.shared.data(from: baseURL.appendingPathComponent(path))
+    func get<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {
+        try await send("GET", path, query: query)
+    }
+
+    func send<T: Decodable>(_ method: String, _ path: String, query: [String: String] = [:]) async throws -> T {
+        var components = URLComponents(
+            url: baseURL.appendingPathComponent(path),
+            resolvingAgainstBaseURL: false
+        )!
+        if !query.isEmpty {
+            components.queryItems = query.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+        var request = URLRequest(url: components.url!)
+        request.httpMethod = method
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try Self.ensureOK(response, data: data)
+        return try Self.decoder.decode(T.self, from: data)
+    }
+
+    func post<T: Decodable>(
+        _ path: String,
+        body: [String: Any],
+        timeout: TimeInterval = 300
+    ) async throws -> T {
+        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        request.timeoutInterval = timeout
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try Self.ensureOK(response, data: data)
+        return try Self.decoder.decode(T.self, from: data)
+    }
+
+    func postMultipart<T: Decodable>(
+        _ path: String,
+        fields: [String: String],
+        fileField: String,
+        filename: String,
+        contentType: String,
+        fileData: Data,
+        timeout: TimeInterval = 300
+    ) async throws -> T {
+        let boundary = "omnidev-\(UUID().uuidString)"
+        var body = Data()
+        for (name, value) in fields {
+            body.append(Data("--\(boundary)\r\n".utf8))
+            body.append(Data("Content-Disposition: form-data; name=\"\(name)\"\r\n\r\n\(value)\r\n".utf8))
+        }
+        body.append(Data("--\(boundary)\r\n".utf8))
+        let fileHeader = "Content-Disposition: form-data; name=\"\(fileField)\"; filename=\"\(filename)\"\r\n"
+            + "Content-Type: \(contentType)\r\n\r\n"
+        body.append(Data(fileHeader.utf8))
+        body.append(fileData)
+        body.append(Data("\r\n--\(boundary)--\r\n".utf8))
+
+        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+        request.timeoutInterval = timeout
+        let (data, response) = try await URLSession.shared.data(for: request)
         try Self.ensureOK(response, data: data)
         return try Self.decoder.decode(T.self, from: data)
     }

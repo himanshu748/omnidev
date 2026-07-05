@@ -12,7 +12,7 @@ Native macOS AI developer app. Ship, inspect, and operate software from one loca
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white)
 ![License MIT](https://img.shields.io/badge/License-MIT-green)
 
-OmniDev is a native macOS app: a SwiftUI/WebKit shell that launches and supervises a local FastAPI backend and Next.js cockpit as sidecar processes. It brings together AI-assisted code generation, AWS operations, browser automation, visual analysis, and S3 file management in one place.
+OmniDev is a fully native macOS app: every surface — cockpit, chat, DevOps, codegen, scraper, vision, storage — is SwiftUI, backed by a supervised local FastAPI engine on loopback. It brings together AI-assisted code generation, AWS operations, browser automation, visual analysis, and S3 file management in one place.
 
 Everything runs on your machine. With a local [Ollama](https://ollama.com) server, every AI-backed module — DevOps Agent, Code Gen, and Vision Lab — works completely offline with no API key and no data leaving your Mac. Prefer a hosted model? Set a free `GEMINI_API_KEY` and OmniDev uses Gemini instead. Risky agent actions always require human confirmation.
 
@@ -76,7 +76,7 @@ The server is a thin stdio bridge to the running backend (set `OMNIDEV_BACKEND_U
 
 ## The macOS App
 
-OmniDev ships as a native macOS `.app`: a SwiftUI/WebKit shell (`macos/`) that starts the FastAPI backend (port 8010) and Next.js frontend (port 3010) as managed sidecars, waits for both health checks, and presents the cockpit in a native window with sidebar navigation.
+OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI — Command Center, streaming Chat, and all five modules are native views over the local engine (port 8010). The app supervises only the FastAPI sidecar; Node/Next.js is not needed to run it. First launch opens a native onboarding window that checks Ollama and pulls `gemma4:e4b` with live progress, a menu-bar extra tracks engine health, and Settings (⌘,) controls provider, read-only DevOps mode, and the engine port.
 
 ```bash
 # Build and run the macOS app from source
@@ -95,11 +95,11 @@ Stop the sidecars any time with `scripts/macos/stop-omnidev.sh`. See [docs/MACOS
 
 ```text
 omnidev/
-├── macos/                       # native SwiftUI/WebKit shell
+├── macos/                       # fully native SwiftUI app
 │   └── Sources/OmniDevMac/
-│       ├── App/                 # app entry
-│       ├── Services/            # sidecar lifecycle (LocalStackManager)
-│       └── Views/               # native window, sidebar, web cockpit
+│       ├── App/                 # app entry, menu-bar extra, Settings
+│       ├── Services/            # sidecar lifecycle + URLSession API bridge
+│       └── Views/               # cockpit, chat, and all module views
 ├── backend/
 │   ├── app/
 │   │   ├── main.py              # FastAPI app and Playwright lifespan

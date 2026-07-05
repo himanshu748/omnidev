@@ -71,7 +71,9 @@ struct SidebarView: View {
 
                 HStack {
                     StatusPill(title: "API", isReady: manager.backendHealthy)
-                    StatusPill(title: "UI", isReady: manager.frontendReady)
+                    if !manager.aiModel.isEmpty {
+                        StatusPill(title: manager.aiModel, isReady: true)
+                    }
                 }
 
                 HStack {

@@ -1,10 +1,11 @@
 import type { CSSProperties } from "react";
 
 /**
- * The OmniDev brand mark — a nested "secure enclosure": an outer rounded
- * boundary holding a protected core. One component, used on every surface,
- * so the brand reads identically in the landing nav, the cockpit, and every
- * module page. `currentColor` lets it inherit the surrounding text color.
+ * The OmniDev brand mark — a terminal window: rounded boundary with the
+ * `>_` prompt, echoing the terminal logo (public/brand/omnidev-logo.png).
+ * One component, used on every surface, so the brand reads identically in
+ * the landing nav, the cockpit, and every module page. `currentColor` lets
+ * it inherit the surrounding text color.
  */
 export function LogoMark({
   size = 26,
@@ -35,7 +36,19 @@ export function LogoMark({
         strokeWidth="1.6"
         opacity="0.85"
       />
-      <rect x="8" y="8" width="8" height="8" rx="2.4" fill="currentColor" />
+      <path
+        d="M7.6 8.9l3.1 3.1-3.1 3.1"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M12.9 15.1h3.7"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

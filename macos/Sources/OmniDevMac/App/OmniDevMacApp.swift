@@ -58,8 +58,8 @@ struct OmniDevMacApp: App {
 
                 Divider()
 
-                Button("Open Cockpit in Browser") {
-                    stackManager.openInBrowser(path: "/app")
+                Button("Open API Docs") {
+                    stackManager.openAPIDocs()
                 }
                 .keyboardShortcut("b", modifiers: [.command, .shift])
             }

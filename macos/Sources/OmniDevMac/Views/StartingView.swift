@@ -5,9 +5,7 @@ struct StartingView: View {
 
     var body: some View {
         VStack(spacing: 18) {
-            Image(systemName: manager.state.systemImage)
-                .font(.system(size: 42, weight: .semibold))
-                .foregroundStyle(manager.state == .ready ? .green : .blue)
+            LogoMarkView(size: 52)
 
             VStack(spacing: 6) {
                 Text("Starting OmniDev")
@@ -18,10 +16,7 @@ struct StartingView: View {
                     .multilineTextAlignment(.center)
             }
 
-            HStack(spacing: 10) {
-                ServiceReadinessLabel(title: "FastAPI", isReady: manager.backendHealthy)
-                ServiceReadinessLabel(title: "Next.js", isReady: manager.frontendReady)
-            }
+            ServiceReadinessLabel(title: "FastAPI engine", isReady: manager.backendHealthy)
 
             HStack {
                 Button("Restart Services") {
