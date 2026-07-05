@@ -18,6 +18,7 @@ FAILURES: list[dict[str, str]] = []
 EXPECTED_ENDPOINTS = [
     "GET /health",
     "POST /api/devops/command",
+    "POST /api/devops/plan",
     "POST /api/scraper/scrape",
     "POST /api/vision/analyze",
     "GET /api/storage/buckets",

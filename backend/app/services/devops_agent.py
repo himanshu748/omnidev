@@ -940,6 +940,38 @@ async def summarise(action: str, raw_result: Any) -> str:
 
 
 # ── Public orchestrator ─────────────────────────────────────
+async def plan_command(message: str) -> dict:
+    """Parse a natural-language command and return the boto3 plan without executing.
+
+    Backs the MCP `aws_plan` tool: external agents may inspect what OmniDev
+    would do, but execution — and destructive-action approval — stays in the
+    OmniDev UI. Never dispatches, so nothing is audit-logged here.
+    """
+    intent = await parse_intent(message)
+    plan = build_plan(intent)
+
+    if intent.action == "unsupported" or plan is None:
+        return {
+            "action": intent.action,
+            "params": intent.params,
+            "plan": None,
+            "summary": (
+                "Sorry, that action is not currently supported. "
+                "Supported services: EC2, S3, VPC, IAM, RDS, CloudWatch, Lambda."
+            ),
+        }
+
+    return {
+        "action": intent.action,
+        "params": intent.params,
+        "plan": plan,
+        "summary": (
+            f"Plan preview for {intent.action}. Nothing was executed — "
+            "run it from the OmniDev DevOps module to apply."
+        ),
+    }
+
+
 async def run_command(message: str, confirm_destructive: bool = False) -> dict:
     intent = await parse_intent(message)
     plan = build_plan(intent)

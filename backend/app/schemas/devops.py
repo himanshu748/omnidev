@@ -23,6 +23,18 @@ class ParsedIntent(BaseModel):
     is_destructive: bool = False
 
 
+# ── Plan preview (no execution) ─────────────────────────────
+class DevOpsPlanRequest(BaseModel):
+    message: str = Field(..., min_length=1, examples=["Stop instance i-123"])
+
+
+class DevOpsPlanResponse(BaseModel):
+    action: str
+    params: dict[str, Any] = {}
+    plan: dict[str, Any] | None = None
+    summary: str = ""
+
+
 # ── Response ────────────────────────────────────────────────
 class DevOpsCommandResponse(BaseModel):
     action: str

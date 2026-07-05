@@ -187,6 +187,71 @@ async def test_run_command_summarise_failure_falls_back(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_plan_command_never_dispatches(monkeypatch):
+    async def fake_parse(message: str):
+        return ParsedIntent(
+            action="terminate_ec2",
+            params={"instance_ids": ["i-123"]},
+            is_destructive=True,
+        )
+
+    async def fail_dispatch(intent):
+        raise AssertionError("plan_command must never dispatch")
+
+    monkeypatch.setattr(devops_agent, "parse_intent", fake_parse)
+    monkeypatch.setattr(devops_agent, "_dispatch", fail_dispatch)
+    result = await devops_agent.plan_command("Terminate instance i-123")
+    assert result["plan"]["service"] == "ec2"
+    assert result["plan"]["destructive"] is True
+    assert "Nothing was executed" in result["summary"]
+
+
+@pytest.mark.asyncio
+async def test_plan_command_skips_read_only_execution(monkeypatch):
+    async def fake_parse(message: str):
+        return ParsedIntent(action="list_ec2", params={}, is_destructive=False)
+
+    async def fail_dispatch(intent):
+        raise AssertionError("plan_command must never dispatch, even read-only")
+
+    monkeypatch.setattr(devops_agent, "parse_intent", fake_parse)
+    monkeypatch.setattr(devops_agent, "_dispatch", fail_dispatch)
+    result = await devops_agent.plan_command("List instances")
+    assert result["plan"]["read_only"] is True
+
+
+@pytest.mark.asyncio
+async def test_plan_command_unsupported_has_no_plan(monkeypatch):
+    async def fake_parse(message: str):
+        return ParsedIntent(action="unsupported", params={}, is_destructive=False)
+
+    monkeypatch.setattr(devops_agent, "parse_intent", fake_parse)
+    result = await devops_agent.plan_command("Make me a coffee")
+    assert result["plan"] is None
+    assert "not currently supported" in result["summary"]
+
+
+@pytest.mark.asyncio
+async def test_devops_plan_endpoint(client, monkeypatch, coverage_tracker):
+    monkeypatch.setattr(settings, "gemini_api_key", "test-gemini-key")
+
+    async def fake_plan_command(message: str):
+        return {
+            "action": "stop_ec2",
+            "params": {"instance_ids": ["i-123"]},
+            "plan": {"service": "ec2", "operation": "stop_instances", "destructive": True},
+            "summary": "Plan preview for stop_ec2. Nothing was executed.",
+        }
+
+    monkeypatch.setattr(devops_router, "plan_command", fake_plan_command)
+    resp = await client.post("/api/devops/plan", json={"message": "Stop instance i-123"})
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["plan"]["destructive"] is True
+    coverage_tracker("POST /api/devops/plan")
+
+
+@pytest.mark.asyncio
 async def test_devops_endpoint(client, monkeypatch, coverage_tracker):
     monkeypatch.setattr(settings, "gemini_api_key", "test-gemini-key")
     monkeypatch.setattr(settings, "aws_access_key_id", "test-access-key")
