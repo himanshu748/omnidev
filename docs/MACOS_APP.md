@@ -9,9 +9,10 @@ This is a developer-friendly native app for a local checkout, not yet a signed p
 | Surface | What it does |
 |---------|--------------|
 | Command Center | Engine status, active provider/model, local model manager (one-click pull with progress), module launcher. |
-| Chat | Token streaming from `POST /api/chat/stream` via URLSession — watch the local model think. |
+| Chat | Token streaming from `POST /api/chat/stream` via URLSession — with SQLite conversation memory ("now add auth" works) and a Tools toggle that lets the model call MCP tools; every call renders in the transcript. |
+| MCP Marketplace | Install curated MCP servers (Filesystem, Fetch, Memory, Time, Git, Sequential Thinking) the local model can use as tools. Catalog-only, home-scoped paths, minimal child environment. |
 | DevOps Agent | Natural-language AWS commands with the enriched boto3 plan preview; destructive actions require an explicit in-app confirmation. |
-| Code Gen | Generate validated project files, browse/copy them, refine iteratively, preview HTML output in an isolated `WKWebView` (no base URL, non-persistent data store), and save files to a folder you choose. |
+| Code Gen | Generate validated project files, browse/copy them, refine iteratively, preview HTML output in an isolated `WKWebView` (no base URL, non-persistent data store), save files to a folder you choose, or "Land in Repo" — commit under `~/OmniDev/projects/<name>` (no remotes, never pushed). |
 | Web Scraper | All extract modes (text/markdown/article/links/metadata/html/screenshot/pdf) plus the bounded same-domain crawl — every navigation SSRF-guarded by the backend. |
 | Vision Lab | Analyze/OCR/custom-prompt a local image (10 MB cap, matching the backend). |
 | Cloud Storage | Browse S3 buckets/objects, upload, presigned-URL download, confirmed delete. |

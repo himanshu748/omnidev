@@ -230,16 +230,35 @@ async def stream_text(
     temperature: float | None = None,
     max_tokens: int = 2048,
 ) -> AsyncIterator[str]:
-    """
-    Yield text deltas as the active provider generates them.
+    """Yield text deltas for a single-turn prompt (see stream_chat)."""
+    async for delta in stream_chat(
+        _ollama_messages(None, prompt),
+        system=system,
+        temperature=temperature,
+        max_tokens=max_tokens,
+    ):
+        yield delta
 
-    Ollama streams via /api/chat (stream=True); Gemini streams via the SDK's
-    generate_content_stream. Callers wrap this in an SSE/NDJSON response.
+
+async def stream_chat(
+    messages: list[dict[str, Any]],
+    *,
+    system: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int = 2048,
+) -> AsyncIterator[str]:
+    """
+    Yield text deltas for a multi-turn conversation.
+
+    `messages` are {"role": "user"|"assistant", "content": str} turns, oldest
+    first. Ollama streams via /api/chat (stream=True); Gemini streams via the
+    SDK's generate_content_stream. Callers wrap this in an NDJSON response.
     """
     if get_provider() == "ollama":
+        full_messages = ([{"role": "system", "content": system}] if system else []) + messages
         payload = {
             "model": settings.ollama_model,
-            "messages": _ollama_messages(system, prompt),
+            "messages": full_messages,
             "stream": True,
             "options": {"num_predict": max_tokens},
         }
@@ -284,10 +303,18 @@ async def stream_text(
     if temperature is not None:
         config.temperature = temperature
 
+    contents = [
+        types.Content(
+            role="model" if m["role"] == "assistant" else "user",
+            parts=[types.Part.from_text(text=m["content"])],
+        )
+        for m in messages
+    ]
+
     def _open_stream():
         return get_client().models.generate_content_stream(
             model=settings.gemini_model,
-            contents=prompt,
+            contents=contents,
             config=config,
         )
 
@@ -301,6 +328,54 @@ async def stream_text(
         text = getattr(chunk, "text", "") or ""
         if text:
             yield text
+
+
+# ── Tool-calling chat round (local provider only) ───────────
+async def ollama_chat_round(
+    messages: list[dict[str, Any]],
+    *,
+    tools: list[dict[str, Any]],
+    temperature: float | None = None,
+    max_tokens: int = 2048,
+) -> dict[str, Any]:
+    """
+    One non-streaming /api/chat round with tool definitions.
+
+    Returns the raw `message` dict; callers inspect `tool_calls` and loop.
+    Tool calling is a local-provider feature (Gemma 4 handles tools well);
+    Gemini callers use generate_structured instead.
+    """
+    if get_provider() != "ollama":
+        raise AIConfigurationError(
+            "MCP tool calling runs on the local provider. Set AI_PROVIDER=ollama."
+        )
+    model = settings.ollama_model
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": messages,
+        "stream": False,
+        "tools": tools,
+        "options": {"num_predict": max_tokens},
+    }
+    if temperature is not None:
+        payload["options"]["temperature"] = temperature
+
+    url = settings.ollama_base_url.rstrip("/") + "/api/chat"
+    try:
+        resp = await _get_ollama_client().post(url, json=payload)
+    except httpx.HTTPError as exc:
+        raise AIConfigurationError(
+            f"Cannot reach Ollama at {settings.ollama_base_url}. "
+            + OLLAMA_INSTALL_HINT.format(model=model)
+        ) from exc
+    if resp.status_code >= 400:
+        detail = ""
+        try:
+            detail = resp.json().get("error", "")
+        except Exception:
+            detail = resp.text[:200]
+        raise AIResponseError(f"Ollama request failed ({resp.status_code}): {detail}")
+    return resp.json().get("message") or {}
 
 
 # ── Structured generation ───────────────────────────────────

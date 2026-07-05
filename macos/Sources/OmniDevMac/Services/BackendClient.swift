@@ -89,16 +89,47 @@ struct BackendClient {
         }
     }
 
-    /// Stream chat completion deltas for a prompt.
-    func chatStream(message: String) -> AsyncThrowingStream<String, Error> {
-        streamNDJSON(
-            path: "api/chat/stream",
-            body: ["message": message]
-        ) { object in
+    enum ChatEvent {
+        case sessionId(String)
+        case delta(String)
+        case toolCall(tool: String, arguments: String)
+        case toolResult(tool: String, result: String)
+    }
+
+    /// Stream chat events for a prompt: session id first, then deltas and
+    /// (with `useTools`) MCP tool activity.
+    func chatStream(
+        message: String,
+        sessionId: String?,
+        useTools: Bool
+    ) -> AsyncThrowingStream<ChatEvent, Error> {
+        var body: [String: Any] = ["message": message, "use_tools": useTools]
+        if let sessionId {
+            body["session_id"] = sessionId
+        }
+        return streamNDJSON(path: "api/chat/stream", body: body) { object in
             if let message = object["error"] as? String {
                 throw BackendError.stream(message)
             }
-            return object["delta"] as? String
+            if let id = object["session_id"] as? String {
+                return .sessionId(id)
+            }
+            if let delta = object["delta"] as? String {
+                return .delta(delta)
+            }
+            if let call = object["tool_call"] as? [String: Any] {
+                let arguments = (call["arguments"] as? [String: Any])
+                    .flatMap { try? JSONSerialization.data(withJSONObject: $0) }
+                    .flatMap { String(data: $0, encoding: .utf8) } ?? ""
+                return .toolCall(tool: call["tool"] as? String ?? "?", arguments: arguments)
+            }
+            if let result = object["tool_result"] as? [String: Any] {
+                return .toolResult(
+                    tool: result["tool"] as? String ?? "?",
+                    result: result["result"] as? String ?? ""
+                )
+            }
+            return nil
         }
     }
 

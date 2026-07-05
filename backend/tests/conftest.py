@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 from app.config import settings
-from app.routers import chat, codegen, devops, location, models, preview, scraper, storage, vision
+from app.routers import chat, codegen, devops, git, location, mcp, models, preview, scraper, storage, vision
 
 START_TIME = time.time()
 COVERED: set[str] = set()
@@ -37,6 +37,12 @@ EXPECTED_ENDPOINTS = [
     "POST /api/chat/stream",
     "POST /api/codegen/refine",
     "POST /api/scraper/crawl",
+    "GET /api/chat/sessions",
+    "POST /api/git/land",
+    "GET /api/git/status",
+    "GET /api/mcp/catalog",
+    "GET /api/mcp/servers",
+    "POST /api/mcp/servers",
 ]
 
 
@@ -62,6 +68,8 @@ def create_app() -> FastAPI:
     app.include_router(preview.router, prefix="/api/preview", tags=["Site Preview"])
     app.include_router(models.router, prefix="/api/models", tags=["Models"])
     app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
+    app.include_router(git.router, prefix="/api/git", tags=["Git Landing"])
+    app.include_router(mcp.router, prefix="/api/mcp", tags=["MCP Marketplace"])
     app.state.browser = object()
 
     @app.get("/health", tags=["System"])
@@ -82,6 +90,14 @@ def create_app() -> FastAPI:
         }
 
     return app
+
+
+@pytest.fixture(autouse=True)
+def _isolated_local_data(tmp_path, monkeypatch):
+    """Keep chat sessions, MCP config, and git landings out of the real
+    ~/.omnidev and ~/OmniDev during tests."""
+    monkeypatch.setattr(settings, "data_dir", str(tmp_path / "data"))
+    monkeypatch.setattr(settings, "land_root", str(tmp_path / "projects"))
 
 
 @pytest.fixture(scope="session")

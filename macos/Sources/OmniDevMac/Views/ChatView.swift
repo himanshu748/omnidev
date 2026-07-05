@@ -1,12 +1,16 @@
 import SwiftUI
 
 /// Native streaming chat against the local model — tokens render live from
-/// `POST /api/chat/stream`, no webview involved.
+/// `POST /api/chat/stream`. Conversations persist via SQLite sessions, and
+/// the model can call MCP tools when the Tools toggle is on.
 struct ChatView: View {
     @ObservedObject var manager: LocalStackManager
     @State private var messages: [ChatMessage] = []
     @State private var draft = ""
     @State private var isStreaming = false
+    @State private var sessionId: String?
+    @State private var toolsEnabled = false
+    @State private var activeStream: Task<Void, Never>?
     @FocusState private var inputFocused: Bool
 
     var body: some View {
@@ -20,6 +24,16 @@ struct ChatView: View {
         }
         .background(.background)
         .navigationTitle("Chat")
+        .toolbar {
+            ToolbarItem {
+                Button {
+                    newChat()
+                } label: {
+                    Label("New Chat", systemImage: "square.and.pencil")
+                }
+                .disabled(messages.isEmpty)
+            }
+        }
         .onAppear {
             inputFocused = true
         }
@@ -28,13 +42,16 @@ struct ChatView: View {
     private var emptyState: some View {
         VStack(spacing: 14) {
             Spacer()
-            LogoMarkView(size: 44, color: .omniAccent.opacity(0.9))
+            LogoMarkView(size: 44)
             Text("Ask OmniDev anything")
                 .font(.title3.weight(.semibold))
             Text(manager.aiModel.isEmpty
                  ? "Streams from the local engine — nothing leaves your Mac."
                  : "Streams from \(manager.aiModel) — nothing leaves your Mac.")
                 .font(.callout)
+                .foregroundStyle(.secondary)
+            Text("Conversations are remembered, so follow-ups like “now add auth” work.")
+                .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
         }
@@ -62,6 +79,12 @@ struct ChatView: View {
 
     private var inputBar: some View {
         HStack(spacing: 10) {
+            Toggle(isOn: $toolsEnabled) {
+                Image(systemName: "wrench.and.screwdriver")
+            }
+            .toggleStyle(.button)
+            .help("Let the model call tools from enabled MCP servers")
+
             TextField("Message the local model…", text: $draft, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1...5)
@@ -88,7 +111,12 @@ struct ChatView: View {
         !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isStreaming
     }
 
-    @State private var activeStream: Task<Void, Never>?
+    private func newChat() {
+        activeStream?.cancel()
+        isStreaming = false
+        messages = []
+        sessionId = nil
+    }
 
     private func send() {
         if isStreaming {
@@ -104,20 +132,60 @@ struct ChatView: View {
         isStreaming = true
 
         let client = manager.backendClient
+        let currentSession = sessionId
+        let useTools = toolsEnabled
         activeStream = Task {
             do {
-                for try await delta in client.chatStream(message: prompt) {
-                    messages[messages.count - 1].text += delta
+                let stream = client.chatStream(
+                    message: prompt, sessionId: currentSession, useTools: useTools
+                )
+                for try await event in stream {
+                    switch event {
+                    case .sessionId(let id):
+                        sessionId = id
+                    case .delta(let delta):
+                        appendToAnswer(delta)
+                    case .toolCall(let tool, let arguments):
+                        insertBeforeAnswer(ChatMessage(
+                            role: .tool,
+                            text: arguments.isEmpty || arguments == "{}"
+                                ? "⚙ \(tool)" : "⚙ \(tool) \(arguments)"
+                        ))
+                    case .toolResult(let tool, let result):
+                        insertBeforeAnswer(ChatMessage(
+                            role: .tool,
+                            text: "→ \(tool): \(result.prefix(400))"
+                        ))
+                    }
                 }
             } catch is CancellationError {
                 // Stopped by the user; keep the partial answer.
             } catch {
-                if messages[messages.count - 1].text.isEmpty {
-                    messages[messages.count - 1].text = "⚠︎ \(error.localizedDescription)"
-                    messages[messages.count - 1].isError = true
+                if let index = answerIndex(), messages[index].text.isEmpty {
+                    messages[index].text = "⚠︎ \(error.localizedDescription)"
+                    messages[index].isError = true
                 }
             }
             isStreaming = false
+        }
+    }
+
+    /// Index of the trailing (in-progress) assistant message.
+    private func answerIndex() -> Int? {
+        messages.lastIndex { $0.role == .assistant }
+    }
+
+    private func appendToAnswer(_ delta: String) {
+        if let index = answerIndex() {
+            messages[index].text += delta
+        }
+    }
+
+    private func insertBeforeAnswer(_ message: ChatMessage) {
+        if let index = answerIndex() {
+            messages.insert(message, at: index)
+        } else {
+            messages.append(message)
         }
     }
 }
@@ -126,6 +194,7 @@ struct ChatMessage: Identifiable {
     enum Role {
         case user
         case assistant
+        case tool
     }
 
     let id = UUID()
@@ -148,22 +217,34 @@ private struct ChatBubble: View {
                         .padding(4)
                 } else {
                     Text(message.text)
-                        .font(.body)
-                        .foregroundStyle(message.isError ? AnyShapeStyle(.orange) : AnyShapeStyle(.primary))
+                        .font(message.role == .tool ? .caption.monospaced() : .body)
+                        .foregroundStyle(bubbleForeground)
                         .textSelection(.enabled)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(
-                message.role == .user
-                    ? AnyShapeStyle(Color.omniAccent.opacity(0.22))
-                    : AnyShapeStyle(.regularMaterial),
-                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
-            )
+            .padding(.horizontal, message.role == .tool ? 10 : 14)
+            .padding(.vertical, message.role == .tool ? 6 : 10)
+            .background(bubbleBackground, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
 
-            if message.role == .assistant { Spacer(minLength: 60) }
+            if message.role != .user { Spacer(minLength: 60) }
+        }
+    }
+
+    private var bubbleForeground: AnyShapeStyle {
+        if message.isError { return AnyShapeStyle(.orange) }
+        if message.role == .tool { return AnyShapeStyle(.secondary) }
+        return AnyShapeStyle(.primary)
+    }
+
+    private var bubbleBackground: AnyShapeStyle {
+        switch message.role {
+        case .user:
+            return AnyShapeStyle(Color.omniAccent.opacity(0.22))
+        case .assistant:
+            return AnyShapeStyle(.regularMaterial)
+        case .tool:
+            return AnyShapeStyle(.quaternary.opacity(0.5))
         }
     }
 }

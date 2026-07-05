@@ -13,6 +13,7 @@ struct CodeGenView: View {
     @State private var selectedPath: String?
     @State private var showPreview = false
     @State private var saveMessage: String?
+    @State private var landName = ""
 
     private static let frameworks = [
         "react", "next", "streamlit", "node", "express", "python", "fastapi",
@@ -130,10 +131,25 @@ struct CodeGenView: View {
                         showPreview = true
                     }
                 }
+
+                Divider().frame(height: 18)
+
+                TextField("repo name (e.g. todo-app)", text: $landName)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(width: 190)
+                Button("Land in Repo") {
+                    land(result)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.omniAccent)
+                .disabled(landName.trimmingCharacters(in: .whitespaces).isEmpty)
+                .help("Writes validated files under ~/OmniDev/projects/<name> and commits them")
+
                 if let saveMessage {
                     Text(saveMessage)
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
         }
@@ -180,6 +196,23 @@ struct CodeGenView: View {
             return result.files.first { $0.path == result.entry }
         }
         return result.files.first { $0.path.hasSuffix(".html") }
+    }
+
+    private func land(_ result: BackendClient.CodeGenResult) {
+        let name = landName.trimmingCharacters(in: .whitespaces).lowercased()
+        let client = manager.backendClient
+        saveMessage = "Landing…"
+        Task {
+            do {
+                let landed = try await client.landProject(
+                    name: name, files: result.files, message: "Land \(name) from OmniDev Code Gen"
+                )
+                saveMessage = "\(landed.message) → \(landed.path) @ \(landed.commit)"
+                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: landed.path)])
+            } catch {
+                saveMessage = "Landing failed: \(error.localizedDescription)"
+            }
+        }
     }
 
     private func saveToFolder(_ result: BackendClient.CodeGenResult) {

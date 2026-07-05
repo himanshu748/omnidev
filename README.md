@@ -74,6 +74,8 @@ Then, inside a Claude Code session:
 
 The server is a thin stdio bridge to the running backend (set `OMNIDEV_BACKEND_URL` if yours isn't on `http://127.0.0.1:8000`). From `backend/` you can also run it directly with `python -m app.mcp` or `make mcp`.
 
+MCP works in both directions: the app's **MCP Marketplace** installs curated servers (Filesystem, Fetch, Memory, Time, Git, Sequential Thinking) whose tools Gemma 4 calls from chat — flip the Tools toggle and watch every call land in the transcript. Only the curated catalog can be installed, folder access is scoped to directories you pick inside your home folder, and server processes never see backend credentials.
+
 ## The macOS App
 
 OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI — Command Center, streaming Chat, and all five modules are native views over the local engine (port 8010). The app supervises only the FastAPI sidecar; Node/Next.js is not needed to run it. First launch opens a native onboarding window that checks Ollama and pulls `gemma4:e4b` with live progress, a menu-bar extra tracks engine health, and Settings (⌘,) controls provider, read-only DevOps mode, and the engine port.
@@ -219,6 +221,9 @@ All backend routes are served from `http://localhost:8000` by default (`8010` un
 | `GET` | `/health` | Service health check; reports active AI provider and model. |
 | `POST` | `/api/devops/command` | Natural-language AWS command; destructive operations require `confirm_destructive: true`. |
 | `POST` | `/api/devops/plan` | Plan preview for a natural-language AWS command — never executes (used by the MCP `aws_plan` tool). |
+| `POST` | `/api/chat/stream` | Streaming chat with SQLite session memory (`session_id`) and optional MCP tool calling (`use_tools`). |
+| `GET` | `/api/mcp/catalog` | Curated MCP server catalog; `/api/mcp/servers` CRUD + per-server tool listing. |
+| `POST` | `/api/git/land` | Commit a validated generated project under `~/OmniDev/projects/<slug>` — no shell, no hooks, no remotes. |
 | `POST` | `/api/codegen/generate` | Returns validated generated files and instructions. Backend does not execute generated code. |
 | `POST` | `/api/scraper/scrape` | Browser-based extraction for text, HTML, screenshots, links, metadata, and PDFs. |
 | `POST` | `/api/preview/check` | Captures page preview and basic metadata. |

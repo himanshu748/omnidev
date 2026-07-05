@@ -65,6 +65,8 @@ struct ContentView: View {
                 VisionView(manager: manager)
             case .storage:
                 StorageView(manager: manager)
+            case .mcp:
+                MCPMarketplaceView(manager: manager)
             }
         }
     }

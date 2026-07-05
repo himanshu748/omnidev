@@ -43,6 +43,12 @@ class Settings(BaseSettings):
     # When set, executed DevOps actions are appended as JSON lines.
     audit_log_path: str = ""
 
+    # ── Local data (sessions, MCP config) ───────────────────
+    # Chat history and MCP server config live here, outside the repo.
+    data_dir: str = "~/.omnidev"
+    # Codegen "Land in repo" writes ONLY under this root.
+    land_root: str = "~/OmniDev/projects"
+
     # ── IPInfo ──────────────────────────────────────────────
     ipinfo_token: str = ""
 

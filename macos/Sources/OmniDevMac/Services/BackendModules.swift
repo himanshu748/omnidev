@@ -168,6 +168,113 @@ extension BackendClient {
         )
     }
 
+    // MARK: - Git landing
+
+    struct LandResult: Decodable {
+        let path: String
+        let commit: String
+        let filesWritten: Int
+        let message: String
+    }
+
+    func landProject(
+        name: String,
+        files: [GeneratedFile],
+        message: String
+    ) async throws -> LandResult {
+        try await post(
+            "api/git/land",
+            body: [
+                "name": name,
+                "files": files.map { ["path": $0.path, "content": $0.content] },
+                "message": message,
+            ]
+        )
+    }
+
+    // MARK: - MCP marketplace
+
+    struct MCPCatalogParam: Decodable, Identifiable {
+        let name: String
+        let type: String
+        let description: String
+
+        var id: String { name }
+    }
+
+    struct MCPCatalogEntry: Decodable, Identifiable {
+        let id: String
+        let name: String
+        let description: String
+        let capabilities: String
+        let runtime: String
+        let runtimeAvailable: Bool
+        let params: [MCPCatalogParam]
+    }
+
+    private struct MCPCatalog: Decodable {
+        let entries: [MCPCatalogEntry]
+    }
+
+    struct MCPServer: Decodable, Identifiable {
+        let name: String
+        let catalogId: String
+        let params: [String: String]
+        let enabled: Bool
+
+        var id: String { name }
+    }
+
+    private struct MCPServerList: Decodable {
+        let servers: [MCPServer]
+    }
+
+    struct MCPTool: Decodable, Identifiable {
+        let name: String
+        let description: String
+
+        var id: String { name }
+    }
+
+    private struct MCPToolList: Decodable {
+        let tools: [MCPTool]
+    }
+
+    func mcpCatalog() async throws -> [MCPCatalogEntry] {
+        let catalog: MCPCatalog = try await get("api/mcp/catalog")
+        return catalog.entries
+    }
+
+    func mcpServers() async throws -> [MCPServer] {
+        let list: MCPServerList = try await get("api/mcp/servers")
+        return list.servers
+    }
+
+    func mcpAddServer(catalogId: String, params: [String: String]) async throws -> MCPServer {
+        try await post("api/mcp/servers", body: ["catalog_id": catalogId, "params": params])
+    }
+
+    func mcpRemoveServer(_ name: String) async throws {
+        struct Ack: Decodable { let deleted: String }
+        let _: Ack = try await send("DELETE", "api/mcp/servers/\(name)")
+    }
+
+    func mcpSetEnabled(_ name: String, enabled: Bool) async throws {
+        var request = URLRequest(url: baseURL.appendingPathComponent("api/mcp/servers/\(name)"))
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONSerialization.data(withJSONObject: ["enabled": enabled])
+        let (data, response) = try await URLSession.shared.data(for: request)
+        if let http = response as? HTTPURLResponse, http.statusCode != 200 {
+            throw BackendError.http(http.statusCode, String(data: data, encoding: .utf8) ?? "")
+        }
+    }
+
+    func mcpTools(server: String) async throws -> [MCPTool] {
+        let list: MCPToolList = try await get("api/mcp/servers/\(server)/tools")
+        return list.tools
+    }
+
     // MARK: - Storage
 
     struct Bucket: Decodable, Identifiable {

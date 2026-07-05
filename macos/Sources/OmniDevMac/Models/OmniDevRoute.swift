@@ -8,11 +8,12 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
     case scraper
     case vision
     case storage
+    case mcp
 
     var id: String { rawValue }
 
     /// The feature modules, excluding the cockpit and chat surfaces.
-    static let modules: [OmniDevRoute] = [.devops, .codegen, .scraper, .vision, .storage]
+    static let modules: [OmniDevRoute] = [.devops, .codegen, .scraper, .vision, .storage, .mcp]
 
     var title: String {
         switch self {
@@ -30,6 +31,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
             return "Vision Lab"
         case .storage:
             return "Cloud Storage"
+        case .mcp:
+            return "MCP Marketplace"
         }
     }
 
@@ -49,6 +52,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
             return "Image analysis and OCR"
         case .storage:
             return "S3 buckets and objects"
+        case .mcp:
+            return "Tools for the local model"
         }
     }
 
@@ -68,6 +73,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
             return "eye"
         case .storage:
             return "externaldrive"
+        case .mcp:
+            return "puzzlepiece.extension"
         }
     }
 }
