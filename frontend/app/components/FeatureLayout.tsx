@@ -3,14 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Code2, Database, Eye, Globe, TerminalSquare } from "lucide-react";
 import { API_BASE, isHostedWithoutApiConfig } from "@/lib/api";
+import { Logo } from "@/app/components/Logo";
 
 const FEATURE_LINKS = [
-  { label: "DevOps Agent", href: "/devops", emoji: "🤖" },
-  { label: "Code Gen", href: "/codegen", emoji: "⚡" },
-  { label: "Web Scraper", href: "/scraper", emoji: "🕷️" },
-  { label: "Vision Lab", href: "/vision", emoji: "🖼️" },
-  { label: "Cloud Storage", href: "/storage", emoji: "📦" },
+  { label: "DevOps Agent", href: "/devops", icon: TerminalSquare },
+  { label: "Code Gen", href: "/codegen", icon: Code2 },
+  { label: "Web Scraper", href: "/scraper", icon: Globe },
+  { label: "Vision Lab", href: "/vision", icon: Eye },
+  { label: "Cloud Storage", href: "/storage", icon: Database },
 ];
 
 type EndpointInfo = {
@@ -42,17 +44,17 @@ export default function FeatureLayout({
     <div className="featureApp">
       <header className="featureHeader">
         <div className="featureHeaderInner">
-          <Link href="/" className="featureLogo">
-            Omni<span style={{ color: "var(--accent)" }}>Dev</span>
+          <Link href="/" className="featureLogo" aria-label="OmniDev home">
+            <Logo size={24} />
           </Link>
           <nav className="featureNav">
-            {FEATURE_LINKS.map(({ href, label, emoji }) => (
+            {FEATURE_LINKS.map(({ href, label, icon: Icon }) => (
               <Link
                 key={href}
                 href={href}
                 className={`featureNavLink${pathname === href ? " active" : ""}`}
               >
-                <span aria-hidden>{emoji}</span> {label}
+                <Icon size={15} aria-hidden="true" /> {label}
               </Link>
             ))}
           </nav>

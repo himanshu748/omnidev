@@ -20,6 +20,7 @@ import {
   WifiOff,
 } from "lucide-react";
 import Reveal from "./components/Reveal";
+import { LogoMark } from "./components/Logo";
 
 const displayFont = Space_Grotesk({
   subsets: ["latin"],
@@ -134,7 +135,7 @@ export default function LandingPage() {
       <header className="lpNav">
         <div className="lpNavInner">
           <Link href="/" className="lpBrand" aria-label="OmniDev home">
-            <Image src="/brand/omnidev-logo.png" alt="" width={30} height={30} priority />
+            <LogoMark size={26} style={{ color: "var(--lp-accent)" }} />
             <span>OmniDev</span>
           </Link>
           <nav className="lpNavLinks" aria-label="Landing navigation">
@@ -439,7 +440,7 @@ export default function LandingPage() {
       <footer className="lpFooter">
         <div className="lpFooterInner">
           <div className="lpFooterBrand">
-            <Image src="/brand/omnidev-logo.png" alt="" width={24} height={24} />
+            <LogoMark size={22} style={{ color: "var(--lp-accent)" }} />
             <span>OmniDev, MIT licensed.</span>
           </div>
           <div className="lpFooterLinks">

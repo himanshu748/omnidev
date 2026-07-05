@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { API_BASE } from "@/lib/api";
 import ModelManager from "@/app/components/ModelManager";
+import { LogoMark } from "@/app/components/Logo";
 import "./cockpit.css";
 
 type StepStatus = "completed" | "active" | "pending";
@@ -467,14 +468,7 @@ export default function HomePage() {
     <main className="cockpitShell">
       <aside className="cockpitSidebar" aria-label="OmniDev navigation">
         <div className="cockpitBrand">
-          <Image
-            className="brandMark"
-            src="/brand/omnidev-logo.png"
-            alt=""
-            width={36}
-            height={36}
-            priority
-          />
+          <LogoMark size={30} style={{ color: "var(--cockpit-blue)" }} />
           <div>
             <strong>OmniDev</strong>
             <span>AI Developer Cockpit</span>
