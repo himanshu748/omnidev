@@ -80,16 +80,29 @@ final class LocalStackManager: ObservableObject {
     }
 
     private func runLaunchScript() async {
+        var environment = [
+            "OMNIDEV_BACKEND_PORT": backendPort,
+            // Settings-window values; inherited by the uvicorn sidecar,
+            // where they take precedence over backend/.env.
+            "AI_PROVIDER": AppSettings.aiProvider,
+            "DEVOPS_READ_ONLY": AppSettings.devopsReadOnly ? "1" : "0",
+        ]
+        // Only override AWS when Settings holds a full key pair, so an empty
+        // form still falls through to the boto3 credential chain (~/.aws).
+        let awsKey = AppSettings.awsAccessKeyId
+        let awsSecret = AppSettings.awsSecretAccessKey
+        if !awsKey.isEmpty && !awsSecret.isEmpty {
+            environment["AWS_ACCESS_KEY_ID"] = awsKey
+            environment["AWS_SECRET_ACCESS_KEY"] = awsSecret
+        }
+        if !AppSettings.awsRegion.isEmpty {
+            environment["AWS_DEFAULT_REGION"] = AppSettings.awsRegion
+        }
+
         do {
             try await runProcess(
                 rootURL.appendingPathComponent("scripts/macos/launch-omnidev.sh"),
-                environment: [
-                    "OMNIDEV_BACKEND_PORT": backendPort,
-                    // Settings-window values; inherited by the uvicorn sidecar,
-                    // where they take precedence over backend/.env.
-                    "AI_PROVIDER": AppSettings.aiProvider,
-                    "DEVOPS_READ_ONLY": AppSettings.devopsReadOnly ? "1" : "0",
-                ]
+                environment: environment
             )
         } catch {
             state = .failed(error.localizedDescription)

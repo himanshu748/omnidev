@@ -5,6 +5,9 @@ struct SettingsView: View {
     @AppStorage(AppSettings.aiProviderKey) private var aiProvider = AppSettings.defaultAIProvider
     @AppStorage(AppSettings.devopsReadOnlyKey) private var devopsReadOnly = false
     @AppStorage(AppSettings.backendPortKey) private var backendPort = AppSettings.defaultBackendPort
+    @AppStorage(AppSettings.awsAccessKeyIdKey) private var awsAccessKeyId = ""
+    @AppStorage(AppSettings.awsRegionKey) private var awsRegion = AppSettings.defaultAWSRegion
+    @State private var awsSecretAccessKey = AppSettings.awsSecretAccessKey
 
     var body: some View {
         Form {
@@ -27,6 +30,22 @@ struct SettingsView: View {
                 TextField("Backend port", text: $backendPort)
             } header: {
                 Text("Engine Port")
+            }
+
+            Section {
+                TextField("Access key ID", text: $awsAccessKeyId)
+                    .autocorrectionDisabled()
+                SecureField("Secret access key", text: $awsSecretAccessKey)
+                    .onChange(of: awsSecretAccessKey) { newValue in
+                        AppSettings.setAWSSecretAccessKey(newValue)
+                    }
+                TextField("Region", text: $awsRegion, prompt: Text(AppSettings.defaultAWSRegion))
+                    .autocorrectionDisabled()
+                Text("Used by the DevOps Agent and Cloud Storage. Leave the keys empty to use the standard AWS credential chain (~/.aws, SSO, instance role). The secret is stored in your login keychain.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("AWS")
             }
 
             Section {
