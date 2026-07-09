@@ -61,6 +61,10 @@ struct OmniDevMacApp: App {
                     NotificationCenter.default.post(name: .omniDevShowOnboarding, object: nil)
                 }
 
+                Button("Settings…") {
+                    SettingsOpener.open()
+                }
+
                 Button("Check for Updates…") {
                     Task { await UpdateChecker.checkForUpdates() }
                 }
@@ -113,6 +117,10 @@ private struct MenuBarContent: View {
         }
 
         Divider()
+
+        Button("Settings…") {
+            SettingsOpener.open()
+        }
 
         Button("Check for Updates…") {
             Task { await UpdateChecker.checkForUpdates() }

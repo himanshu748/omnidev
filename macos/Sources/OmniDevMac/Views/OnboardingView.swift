@@ -1,4 +1,17 @@
+import AppKit
 import SwiftUI
+
+/// Opens the app's Settings scene from anywhere (onboarding, menus). The
+/// selector name changed in macOS 13, so try both.
+enum SettingsOpener {
+    static func open() {
+        NSApp.activate(ignoringOtherApps: true)
+        if NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil) {
+            return
+        }
+        NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+    }
+}
 
 /// First-run setup: verifies the local engine, Ollama, and the default
 /// model — and pulls the model with live progress, so a new user reaches a
@@ -83,6 +96,18 @@ struct OnboardingView: View {
                         state: .done
                     )
                 }
+
+                OnboardingStep(
+                    title: "AWS — optional",
+                    detail: "The DevOps Agent and Cloud Storage use your AWS credentials. Keys from ~/.aws work automatically; you can also set a key pair in Settings.",
+                    state: .optional
+                ) {
+                    Button("Configure AWS…") {
+                        SettingsOpener.open()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
             }
 
             HStack {
@@ -145,6 +170,7 @@ private struct OnboardingStep<Accessory: View>: View {
         case waiting
         case action
         case done
+        case optional
     }
 
     let title: String
@@ -193,6 +219,7 @@ private struct OnboardingStep<Accessory: View>: View {
         case .waiting: return "clock"
         case .action: return "arrow.down.circle"
         case .done: return "checkmark.circle.fill"
+        case .optional: return "gearshape"
         }
     }
 }
