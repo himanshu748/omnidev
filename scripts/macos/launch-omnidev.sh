@@ -86,6 +86,53 @@ wait_for_url() {
   return 1
 }
 
+
+best_system_python() {
+  local candidates=()
+  if [[ -n "${OMNIDEV_PYTHON:-}" ]]; then
+    candidates+=("$OMNIDEV_PYTHON")
+  fi
+  candidates+=(
+    /opt/homebrew/bin/python3.13 /opt/homebrew/bin/python3.12 /opt/homebrew/bin/python3.11 /opt/homebrew/bin/python3
+    /usr/local/bin/python3.13 /usr/local/bin/python3.12 /usr/local/bin/python3.11 /usr/local/bin/python3
+    /opt/anaconda3/bin/python3
+    "$(command -v python3 || true)"
+  )
+  for candidate in "${candidates[@]}"; do
+    [[ -n "$candidate" && -x "$candidate" ]] || continue
+    if "$candidate" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)' >/dev/null 2>&1; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+ensure_venv() {
+  # Some Python that can already import the app means deps are installed.
+  if python_bin >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "No usable engine Python — bootstrapping backend/.venv (first run can take a few minutes)"
+  local sys_py
+  if ! sys_py="$(best_system_python)"; then
+    log "No Python 3.11+ found. Install one (brew install python) and relaunch OmniDev."
+    return 1
+  fi
+  log "Bootstrap Python: $sys_py"
+  rm -rf "$ROOT_DIR/backend/.venv"
+  {
+    "$sys_py" -m venv "$ROOT_DIR/backend/.venv"
+    "$ROOT_DIR/backend/.venv/bin/pip" install --upgrade pip
+    "$ROOT_DIR/backend/.venv/bin/pip" install -r "$ROOT_DIR/backend/requirements.txt"
+  } >> "$STATE_DIR/bootstrap.log" 2>&1
+  if ! "$ROOT_DIR/backend/.venv/bin/python" -m playwright install chromium >> "$STATE_DIR/bootstrap.log" 2>&1; then
+    log "Playwright Chromium install failed; the scraper will return 503 until it succeeds"
+  fi
+  log "Engine bootstrap complete"
+}
+
 start_backend() {
   if is_http_up "$BACKEND_URL/health"; then
     log "Backend already healthy at $BACKEND_URL"
@@ -112,6 +159,7 @@ start_backend() {
 
 main() {
   log "Launching OmniDev from $ROOT_DIR"
+  ensure_venv
   start_backend
   log "Native app talks to $BACKEND_URL directly"
 

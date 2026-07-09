@@ -11,6 +11,7 @@ MACOS_DIR="$APP_PATH/Contents/MacOS"
 RESOURCES_DIR="$APP_PATH/Contents/Resources"
 BUNDLE_ID="dev.omnidev.app"
 MIN_SYSTEM_VERSION="13.0"
+APP_VERSION="$(sed -n 's/.*static let version = "\(.*\)".*/\1/p' "$MACOS_PROJECT/Sources/OmniDevMac/Support/AppSettings.swift")"
 
 chmod +x "$ROOT_DIR/scripts/macos/launch-omnidev.sh" "$ROOT_DIR/scripts/macos/stop-omnidev.sh"
 swift build --package-path "$MACOS_PROJECT" -c release >/dev/null
@@ -25,6 +26,17 @@ chmod +x "$MACOS_DIR/$APP_NAME"
 # Bundle.module resolves against Contents/Resources inside a .app; without
 # the SwiftPM resource bundle the accessor fatalErrors at launch.
 cp -R "$(dirname "$BUILD_BIN")/OmniDevMac_OmniDevMac.bundle" "$RESOURCES_DIR/"
+
+# Bundle the engine (backend source + launch scripts) so the packaged app
+# self-installs into ~/Library/Application Support/OmniDev on first run.
+ENGINE_DIR="$RESOURCES_DIR/engine"
+mkdir -p "$ENGINE_DIR/scripts/macos"
+rsync -a \
+  --exclude '.venv' --exclude '__pycache__' --exclude '.pytest_cache' \
+  --exclude 'tests' --exclude 'test-results' --exclude '.env' \
+  "$ROOT_DIR/backend/" "$ENGINE_DIR/backend/"
+cp "$ROOT_DIR/scripts/macos/launch-omnidev.sh" "$ROOT_DIR/scripts/macos/stop-omnidev.sh" "$ENGINE_DIR/scripts/macos/"
+chmod +x "$ENGINE_DIR/scripts/macos/"*.sh
 
 ICON_PNG="$ROOT_DIR/macos/Sources/OmniDevMac/Resources/AppIcon.png"
 ICON_FILE=""
@@ -69,7 +81,7 @@ cat > "$APP_CONTENTS/Info.plist" <<PLIST
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleShortVersionString</key>
-  <string>0.3.0</string>
+  <string>$APP_VERSION</string>
   <key>CFBundleVersion</key>
   <string>1</string>
   <key>LSMinimumSystemVersion</key>

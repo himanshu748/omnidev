@@ -1,0 +1,30 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build OmniDev.app
+        run: bash scripts/macos/build-app.sh
+
+      - name: Zip app bundle
+        run: ditto -c -k --keepParent dist/mac/OmniDev.app "dist/OmniDev-${{ github.ref_name }}.zip"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/OmniDev-${{ github.ref_name }}.zip
+          generate_release_notes: true
+          body: |
+            **Install:** unzip and drag `OmniDev.app` to Applications. The build is unsigned, so on first launch right-click → Open (or run `xattr -d com.apple.quarantine /Applications/OmniDev.app`).
+
+            **Requirements:** Python 3.11+ on PATH (`brew install python`). [Ollama](https://ollama.com) for fully-offline AI, or a `GEMINI_API_KEY` for cloud AI. The engine self-installs into `~/Library/Application Support/OmniDev` on first run.

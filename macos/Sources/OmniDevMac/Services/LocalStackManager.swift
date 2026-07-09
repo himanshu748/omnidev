@@ -38,7 +38,7 @@ final class LocalStackManager: ObservableObject {
         guard state != .starting && state != .ready else { return }
         reloadConfiguration()
         state = .starting
-        message = "Starting the FastAPI engine sidecar."
+        message = "Starting the local engine — the first run installs it and can take a few minutes."
 
         Task {
             await runLaunchScript()

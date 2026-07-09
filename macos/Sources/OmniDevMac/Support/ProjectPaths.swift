@@ -24,6 +24,11 @@ enum ProjectPaths {
             }
         }
 
+        // No dev checkout — install the engine bundled inside the .app.
+        if let engineRoot = EngineInstaller.ensureInstalled() {
+            return engineRoot.standardizedFileURL
+        }
+
         return cwd.standardizedFileURL
     }
 }
