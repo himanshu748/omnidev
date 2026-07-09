@@ -22,6 +22,10 @@ mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 cp "$BUILD_BIN" "$MACOS_DIR/$APP_NAME"
 chmod +x "$MACOS_DIR/$APP_NAME"
 
+# Bundle.module resolves against Contents/Resources inside a .app; without
+# the SwiftPM resource bundle the accessor fatalErrors at launch.
+cp -R "$(dirname "$BUILD_BIN")/OmniDevMac_OmniDevMac.bundle" "$RESOURCES_DIR/"
+
 ICON_PNG="$ROOT_DIR/macos/Sources/OmniDevMac/Resources/AppIcon.png"
 ICON_FILE=""
 if [[ -f "$ICON_PNG" ]] && command -v sips >/dev/null 2>&1 && command -v iconutil >/dev/null 2>&1; then

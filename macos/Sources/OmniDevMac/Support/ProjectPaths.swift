@@ -18,8 +18,8 @@ enum ProjectPaths {
 
         for candidate in candidates {
             let backend = candidate.appendingPathComponent("backend")
-            let frontend = candidate.appendingPathComponent("frontend")
-            if fileManager.fileExists(atPath: backend.path) && fileManager.fileExists(atPath: frontend.path) {
+            let launcher = candidate.appendingPathComponent("scripts/macos/launch-omnidev.sh")
+            if fileManager.fileExists(atPath: backend.path) && fileManager.fileExists(atPath: launcher.path) {
                 return candidate.standardizedFileURL
             }
         }
