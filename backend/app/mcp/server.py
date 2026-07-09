@@ -224,7 +224,7 @@ async def list_models() -> str:
 
 @mcp.tool()
 async def pull_model(name: str) -> str:
-    """Pull a local Ollama model (e.g. gemma4:e4b). Blocks until the download
+    """Pull a local Ollama model (e.g. gemma4:12b). Blocks until the download
     finishes; may take several minutes on first pull."""
     last_status = ""
     try:

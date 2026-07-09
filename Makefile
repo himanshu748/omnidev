@@ -27,7 +27,7 @@ backend: ## Run the FastAPI backend (http://localhost:8000)
 
 .PHONY: models
 models: ## Pull the default local model for fully-offline use
-	ollama pull gemma4:e4b
+	ollama pull gemma4:12b
 
 .PHONY: mcp
 mcp: ## Run the MCP server on stdio (register with: claude mcp add omnidev)

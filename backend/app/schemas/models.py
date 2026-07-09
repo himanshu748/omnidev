@@ -40,4 +40,4 @@ class ModelsResponse(BaseModel):
 
 
 class PullModelRequest(BaseModel):
-    name: str = Field(..., min_length=1, max_length=200, description="Model reference, e.g. 'gemma4:e4b'")
+    name: str = Field(..., min_length=1, max_length=200, description="Model reference, e.g. 'gemma4:12b'")

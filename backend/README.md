@@ -3,7 +3,7 @@
 Local-first AI developer cockpit — FastAPI backend.
 
 The AI layer is **provider-agnostic**: it runs fully offline against a local
-[Ollama](https://ollama.com) model (default `gemma4:e4b`) or, optionally,
+[Ollama](https://ollama.com) model (default `gemma4:12b`) or, optionally,
 against Google Gemini. `AI_PROVIDER=auto` (the default) uses Gemini when
 `GEMINI_API_KEY` is set and falls back to local Ollama otherwise — so the
 backend works out of the box with **no API key and no cloud**.
@@ -39,7 +39,7 @@ Open **http://localhost:8000/docs** for interactive API docs.
 ```bash
 # In a separate terminal:
 ollama serve
-ollama pull gemma4:e4b    # one model covers text, structured plans, and vision
+ollama pull gemma4:12b    # one model covers text, structured plans, and vision
 ```
 
 Then run the backend with `AI_PROVIDER=ollama` (or just leave `GEMINI_API_KEY`

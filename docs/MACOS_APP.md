@@ -17,7 +17,7 @@ This is a developer-friendly native app for a local checkout, not yet a signed p
 | Vision Lab | Analyze/OCR/custom-prompt a local image (10 MB cap, matching the backend). |
 | Cloud Storage | Browse S3 buckets/objects, upload, presigned-URL download, confirmed delete. |
 
-First run opens a native onboarding window: it checks the engine, then Ollama, then the default model — and pulls `gemma4:e4b` with live progress. A menu-bar extra shows engine health and quick actions. The Settings window (⌘,) controls the AI provider, read-only DevOps mode, and the engine port; values reach the sidecar as environment variables when services restart.
+First run opens a native onboarding window: it checks the engine, then Ollama, then the default model — and pulls `gemma4:12b` with live progress. A menu-bar extra shows engine health and quick actions. The Settings window (⌘,) controls the AI provider, read-only DevOps mode, and the engine port; values reach the sidecar as environment variables when services restart.
 
 ## Prerequisites
 

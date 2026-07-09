@@ -31,7 +31,7 @@ struct OnboardingView: View {
     }
     private var defaultModel: String {
         let model = status?.textModel ?? ""
-        return model.isEmpty ? "gemma4:e4b" : model
+        return model.isEmpty ? "gemma4:12b" : model
     }
     private var allReady: Bool {
         manager.backendHealthy && (!usesOllama || (ollamaReachable && modelReady))
@@ -79,7 +79,7 @@ struct OnboardingView: View {
                                     .progressViewStyle(.linear)
                                     .frame(maxWidth: .infinity)
                             } else {
-                                Button("Download (~9.6 GB)") {
+                                Button("Download (~7.6 GB)") {
                                     pull.pull(model: defaultModel, client: manager.backendClient) {
                                         Task { await refresh() }
                                     }

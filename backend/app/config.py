@@ -26,11 +26,12 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.0-flash"
 
     # ── Ollama (local, fully offline) ───────────────────────
-    # gemma4:e4b handles text, structured output, and vision in one model.
+    # gemma4:12b handles text, structured output, and vision in one model,
+    # with a 256K context and the strongest coding of the laptop-class tiers.
     # Use gemma4:e2b on lower-memory machines.
     ollama_base_url: str = "http://localhost:11434"
-    ollama_model: str = "gemma4:e4b"
-    ollama_vision_model: str = "gemma4:e4b"
+    ollama_model: str = "gemma4:12b"
+    ollama_vision_model: str = "gemma4:12b"
 
     # ── AWS ─────────────────────────────────────────────────
     aws_access_key_id: str = ""

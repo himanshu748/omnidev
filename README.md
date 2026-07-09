@@ -42,10 +42,10 @@ OmniDev picks its AI provider through one setting, `AI_PROVIDER`:
 ollama serve
 
 # 2. Pull the default model — one model covers everything
-ollama pull gemma4:e4b        # text, structured intents, vision & OCR (~9.6GB)
+ollama pull gemma4:12b        # text, structured intents, vision & OCR (~7.6GB, 256K context)
 ```
 
-No API keys required. [Gemma 4 E4B](https://ollama.com/library/gemma4:e4b) — the same edge model featured in Google's AI Edge Gallery — handles DevOps intent parsing, code generation, and Vision Lab image analysis in a single download, with a 128K context window. On lower-memory machines, `ollama pull gemma4:e2b` and set both model vars to it. Override models and endpoint via `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`, and `OLLAMA_BASE_URL` in `backend/.env`; any Ollama model with structured-output support works.
+No API keys required. [Gemma 4 12B](https://ollama.com/library/gemma4:12b) — the encoder-free unified multimodal model — handles DevOps intent parsing, code generation, and Vision Lab image analysis in a single download, with a 256K context window and the strongest coding of the laptop-class tiers (use Ollama ≥ 0.31 for the Apple Silicon multi-token-prediction speedup). On lower-memory machines, `ollama pull gemma4:e2b` and set both model vars to it. Override models and endpoint via `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`, and `OLLAMA_BASE_URL` in `backend/.env`; any Ollama model with structured-output support works.
 
 The `/health` endpoint reports the active provider and model.
 
@@ -77,7 +77,7 @@ MCP works in both directions: the app's **MCP Marketplace** installs curated ser
 
 ## The macOS App
 
-OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI — Command Center, streaming Chat, and all five modules are native views over the local engine (port 8010). The app supervises only the FastAPI sidecar; Node/Next.js is not needed to run it. First launch opens a native onboarding window that checks Ollama and pulls `gemma4:e4b` with live progress, a menu-bar extra tracks engine health, and Settings (⌘,) controls provider, read-only DevOps mode, and the engine port.
+OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI — Command Center, streaming Chat, and all five modules are native views over the local engine (port 8010). The app supervises only the FastAPI sidecar; Node/Next.js is not needed to run it. First launch opens a native onboarding window that checks Ollama and pulls `gemma4:12b` with live progress, a menu-bar extra tracks engine health, and Settings (⌘,) controls provider, read-only DevOps mode, and the engine port.
 
 ```bash
 # Build and run the macOS app from source
@@ -160,10 +160,10 @@ Create `backend/.env` from `backend/.env.example`.
 # AI provider: auto | gemini | ollama  (auto = Gemini if key set, else local Ollama)
 AI_PROVIDER=auto
 
-# Ollama (local, offline) — gemma4:e4b covers text + vision in one model
+# Ollama (local, offline) — gemma4:12b covers text + vision in one model
 OLLAMA_BASE_URL=http://localhost:11434
-OLLAMA_MODEL=gemma4:e4b
-OLLAMA_VISION_MODEL=gemma4:e4b
+OLLAMA_MODEL=gemma4:12b
+OLLAMA_VISION_MODEL=gemma4:12b
 
 # Gemini (cloud, optional — free key at https://aistudio.google.com/apikey)
 GEMINI_API_KEY=

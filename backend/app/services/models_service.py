@@ -31,12 +31,20 @@ _MODEL_REF = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9._/-]{0,127}(?::[a-zA-Z0-9._-]{1
 # Curated picks OmniDev recommends, matched to what each module needs.
 RECOMMENDED_MODELS: list[dict[str, Any]] = [
     {
+        "name": "gemma4:12b",
+        "label": "Gemma 4 12B",
+        "size_gb": 7.6,
+        "roles": ["text", "structured", "vision"],
+        "note": "Default. Encoder-free multimodal, 256K context, the best coding of the laptop tiers.",
+        "recommended": True,
+    },
+    {
         "name": "gemma4:e4b",
         "label": "Gemma 4 E4B",
         "size_gb": 9.6,
-        "roles": ["text", "structured", "vision"],
-        "note": "Default. Text, plans, and vision in one model. Google's edge model from AI Edge Gallery.",
-        "recommended": True,
+        "roles": ["text", "structured", "vision", "audio"],
+        "note": "Edge model with native audio input. Google's edge model from AI Edge Gallery.",
+        "recommended": False,
     },
     {
         "name": "gemma4:e2b",
