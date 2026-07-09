@@ -1,1 +1,0 @@
-When I say 'update backend', only look inside /backend. When I say 'update frontend', only look inside /frontend. Never read outside the specified folder unless I explicitly ask.
