@@ -27,8 +27,8 @@ This project follows our [Code of Conduct](CODE_OF_CONDUCT.md). By participating
 ### Prerequisites
 
 - Python 3.11+ (tested on 3.13)
-- Node.js 18+ (tested with Node 22)
-- npm (comes with Node.js)
+- macOS with Xcode command-line tools (for the native app; the backend alone runs on any OS)
+- [Ollama](https://ollama.com) for local AI, or a `GEMINI_API_KEY`
 - Git
 
 ### Fork & Clone
@@ -49,22 +49,25 @@ source .venv/bin/activate
 pip install -r requirements.txt
 playwright install chromium
 cp .env.example .env
-# Edit .env with your credentials
-
-# Frontend
-cd ../frontend
-npm install
+# Edit .env with your credentials (optional — the defaults run fully local)
 ```
 
 ### Run Locally
 
 ```bash
-# Terminal 1 — Backend
+# Backend only
 cd backend && source .venv/bin/activate
 uvicorn app.main:app --reload
 
-# Terminal 2 — Frontend
-cd frontend && npm run dev
+# Native macOS app (starts its own backend sidecar)
+make mac
+```
+
+### Test
+
+```bash
+make test                  # backend pytest suite
+cd macos && swift build    # native app compiles
 ```
 
 <br />
@@ -75,20 +78,20 @@ cd frontend && npm run dev
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | Stable, production-ready code |
-| `develop` | Integration branch for new features |
+| `main` | Stable, release-ready code |
 | `feature/<name>` | New features |
 | `bugfix/<name>` | Bug fixes |
-| `hotfix/<name>` | Urgent production fixes |
 | `docs/<name>` | Documentation updates |
 
 ### Creating a Feature Branch
 
 ```bash
-git checkout develop
-git pull origin develop
+git checkout main
+git pull origin main
 git checkout -b feature/my-awesome-feature
 ```
+
+Releases are cut from `main` by tagging `vX.Y.Z` (see `docs/MACOS_APP.md`).
 
 <br />
 
@@ -123,12 +126,14 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 | Scope | Applies To |
 |-------|-----------|
 | `backend` | FastAPI backend |
-| `frontend` | Next.js frontend |
+| `macos` | Native SwiftUI app |
+| `chat` | Chat + session memory |
 | `devops` | DevOps Agent module |
+| `codegen` | Code Gen module |
 | `scraper` | Web Scraper module |
 | `vision` | Vision Lab module |
 | `storage` | Cloud Storage module |
-| `location` | Location Services module |
+| `mcp` | MCP server + marketplace |
 | `docs` | Documentation |
 | `deps` | Dependencies |
 
@@ -137,8 +142,8 @@ We follow [Conventional Commits](https://www.conventionalcommits.org/):
 ```
 feat(scraper): add proxy rotation support
 fix(backend): handle missing API key gracefully
+feat(macos): add AWS section to the Settings window
 docs(readme): update quick start instructions
-refactor(frontend): extract FeatureLayout component
 chore(deps): upgrade fastapi to 0.115.0
 ```
 
@@ -146,16 +151,16 @@ chore(deps): upgrade fastapi to 0.115.0
 
 ## 🔀 Pull Request Process
 
-1. **Update your branch** with the latest `develop`:
+1. **Update your branch** with the latest `main`:
    ```bash
    git fetch origin
-   git rebase origin/develop
+   git rebase origin/main
    ```
 
 2. **Ensure all checks pass**:
+   - Backend tests pass (`make test`)
+   - The macOS app builds (`cd macos && swift build`)
    - Backend starts without errors
-   - Frontend builds successfully (`npm run build`)
-   - No linting warnings
 
 3. **Write a clear PR description**:
    - What does this PR do?
@@ -180,6 +185,7 @@ chore(deps): upgrade fastapi to 0.115.0
 - Use `async def` for endpoint handlers
 - Use Pydantic models for request/response schemas
 - Keep services in `app/services/`, routers in `app/routers/`, schemas in `app/schemas/`
+- Keep new AI features provider-agnostic: go through `app/services/ai_service.py` (`generate_text`, `generate_structured`, `analyze_image_bytes`) rather than calling a provider directly
 
 ```python
 # ✅ Good
@@ -192,30 +198,13 @@ def scrape(data):
     ...
 ```
 
-### TypeScript (Frontend)
+### Swift (macOS App)
 
-- Use functional components with hooks
-- Use TypeScript types (no `any`)
-- Use the `"use client"` directive for client components
-- Follow the Next.js App Router conventions
-- Use the `api()` helper from `lib/api.ts` for backend calls
-
-```tsx
-// ✅ Good
-const [loading, setLoading] = useState<boolean>(false);
-const res = await fetch(api("/api/scraper/scrape"), { ... });
-
-// ❌ Bad
-const [loading, setLoading] = useState(false); // implicit type OK for primitives
-const res = await fetch("http://localhost:8000/api/scraper/scrape"); // hardcoded URL
-```
-
-### CSS
-
-- Use CSS custom properties (variables) from `globals.css`
-- Follow the existing naming conventions (camelCase class names)
-- Use `var(--accent)`, `var(--bg-card)`, etc. — never hardcode colors
-- Keep styles in `globals.css` unless component-specific
+- SwiftUI views live in `macos/Sources/OmniDevMac/Views/`, services in `Services/`, shared helpers in `Support/`
+- Use the shared chrome in `ModuleKit.swift` (`ModuleCard`, `ErrorBanner`, `MonoResult`, `ModuleRun`) so module pages stay consistent
+- Page identity belongs in the toolbar: `navigationTitle` + `navigationSubtitle`, not in-body headers
+- Talk to the backend through `BackendClient` / `BackendModules` (URLSession) — never spawn processes from views
+- Secrets go in the Keychain (`KeychainStore`), never in UserDefaults
 
 <br />
 
@@ -227,8 +216,8 @@ When reporting a bug, please include:
 2. **Steps to Reproduce**: Numbered steps to trigger the bug
 3. **Expected Behavior**: What should happen
 4. **Actual Behavior**: What actually happens
-5. **Environment**: OS, Python version, Node version, browser
-6. **Screenshots/Logs**: If applicable
+5. **Environment**: macOS version, Python version, Ollama version, app version
+6. **Screenshots/Logs**: If applicable (launcher logs: `.omnidev-macos/launcher.log`)
 
 Use the GitHub Issues tab with the appropriate label (`bug`, `enhancement`, `question`).
 
