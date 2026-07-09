@@ -67,3 +67,10 @@ scripts/macos/stop-omnidev.sh                               # stop everything
 - `Services/BackendClient.swift` + `BackendModules.swift` — thin URLSession bridge to the engine; NDJSON streaming for chat and model pulls; multipart for vision/storage uploads.
 - `Views/` — one SwiftUI view per module plus shared chrome in `ModuleKit.swift`; the brand badge is `LogoMarkView` (terminal glyph).
 - Generated code is never executed: Code Gen writes files only where you choose, and its preview loads HTML strings into an isolated, non-persistent `WKWebView` with no base URL.
+
+
+## Releasing
+
+Tag a version to publish: bump `AppInfo.version` in `macos/Sources/OmniDevMac/Support/AppSettings.swift`, commit, then `git tag vX.Y.Z && git push origin vX.Y.Z`. The `release.yml` workflow builds `OmniDev.app` on a macOS runner, zips it, and publishes a GitHub Release. The in-app "Check for Updates…" compares `AppInfo.version` against the latest release tag.
+
+Packaged apps carry the engine in `Contents/Resources/engine/` and self-install it into `~/Library/Application Support/OmniDev/engine` on first launch (re-synced when the app version changes; the user's `.venv`, `.env`, and runtime state survive upgrades). With no usable Python, `launch-omnidev.sh` bootstraps `backend/.venv` from the newest system Python ≥ 3.11 and installs Playwright Chromium — progress lands in `.omnidev-macos/bootstrap.log`.

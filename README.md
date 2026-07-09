@@ -124,15 +124,21 @@ omnidev/
 - Python 3.11+; Python 3.13 is used for local verification.
 - [Ollama](https://ollama.com) for offline AI (or a `GEMINI_API_KEY` for cloud AI).
 
-### Option A — Native macOS app
+### Option A — Download the app (recommended)
+
+Grab `OmniDev-vX.Y.Z.zip` from [GitHub Releases](https://github.com/himanshu748/omnidev/releases), unzip, and drag `OmniDev.app` to Applications. The build is unsigned — on first launch, right-click → Open (or `xattr -d com.apple.quarantine /Applications/OmniDev.app`).
+
+The engine self-installs into `~/Library/Application Support/OmniDev` on first run (needs Python 3.11+ on the machine) and starts automatically every time the app opens. In-app **Check for Updates…** points at new releases.
+
+### Option B — Build from source
 
 ```bash
 ./script/build_and_run.sh
 ```
 
-This builds the SwiftUI app, starts the FastAPI engine sidecar, and opens the native window.
+This builds the SwiftUI app, starts the FastAPI engine sidecar from the checkout, and opens the native window.
 
-### Option B — Backend only (any OS)
+### Option C — Backend only (any OS)
 
 ```bash
 cd backend
