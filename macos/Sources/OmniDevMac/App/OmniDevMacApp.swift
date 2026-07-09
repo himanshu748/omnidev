@@ -35,6 +35,15 @@ struct OmniDevMacApp: App {
                 }
         }
         .commands {
+            CommandMenu("Go") {
+                ForEach(Array(OmniDevRoute.allCases.enumerated()), id: \.element) { index, route in
+                    Button(route.title) {
+                        NotificationCenter.default.post(name: .omniDevNavigate, object: route)
+                    }
+                    .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
+                }
+            }
+
             CommandMenu("OmniDev") {
                 Button("Restart Local Services") {
                     stackManager.restartServices()

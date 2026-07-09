@@ -17,11 +17,6 @@ struct StorageView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ModuleHeader(
-                    title: "Cloud Storage",
-                    subtitle: "S3 buckets and objects through the boto3 credential chain."
-                )
-
                 if let error {
                     ErrorBanner(message: error)
                 }
@@ -40,6 +35,7 @@ struct StorageView: View {
         }
         .background(.background)
         .navigationTitle("Cloud Storage")
+        .navigationSubtitle("S3 buckets and objects through the boto3 credential chain.")
         .task {
             await loadBuckets()
         }

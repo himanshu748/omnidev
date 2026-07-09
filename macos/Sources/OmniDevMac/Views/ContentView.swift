@@ -42,6 +42,11 @@ struct ContentView: View {
         .onReceive(NotificationCenter.default.publisher(for: .omniDevShowOnboarding)) { _ in
             showOnboarding = true
         }
+        .onReceive(NotificationCenter.default.publisher(for: .omniDevNavigate)) { note in
+            if let route = note.object as? OmniDevRoute {
+                selectedRoute = route
+            }
+        }
     }
 
     @ViewBuilder
@@ -75,4 +80,6 @@ struct ContentView: View {
 extension Notification.Name {
     /// Posted by the menu bar / app menu to reopen the setup assistant.
     static let omniDevShowOnboarding = Notification.Name("omniDevShowOnboarding")
+    /// Posted by the Go menu (⌘1–⌘8); carries the target `OmniDevRoute`.
+    static let omniDevNavigate = Notification.Name("omniDevNavigate")
 }

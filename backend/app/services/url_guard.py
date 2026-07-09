@@ -1,7 +1,7 @@
 """
 SSRF protection for user-supplied URLs.
 
-The scraper and preview services fetch arbitrary URLs on behalf of the user
+The scraper service fetches arbitrary URLs on behalf of the user
 (or, dangerously, on behalf of a prompt-injected page). Without validation a
 request could reach the cloud metadata endpoint (169.254.169.254), localhost
 services, or a private LAN host. This guard rejects any URL that resolves to a

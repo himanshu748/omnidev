@@ -1,26 +1,8 @@
 import SwiftUI
 
-/// Shared chrome for the native module pages — one header, one error
-/// banner, one result surface, so every module reads the same.
-struct ModuleHeader: View {
-    let title: String
-    let subtitle: String
-
-    var body: some View {
-        HStack(spacing: 12) {
-            LogoMarkView(size: 32)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.title3.weight(.semibold))
-                Text(subtitle)
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-        }
-    }
-}
-
+/// Shared chrome for the native module pages — one error banner and one
+/// result surface, so every module reads the same. Page identity lives in
+/// the window toolbar via navigationTitle/navigationSubtitle.
 struct ErrorBanner: View {
     let message: String
 

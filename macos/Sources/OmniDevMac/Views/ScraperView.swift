@@ -24,11 +24,6 @@ struct ScraperView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ModuleHeader(
-                    title: "Web Scraper",
-                    subtitle: "Playwright extraction with an SSRF guard on every navigation."
-                )
-
                 ModuleCard {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(spacing: 10) {
@@ -85,6 +80,7 @@ struct ScraperView: View {
         }
         .background(.background)
         .navigationTitle("Web Scraper")
+        .navigationSubtitle("Playwright extraction with an SSRF guard on every navigation.")
     }
 
     private var isRunning: Bool { scrapeRun.isRunning || crawlRun.isRunning }

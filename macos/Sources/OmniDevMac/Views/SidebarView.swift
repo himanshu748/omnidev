@@ -5,91 +5,56 @@ struct SidebarView: View {
     @ObservedObject var manager: LocalStackManager
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 10) {
-                LogoMarkView(size: 38)
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text("OmniDev")
-                        .font(.headline)
-                    Text("Local-first AI cockpit")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.top, 6)
-
-            Divider()
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Feature Agents")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-
-                ForEach(OmniDevRoute.allCases) { route in
-                    Button {
-                        selectedRoute = route
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: route.systemImage)
-                                .frame(width: 20)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(route.title)
-                                    .font(.subheadline)
-                                Text(route.subtitle)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                        }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.vertical, 7)
-                    .padding(.horizontal, 8)
-                    .background(
-                        selectedRoute == route
-                            ? AnyShapeStyle(.selection.opacity(0.24))
-                            : AnyShapeStyle(.clear),
-                        in: RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    )
+        List(selection: $selectedRoute) {
+            Section {
+                ForEach([OmniDevRoute.cockpit, .chat]) { route in
+                    Label(route.title, systemImage: route.systemImage)
+                        .tag(route)
                 }
             }
 
-            Spacer()
+            Section("Feature Agents") {
+                ForEach(OmniDevRoute.modules) { route in
+                    Label(route.title, systemImage: route.systemImage)
+                        .tag(route)
+                }
+            }
+        }
+        .listStyle(.sidebar)
+        .safeAreaInset(edge: .bottom) {
+            EngineStatusCard(manager: manager)
+                .padding(10)
+        }
+    }
+}
 
-            VStack(alignment: .leading, spacing: 10) {
-                Label(manager.state.title, systemImage: manager.state.systemImage)
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(manager.state == .ready ? .green : .primary)
+/// Compact engine health readout pinned under the sidebar list.
+private struct EngineStatusCard: View {
+    @ObservedObject var manager: LocalStackManager
 
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Label(manager.state.title, systemImage: manager.state.systemImage)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(manager.state == .ready ? AnyShapeStyle(.green) : AnyShapeStyle(.primary))
+
+            if !manager.backendHealthy {
                 Text(manager.message)
-                    .font(.caption)
+                    .font(.caption2)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-
-                HStack {
-                    StatusPill(title: "API", isReady: manager.backendHealthy)
-                    if !manager.aiModel.isEmpty {
-                        StatusPill(title: manager.aiModel, isReady: true)
-                    }
-                }
-
-                HStack {
-                    Button("Restart") {
-                        manager.restartServices()
-                    }
-                    Button("Logs") {
-                        manager.openLogs()
-                    }
-                }
-                .buttonStyle(.bordered)
             }
-            .padding(12)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+            HStack(spacing: 5) {
+                StatusPill(title: "API", isReady: manager.backendHealthy)
+                if !manager.aiModel.isEmpty {
+                    StatusPill(title: manager.aiModel, isReady: true)
+                }
+            }
         }
-        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
     }
 }
 
@@ -101,12 +66,13 @@ private struct StatusPill: View {
         HStack(spacing: 5) {
             Circle()
                 .fill(isReady ? .green : .orange)
-                .frame(width: 7, height: 7)
+                .frame(width: 6, height: 6)
             Text(title)
-                .font(.caption.weight(.semibold))
+                .font(.caption2.weight(.semibold))
+                .lineLimit(1)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 5)
+        .padding(.horizontal, 7)
+        .padding(.vertical, 4)
         .background(.thinMaterial, in: Capsule())
     }
 }

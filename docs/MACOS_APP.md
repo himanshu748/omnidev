@@ -1,6 +1,6 @@
 # macOS App
 
-OmniDev is a **fully native SwiftUI app**. Every surface — Command Center, Chat, DevOps Agent, Code Gen, Web Scraper, Vision Lab, Cloud Storage — is native; there is no embedded web view for app UI. The app supervises one sidecar, the local FastAPI engine, and talks to it over loopback. The Next.js frontend is **not** required by the app: it remains the dev-stack web UI and the hosted marketing site.
+OmniDev is a **fully native SwiftUI app**. Every surface — Command Center, Chat, DevOps Agent, Code Gen, Web Scraper, Vision Lab, Cloud Storage — is native; there is no embedded web view for app UI. The app supervises one sidecar, the local FastAPI engine, and talks to it over loopback. An optional MCP server rounds out the stack — there is no web frontend.
 
 This is a developer-friendly native app for a local checkout, not yet a signed production installer.
 
@@ -25,7 +25,7 @@ First run opens a native onboarding window: it checks the engine, then Ollama, t
 - Python dependencies installed in `backend/` (`make setup-backend`)
 - [Ollama](https://ollama.com) for offline AI (the onboarding window handles the model pull)
 
-Node is **not** needed to run the app — only for the web dev stack and marketing site.
+Node is **not** needed to run the app.
 
 ## Build & Launch
 
@@ -54,11 +54,10 @@ Signing, notarization, DMG, and a Homebrew cask are tracked in [ROADMAP.md](../R
 
 ## Scripted Launch (no app)
 
-`scripts/macos/launch-omnidev.sh` starts the backend (and, unless `OMNIDEV_SKIP_FRONTEND=1`, the web frontend) with health checks:
+`scripts/macos/launch-omnidev.sh` starts the backend with health checks:
 
 ```bash
-OMNIDEV_BACKEND_PORT=8010 scripts/macos/launch-omnidev.sh   # backend + web UI
-OMNIDEV_SKIP_FRONTEND=1 scripts/macos/launch-omnidev.sh     # engine only (what the app does)
+OMNIDEV_BACKEND_PORT=8010 scripts/macos/launch-omnidev.sh   # engine only (what the app does)
 scripts/macos/stop-omnidev.sh                               # stop everything
 ```
 
@@ -66,5 +65,5 @@ scripts/macos/stop-omnidev.sh                               # stop everything
 
 - `Services/LocalStackManager.swift` — sidecar lifecycle, health polling, provider/model info.
 - `Services/BackendClient.swift` + `BackendModules.swift` — thin URLSession bridge to the engine; NDJSON streaming for chat and model pulls; multipart for vision/storage uploads.
-- `Views/` — one SwiftUI view per module plus shared chrome in `ModuleKit.swift`; the brand badge is `LogoMarkView` (terminal glyph, matching `frontend/public/brand/omnidev-logo.png`).
+- `Views/` — one SwiftUI view per module plus shared chrome in `ModuleKit.swift`; the brand badge is `LogoMarkView` (terminal glyph).
 - Generated code is never executed: Code Gen writes files only where you choose, and its preview loads HTML strings into an isolated, non-persistent `WKWebView` with no base URL.

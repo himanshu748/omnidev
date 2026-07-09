@@ -8,7 +8,6 @@ Native macOS AI developer app. Ship, inspect, and operate software from one loca
 ![Ollama](https://img.shields.io/badge/AI-Ollama%20(offline)-222222?logo=ollama&logoColor=white)
 ![Google Gemini](https://img.shields.io/badge/AI-Gemini%20(cloud)-4285F4?logo=google&logoColor=white)
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
-![Next.js 16](https://img.shields.io/badge/Next.js-16-black?logo=next.js&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white)
 ![License MIT](https://img.shields.io/badge/License-MIT-green)
 
@@ -85,13 +84,12 @@ OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI — Command Cent
 ./script/build_and_run.sh
 ```
 
-Stop the sidecars any time with `scripts/macos/stop-omnidev.sh`. See [docs/MACOS_APP.md](docs/MACOS_APP.md) for packaging details. Windows and Linux packages are planned next.
+Stop the engine sidecar any time with `scripts/macos/stop-omnidev.sh`. See [docs/MACOS_APP.md](docs/MACOS_APP.md) for packaging details. Windows and Linux packages are planned next.
 
 ## Product Surface
 
-- `/` is the product landing page: positioning, modules, local-first story, platform direction.
-- `/app` is the main cockpit: setup status, command center, agent mode, approvals, and module launcher.
-- Feature pages live under `frontend/app/` and share API helpers through `frontend/lib/api.ts`.
+- The native macOS app is the product: Command Center, streaming Chat, and all module pages are SwiftUI views over the local FastAPI engine.
+- The backend also serves interactive API docs at `/docs` and an MCP server for external agents.
 
 ## Architecture
 
@@ -113,18 +111,6 @@ omnidev/
 │   │   └── schemas/             # Pydantic request/response models
 │   ├── requirements.txt
 │   └── .env.example
-├── frontend/
-│   ├── app/
-│   │   ├── page.tsx             # landing page
-│   │   ├── app/page.tsx         # app cockpit
-│   │   ├── components/          # shared frontend chrome
-│   │   ├── devops/page.tsx
-│   │   ├── codegen/page.tsx
-│   │   ├── scraper/page.tsx
-│   │   ├── vision/page.tsx
-│   │   └── storage/page.tsx
-│   ├── lib/api.ts
-│   └── package.json
 ├── scripts/macos/               # launch/stop/package sidecar scripts
 ├── docs/
 └── README.md
@@ -134,9 +120,8 @@ omnidev/
 
 ### Prerequisites
 
-- macOS with Xcode command-line tools (for the native app), or any OS for the dev stack.
+- macOS with Xcode command-line tools (for the native app), or any OS for the backend alone.
 - Python 3.11+; Python 3.13 is used for local verification.
-- Node.js 20.9+; Node 22 works with Next.js 16.
 - [Ollama](https://ollama.com) for offline AI (or a `GEMINI_API_KEY` for cloud AI).
 
 ### Option A — Native macOS app
@@ -145,11 +130,9 @@ omnidev/
 ./script/build_and_run.sh
 ```
 
-This builds the SwiftUI shell, starts both sidecars, and opens the cockpit in a native window.
+This builds the SwiftUI app, starts the FastAPI engine sidecar, and opens the native window.
 
-### Option B — Dev stack (any OS)
-
-Backend:
+### Option B — Backend only (any OS)
 
 ```bash
 cd backend
@@ -161,15 +144,7 @@ cp .env.example .env
 uvicorn app.main:app --reload
 ```
 
-Frontend:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Open `http://localhost:3000`. Backend API docs are at `http://localhost:8000/docs`.
+API docs are at `http://localhost:8000/docs`.
 
 ## Configuration
 
@@ -198,8 +173,6 @@ AWS_ACCESS_KEY_ID=
 AWS_SECRET_ACCESS_KEY=
 AWS_DEFAULT_REGION=us-east-1
 
-# Local frontend origins
-CORS_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001
 ```
 
 Credential needs by module:
@@ -226,7 +199,6 @@ All backend routes are served from `http://localhost:8000` by default (`8010` un
 | `POST` | `/api/git/land` | Commit a validated generated project under `~/OmniDev/projects/<slug>` — no shell, no hooks, no remotes. |
 | `POST` | `/api/codegen/generate` | Returns validated generated files and instructions. Backend does not execute generated code. |
 | `POST` | `/api/scraper/scrape` | Browser-based extraction for text, HTML, screenshots, links, metadata, and PDFs. |
-| `POST` | `/api/preview/check` | Captures page preview and basic metadata. |
 | `POST` | `/api/vision/analyze` | Multipart image analysis. |
 | `GET` | `/api/storage/buckets` | Lists S3 buckets as `{ name, creation_date }` objects. |
 | `GET` | `/api/storage/files` | Lists S3 objects for a bucket and optional prefix. |
@@ -250,9 +222,8 @@ See [docs/API.md](docs/API.md) for request and response examples.
 Common checks:
 
 ```bash
-cd frontend && npm run lint
-cd frontend && npm run build
 cd backend && pytest
+cd macos && swift build
 ```
 
 ## Documentation

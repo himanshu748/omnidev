@@ -21,5 +21,4 @@ stop_pid_file() {
   rm -f "$pid_file"
 }
 
-stop_pid_file "$STATE_DIR/frontend.pid" "frontend"
 stop_pid_file "$STATE_DIR/backend.pid" "backend"

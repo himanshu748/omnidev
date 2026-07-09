@@ -1,6 +1,6 @@
 # 🏗️ Architecture Overview
 
-> OmniDev follows a clean **Client-Server** architecture with a Python/FastAPI backend and Next.js frontend.
+> OmniDev is a native SwiftUI macOS app that supervises a local Python/FastAPI backend sidecar (plus an optional MCP server).
 
 <br />
 
@@ -8,16 +8,16 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                        FRONTEND (Next.js 16)                     │
+│                  NATIVE APP (SwiftUI, macos/)                    │
 │                                                                  │
 │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐            │
 │  │ DevOps   │ │ Scraper  │ │ Vision   │ │ Storage  │            │
-│  │ Agent    │ │Dashboard │ │ Lab      │ │ Manager  │            │
+│  │ Agent    │ │ Module   │ │ Lab      │ │ Manager  │            │
 │  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘            │
 │       └────────────┴────────────┴────────────┘                  │
-│                FeatureLayout + globals.css + api.ts              │
+│            BackendClient (URLSession, loopback only)             │
 └─────────────────────────────┬────────────────────────────────────┘
-                              │ HTTP/REST
+                              │ HTTP/REST (127.0.0.1)
 ┌─────────────────────────────┴────────────────────────────────────┐
 │                       BACKEND (FastAPI)                           │
 │                                                                  │
@@ -26,7 +26,7 @@
 │  ┌──────────────────────────────────────────────────────────┐    │
 │  │                     ROUTERS (API Layer)                   │    │
 │  │       devops.py  codegen.py  scraper.py  vision.py        │    │
-│  │       preview.py storage.py                               │    │
+│  │       storage.py                                          │    │
 │  └───────────────────────┬──────────────────────────────────┘    │
 │  ┌───────────────────────┴──────────────────────────────────┐    │
 │  │                   SERVICES (Business Logic)                │    │
@@ -72,21 +72,14 @@ omnidev/
 │   │       └── storage.py
 │   ├── requirements.txt
 │   └── .env.example
-├── frontend/
-│   ├── app/
-│   │   ├── layout.tsx         # Root layout and metadata
-│   │   ├── page.tsx           # Landing page with 8 sections
-│   │   ├── globals.css        # Design system (2600+ lines)
-│   │   ├── devops/page.tsx    # DevOps Agent dashboard
-│   │   ├── scraper/page.tsx   # Web Scraper dashboard
-│   │   ├── vision/page.tsx    # Vision Lab dashboard
-│   │   └── storage/page.tsx   # Cloud Storage dashboard
-│   ├── components/
-│   │   └── FeatureLayout.tsx  # Shared navigation + header layout
-│   ├── lib/
-│   │   └── api.ts             # Backend API URL helper
-│   ├── package.json
-│   └── next.config.ts
+├── macos/
+│   ├── Package.swift          # SwiftPM app definition
+│   └── Sources/OmniDevMac/
+│       ├── App/               # App entry point
+│       ├── Models/            # Routes and stack state
+│       ├── Views/             # One SwiftUI view per module + ModuleKit chrome
+│       ├── Services/          # BackendClient, LocalStackManager, etc.
+│       └── Support/           # Settings, project paths
 ├── docs/                      # Documentation
 ├── README.md
 ├── CONTRIBUTING.md
@@ -114,22 +107,16 @@ Each feature follows a 3-layer pattern:
 
 Playwright's browser is started once via FastAPI's `lifespan` context manager and shared across all requests via `app.state.browser`. This avoids cold-start overhead per scrape request.
 
-### 3. Frontend Feature Pages
+### 3. Native Module Views
 
-Each feature page follows a consistent pattern:
-- Uses `FeatureLayout` for navigation and header
-- Client-side component (`"use client"`)
-- Local state management via React hooks
-- API calls via `fetch(api("/api/..."))` helper
-- Displays results with structured layouts
+Each module in the macOS app follows a consistent pattern:
+- One SwiftUI view per module (`macos/Sources/OmniDevMac/Views/`)
+- Shared chrome and layout helpers in `ModuleKit.swift`
+- Backend calls via `BackendClient`/`BackendModules` over loopback (URLSession, NDJSON streaming for chat and model pulls)
 
 ### 4. Design System
 
-All styling flows from `globals.css` via CSS custom properties:
-- **No inline colors** — use `var(--accent)`, `var(--bg-card)`, etc.
-- **Typography**: offline-safe system sans stack for display/UI + system mono stack for code/technical values
-- **Glassmorphism**: `.glass-panel`, `.glass-nav` utility classes
-- **Responsive**: `clamp()`, `min()`, and media queries throughout
+App styling is native SwiftUI, with shared tokens and chrome in `ModuleKit.swift` (see [DESIGN.md](DESIGN.md) for the visual language the app inherits).
 
 <br />
 

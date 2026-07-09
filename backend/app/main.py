@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright, Playwright, Browser
 
 from app.config import settings
-from app.routers import chat, codegen, devops, git, location, mcp, models, preview, scraper, storage, vision
+from app.routers import chat, codegen, devops, git, mcp, models, scraper, storage, vision
 from app.services.ai_service import close_ai_clients
 from app.services.mcp_client_service import shutdown_manager as shutdown_mcp
 
@@ -96,9 +96,7 @@ app.include_router(devops.router, prefix="/api/devops", tags=["DevOps Agent"])
 app.include_router(scraper.router, prefix="/api/scraper", tags=["Web Scraper"])
 app.include_router(vision.router, prefix="/api/vision", tags=["Vision Lab"])
 app.include_router(storage.router, prefix="/api/storage", tags=["Cloud Storage"])
-app.include_router(location.router, prefix="/api/location", tags=["Location Services"])
 app.include_router(codegen.router, prefix="/api/codegen", tags=["Code Gen"])
-app.include_router(preview.router, prefix="/api/preview", tags=["Site Preview"])
 app.include_router(models.router, prefix="/api/models", tags=["Models"])
 app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(git.router, prefix="/api/git", tags=["Git Landing"])

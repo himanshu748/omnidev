@@ -22,6 +22,7 @@ struct CockpitView: View {
         }
         .background(.background)
         .navigationTitle("Command Center")
+        .navigationSubtitle("Status, models, and modules")
         .task {
             await refresh()
         }

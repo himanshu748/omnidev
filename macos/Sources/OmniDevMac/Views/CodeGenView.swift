@@ -24,11 +24,6 @@ struct CodeGenView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ModuleHeader(
-                    title: "Code Gen",
-                    subtitle: "Validated project files from the local model — never executed by the backend."
-                )
-
                 ModuleCard {
                     VStack(alignment: .leading, spacing: 10) {
                         TextField("What to build — e.g. A todo app with dark mode", text: $prompt)
@@ -71,6 +66,7 @@ struct CodeGenView: View {
         }
         .background(.background)
         .navigationTitle("Code Gen")
+        .navigationSubtitle("Validated project files from the local model — never executed by the backend.")
         .sheet(isPresented: $showPreview) {
             if let result = run.output {
                 HTMLPreviewSheet(result: result)

@@ -1,12 +1,12 @@
 import SwiftUI
 
-/// The OmniDev brand accent — electric blue, matching `--accent` on the web.
+/// The OmniDev brand accent — electric blue.
 extension Color {
     static let omniAccent = Color(red: 0x4D / 255, green: 0xA2 / 255, blue: 0xFF / 255)
 }
 
 /// The in-app brand badge: a terminal glyph on a blue tile, echoing the
-/// terminal-prompt logo (`frontend/public/brand/omnidev-logo.png`).
+/// terminal-prompt logo (the app icon).
 struct LogoMarkView: View {
     var size: CGFloat = 26
     var color: Color = .omniAccent

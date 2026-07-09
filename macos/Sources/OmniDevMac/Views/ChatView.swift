@@ -24,6 +24,7 @@ struct ChatView: View {
         }
         .background(.background)
         .navigationTitle("Chat")
+        .navigationSubtitle(manager.aiModel.isEmpty ? "Local model" : manager.aiModel)
         .toolbar {
             ToolbarItem {
                 Button {

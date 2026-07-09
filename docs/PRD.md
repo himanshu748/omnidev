@@ -9,8 +9,8 @@
 ## 0. Critical environment notes (read before doing anything)
 
 - **NEVER run builds, dev servers, package installs, or tests inside `~/Documents`** on this machine — the repo lives in an iCloud-synced folder whose file provider stalls processes forever at 0% CPU (broken quota). **Workflow: edit in place, then `rsync` (excluding `.venv`, `node_modules`, `.next`) to a `/tmp` scratch copy and run pytest / tsc / next build / uvicorn there.** Git operations and file edits in `~/Documents` are fine.
-- CI (GitHub Actions, `.github/workflows/ci.yml`) runs backend pytest + frontend typecheck/build + macOS `swift build` on every push — it is the off-machine verifier.
-- Vercel hosts the marketing site (project `omnidev`, team `himanshus-projects-acd54afd`). The GitHub→Vercel integration is stale (repo was recreated); deploy via `vercel` CLI from a staged dir with `frontend/` inside it (`rootDirectory=frontend`). Live: https://omnidev-himanshus-projects-acd54afd.vercel.app
+- CI (GitHub Actions, `.github/workflows/ci.yml`) runs backend pytest + macOS `swift build` on every push — it is the off-machine verifier.
+- ~~Vercel hosts the marketing site.~~ The Next.js web frontend (and the Vercel marketing deploy) was removed in favor of the native SwiftUI app.
 - Local Ollama exists on the dev machine but has only `:cloud` models signed into ollama.com; `gemma4:e4b` is not yet pulled locally.
 
 ---
@@ -29,11 +29,13 @@ Positioning: *"Your AI dev cockpit. Nothing leaves your Mac."*
 ## 3. Design language (non-negotiable)
 
 - **Dark and minimal.** Benchmark: **Vercel, Claude Code, Factory AI.** Near-black grounds (`#0A0C10`–`#0E1117`), off-white ink (`#EEF1F7`), ONE accent (electric blue `#4DA2FF`), generous spacing, tight display type (Space Grotesk display + system/Inter body + mono for data).
-- **One brand mark everywhere.** `frontend/app/components/Logo.tsx` (`LogoMark` — a nested "secure enclosure" square) is the single source; no emojis in navigation or chrome, line icons (lucide) only. The old multi-logo/emoji drift was the #1 "outdated" signal — never reintroduce it.
+- **One brand mark everywhere.** `LogoMarkView` in the macOS app (terminal-prompt glyph) is the single source (the original web `LogoMark` component was removed with the frontend); no emojis in navigation or chrome. The old multi-logo/emoji drift was the #1 "outdated" signal — never reintroduce it.
 - No AI-slop: no purple gradients, no bouncy easing, no fake testimonials/metrics/logos. Honest facts only ("Runs 100% offline", "MIT licensed", "No account, no key, no bill", "Powered by Gemma 4").
 - The name is **OmniDev** (locked; alternatives — Enclave, Onyx, Basalt, Ferro, Klave — are all taken by existing AI products).
 
 ## 4. What exists today (v0.3, all verified + CI-green)
+
+> **Note (2026-07):** this section is a historical v0.3 snapshot. The Next.js web frontend and the `/api/preview` + `/api/location` backend modules described below were since removed — the current stack is the native SwiftUI app + FastAPI backend sidecar + optional MCP server.
 
 **Backend** — FastAPI (Python 3.13), 184 passing tests:
 - Provider-agnostic AI layer: `AI_PROVIDER=auto|gemini|ollama`; default local `gemma4:e4b` via Ollama (text + structured JSON + vision in one model); Gemini optional fallback. Streaming (`stream_text`) on both providers.

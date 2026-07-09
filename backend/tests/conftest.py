@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 from app.config import settings
-from app.routers import chat, codegen, devops, git, location, mcp, models, preview, scraper, storage, vision
+from app.routers import chat, codegen, devops, git, mcp, models, scraper, storage, vision
 
 START_TIME = time.time()
 COVERED: set[str] = set()
@@ -26,12 +26,7 @@ EXPECTED_ENDPOINTS = [
     "POST /api/storage/upload",
     "GET /api/storage/download",
     "DELETE /api/storage/files",
-    "GET /api/location/ip",
-    "GET /api/location/reverse",
-    "GET /api/location/geocode",
-    "GET /api/location/me",
     "POST /api/codegen/generate",
-    "POST /api/preview/check",
     "GET /api/models",
     "POST /api/models/pull",
     "POST /api/chat/stream",
@@ -63,9 +58,7 @@ def create_app() -> FastAPI:
     app.include_router(scraper.router, prefix="/api/scraper", tags=["Web Scraper"])
     app.include_router(vision.router, prefix="/api/vision", tags=["Vision Lab"])
     app.include_router(storage.router, prefix="/api/storage", tags=["Cloud Storage"])
-    app.include_router(location.router, prefix="/api/location", tags=["Location Services"])
     app.include_router(codegen.router, prefix="/api/codegen", tags=["Code Gen"])
-    app.include_router(preview.router, prefix="/api/preview", tags=["Site Preview"])
     app.include_router(models.router, prefix="/api/models", tags=["Models"])
     app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
     app.include_router(git.router, prefix="/api/git", tags=["Git Landing"])

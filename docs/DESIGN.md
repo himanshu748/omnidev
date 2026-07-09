@@ -1,6 +1,6 @@
 # 🎨 Design System
 
-> OmniDev's frontend design is built on a premium dark theme with glassmorphism, micro-animations, and offline-safe system font stacks — designed in [Stitch by Google](https://stitch.withgoogle.com) and adapted for local-first builds.
+> OmniDev's visual design is built on a premium dark theme with glassmorphism, micro-animations, and offline-safe system font stacks — designed in [Stitch by Google](https://stitch.withgoogle.com) and adapted for local-first builds.
 
 <br />
 
@@ -31,7 +31,7 @@ Weights: Browser/system dependent
 Usage: All headings, body text, navigation, buttons, labels
 ```
 
-**Why a system stack?** OmniDev should build and run offline without fetching fonts during Next.js production builds. The stack keeps the interface crisp while avoiding a hidden network dependency.
+**Why a system stack?** OmniDev should build and run offline without fetching fonts at build time. The stack keeps the interface crisp while avoiding a hidden network dependency. (The Next.js web frontend these screens were designed for was later removed in favor of the native SwiftUI app, which inherits this visual language.)
 
 ### Monospace: System Mono
 

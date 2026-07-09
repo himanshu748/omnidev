@@ -49,33 +49,21 @@ class Settings(BaseSettings):
     # Codegen "Land in repo" writes ONLY under this root.
     land_root: str = "~/OmniDev/projects"
 
-    # ── IPInfo ──────────────────────────────────────────────
-    ipinfo_token: str = ""
-
     # ── Context7 (docs for codegen) ─────────────────────────
     context7_api_key: str = ""
 
     # ── CORS ────────────────────────────────────────────────
-    cors_origins: str = "http://localhost:3000"
+    # The native app talks over loopback without CORS; set this only when a
+    # browser-based client needs access (comma-separated origins).
+    cors_origins: str = ""
 
     @property
     def cors_origin_list(self) -> list[str]:
-        configured = [
+        return [
             origin
             for origin in (self._safe_cors_origin(o) for o in self.cors_origins.split(","))
             if origin
         ]
-        local_defaults = [
-            "http://localhost:3000",
-            "http://127.0.0.1:3000",
-            "http://localhost:3001",
-            "http://127.0.0.1:3001",
-            # Native macOS app runs the frontend sidecar on 3010.
-            "http://localhost:3010",
-            "http://127.0.0.1:3010",
-        ]
-        # Keep configured values first, then add missing local dev origins.
-        return list(dict.fromkeys([*configured, *local_defaults]))
 
     @staticmethod
     def _safe_cors_origin(raw_origin: str) -> str | None:

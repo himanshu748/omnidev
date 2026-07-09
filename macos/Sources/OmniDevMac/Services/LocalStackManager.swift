@@ -84,9 +84,6 @@ final class LocalStackManager: ObservableObject {
             try await runProcess(
                 rootURL.appendingPathComponent("scripts/macos/launch-omnidev.sh"),
                 environment: [
-                    "OMNIDEV_OPEN_BROWSER": "0",
-                    // The native app is fully SwiftUI; only the backend runs.
-                    "OMNIDEV_SKIP_FRONTEND": "1",
                     "OMNIDEV_BACKEND_PORT": backendPort,
                     // Settings-window values; inherited by the uvicorn sidecar,
                     // where they take precedence over backend/.env.

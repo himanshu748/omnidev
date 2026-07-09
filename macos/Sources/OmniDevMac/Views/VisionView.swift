@@ -22,11 +22,6 @@ struct VisionView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ModuleHeader(
-                    title: "Vision Lab",
-                    subtitle: "Image analysis and OCR — the image never leaves your Mac."
-                )
-
                 ModuleCard {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 12) {
@@ -93,6 +88,7 @@ struct VisionView: View {
         }
         .background(.background)
         .navigationTitle("Vision Lab")
+        .navigationSubtitle("Image analysis and OCR — the image never leaves your Mac.")
         .fileImporter(
             isPresented: $showImporter,
             allowedContentTypes: [.png, .jpeg, .webP, .gif]

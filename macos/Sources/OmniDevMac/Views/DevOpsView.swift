@@ -18,11 +18,6 @@ struct DevOpsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ModuleHeader(
-                    title: "DevOps Agent",
-                    subtitle: "Natural language → boto3 plan → human-approved execution."
-                )
-
                 ModuleCard {
                     HStack(spacing: 10) {
                         TextField("e.g. List my EC2 instances", text: $command)
@@ -71,6 +66,7 @@ struct DevOpsView: View {
         }
         .background(.background)
         .navigationTitle("DevOps Agent")
+        .navigationSubtitle("Natural language → boto3 plan → human-approved execution.")
     }
 
     private func planCard(_ plan: BackendClient.DevOpsPlan, needsConfirmation: Bool) -> some View {

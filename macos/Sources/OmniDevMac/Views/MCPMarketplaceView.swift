@@ -15,11 +15,6 @@ struct MCPMarketplaceView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ModuleHeader(
-                    title: "MCP Marketplace",
-                    subtitle: "Give the local model tools. Gemma 4 calls them from chat when the Tools toggle is on."
-                )
-
                 if let error {
                     ErrorBanner(message: error)
                 }
@@ -37,6 +32,7 @@ struct MCPMarketplaceView: View {
         }
         .background(.background)
         .navigationTitle("MCP Marketplace")
+        .navigationSubtitle("Give the local model tools. Gemma 4 calls them from chat when the Tools toggle is on.")
         .task {
             await refresh()
         }
