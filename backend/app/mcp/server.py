@@ -15,7 +15,7 @@ Run with the backend directory on sys.path:
     python -m app.mcp
 
 Configuration:
-    OMNIDEV_BACKEND_URL — backend base URL (default http://127.0.0.1:8000)
+    OMNIDEV_BACKEND_URL — backend base URL (default: probe 8000, then 8010)
 """
 
 from __future__ import annotations
@@ -28,7 +28,35 @@ import httpx
 from mcp.server.fastmcp import FastMCP
 from pydantic import BaseModel, Field
 
-BACKEND_URL = os.environ.get("OMNIDEV_BACKEND_URL", "http://127.0.0.1:8000")
+# Candidate backend URLs, probed in order at first use. An explicit
+# OMNIDEV_BACKEND_URL is authoritative; otherwise try the dev-stack port,
+# then the native app's sidecar port.
+_ENV_URL = os.environ.get("OMNIDEV_BACKEND_URL")
+_CANDIDATE_URLS = (
+    [_ENV_URL] if _ENV_URL else ["http://127.0.0.1:8000", "http://127.0.0.1:8010"]
+)
+_resolved_url: str | None = None
+
+
+async def _backend_url() -> str:
+    """Find the running OmniDev backend, caching the first URL that answers."""
+    global _resolved_url
+    if _resolved_url:
+        return _resolved_url
+    for url in _CANDIDATE_URLS:
+        try:
+            async with httpx.AsyncClient(timeout=httpx.Timeout(2.0)) as probe:
+                resp = await probe.get(url.rstrip("/") + "/health")
+            if resp.status_code == 200 and resp.json().get("service") == "omnidev":
+                _resolved_url = url
+                return url
+        except Exception:
+            continue
+    raise RuntimeError(
+        "OmniDev backend is not reachable at "
+        + " or ".join(_CANDIDATE_URLS)
+        + ". Launch the OmniDev app (or `make backend`) and retry."
+    )
 
 # Local generation and model pulls can run for minutes; connect stays short so
 # "backend not running" fails fast, reads are unbounded on purpose.
@@ -54,14 +82,15 @@ mcp = FastMCP(
 )
 
 
-def _client() -> httpx.AsyncClient:
-    return httpx.AsyncClient(base_url=BACKEND_URL, timeout=REQUEST_TIMEOUT)
+async def _client() -> httpx.AsyncClient:
+    return httpx.AsyncClient(base_url=await _backend_url(), timeout=REQUEST_TIMEOUT)
 
 
 def _unreachable() -> RuntimeError:
     return RuntimeError(
-        f"OmniDev backend is not reachable at {BACKEND_URL}. "
-        "Start it with `make backend` (or launch the OmniDev app) and retry."
+        "OmniDev backend stopped responding at "
+        + (_resolved_url or " / ".join(_CANDIDATE_URLS))
+        + ". Launch the OmniDev app (or `make backend`) and retry."
     )
 
 
@@ -75,7 +104,7 @@ def _http_detail(response: httpx.Response, body: bytes) -> str:
 
 async def _request_json(method: str, path: str, **kwargs) -> dict:
     try:
-        async with _client() as client:
+        async with await _client() as client:
             response = await client.request(method, path, **kwargs)
     except httpx.ConnectError as exc:
         raise _unreachable() from exc
@@ -101,7 +130,7 @@ async def local_llm(prompt: str, system: str = "", temperature: float = 0.7) -> 
         payload["system"] = system
     parts: list[str] = []
     try:
-        async with _client() as client:
+        async with await _client() as client:
             async with client.stream("POST", "/api/chat/stream", json=payload) as response:
                 if response.status_code != 200:
                     raise RuntimeError(_http_detail(response, await response.aread()))
@@ -228,7 +257,7 @@ async def pull_model(name: str) -> str:
     finishes; may take several minutes on first pull."""
     last_status = ""
     try:
-        async with _client() as client:
+        async with await _client() as client:
             async with client.stream("POST", "/api/models/pull", json={"name": name}) as response:
                 if response.status_code != 200:
                     raise RuntimeError(_http_detail(response, await response.aread()))

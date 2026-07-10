@@ -24,7 +24,10 @@ def _mock_client(handler):
 
 
 def _use_handler(monkeypatch, handler):
-    monkeypatch.setattr(mcp_server, "_client", lambda: _mock_client(handler))
+    async def fake_client():
+        return _mock_client(handler)
+
+    monkeypatch.setattr(mcp_server, "_client", fake_client)
 
 
 # ── local_llm ───────────────────────────────────────────────
@@ -68,7 +71,7 @@ async def test_local_llm_unreachable_backend_message(monkeypatch):
         raise httpx.ConnectError("refused")
 
     _use_handler(monkeypatch, handler)
-    with pytest.raises(RuntimeError, match="backend is not reachable"):
+    with pytest.raises(RuntimeError, match="stopped responding|not reachable"):
         await mcp_server.local_llm("hi")
 
 

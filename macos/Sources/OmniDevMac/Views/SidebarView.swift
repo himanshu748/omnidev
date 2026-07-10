@@ -8,15 +8,25 @@ struct SidebarView: View {
         List(selection: $selectedRoute) {
             Section {
                 ForEach([OmniDevRoute.cockpit, .chat]) { route in
-                    Label(route.title, systemImage: route.systemImage)
-                        .tag(route)
+                    Label {
+                        Text(route.title)
+                    } icon: {
+                        Image(systemName: route.systemImage)
+                            .foregroundStyle(Color.omniAccent)
+                    }
+                    .tag(route)
                 }
             }
 
             Section("Feature Agents") {
                 ForEach(OmniDevRoute.modules) { route in
-                    Label(route.title, systemImage: route.systemImage)
-                        .tag(route)
+                    Label {
+                        Text(route.title)
+                    } icon: {
+                        Image(systemName: route.systemImage)
+                            .foregroundStyle(Color.omniAccent)
+                    }
+                    .tag(route)
                 }
             }
         }
