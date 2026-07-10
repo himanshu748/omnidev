@@ -108,6 +108,43 @@ async def test_provider_status_unreachable_ollama(monkeypatch):
     assert status["text_model_ready"] is False
 
 
+# ── service: delete ─────────────────────────────────────────
+@pytest.mark.asyncio
+async def test_delete_model_calls_ollama(monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+    seen = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen["method"] = request.method
+        seen["path"] = request.url.path
+        seen["body"] = json.loads(request.content)
+        return httpx.Response(200, json={})
+
+    _install_mock_ollama(monkeypatch, handler)
+    await models_service.delete_model("gemma4:e2b")
+    assert seen == {"method": "DELETE", "path": "/api/delete", "body": {"model": "gemma4:e2b"}}
+
+
+@pytest.mark.asyncio
+async def test_delete_model_missing_raises(monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404, json={"error": "model not found"})
+
+    _install_mock_ollama(monkeypatch, handler)
+    with pytest.raises(FileNotFoundError):
+        await models_service.delete_model("nope:latest")
+
+
+@pytest.mark.asyncio
+async def test_delete_model_refuses_active_default(monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+    monkeypatch.setattr(settings, "ollama_model", "gemma4:12b")
+    with pytest.raises(ValueError):
+        await models_service.delete_model("gemma4:12b")
+
+
 # ── HTTP endpoints ──────────────────────────────────────────
 @pytest.mark.asyncio
 async def test_models_endpoint_lists_recommended(client, monkeypatch, coverage_tracker):
@@ -168,3 +205,44 @@ async def test_pull_endpoint_streams_progress(client, monkeypatch, coverage_trac
     assert lines[0]["status"] == "pulling manifest"
     assert lines[-1]["status"] == "success"
     coverage_tracker("POST /api/models/pull")
+
+
+@pytest.mark.asyncio
+async def test_delete_endpoint_deletes_model(client, monkeypatch, coverage_tracker):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={})
+
+    _install_mock_ollama(monkeypatch, handler)
+    resp = await client.delete("/api/models", params={"name": "gemma4:e2b"})
+    assert resp.status_code == 200
+    assert resp.json() == {"deleted": "gemma4:e2b"}
+    coverage_tracker("DELETE /api/models")
+
+
+@pytest.mark.asyncio
+async def test_delete_endpoint_rejects_bad_ref(client, monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+    resp = await client.delete("/api/models", params={"name": "; rm -rf /"})
+    assert resp.status_code == 400
+
+
+@pytest.mark.asyncio
+async def test_delete_endpoint_missing_model_404(client, monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(404, json={"error": "model not found"})
+
+    _install_mock_ollama(monkeypatch, handler)
+    resp = await client.delete("/api/models", params={"name": "nope:latest"})
+    assert resp.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_endpoint_refuses_active_model(client, monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+    monkeypatch.setattr(settings, "ollama_model", "gemma4:12b")
+    resp = await client.delete("/api/models", params={"name": "gemma4:12b"})
+    assert resp.status_code == 400

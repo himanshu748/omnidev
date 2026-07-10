@@ -18,10 +18,15 @@ enum SettingsOpener {
 /// working offline setup without touching a terminal.
 struct OnboardingView: View {
     @ObservedObject var manager: LocalStackManager
-    @StateObject private var pull = ModelPullController()
+    @ObservedObject private var pull: ModelPullController
     @State private var status: BackendClient.ProviderStatus?
     @State private var refreshing = false
     @Environment(\.dismiss) private var dismiss
+
+    init(manager: LocalStackManager) {
+        self.manager = manager
+        _pull = ObservedObject(wrappedValue: manager.modelPull)
+    }
 
     private var ollamaReachable: Bool { status?.reachable ?? false }
     private var usesOllama: Bool { status == nil || status?.provider == "ollama" }
@@ -136,6 +141,9 @@ struct OnboardingView: View {
         .frame(width: 520)
         .task {
             await refresh()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .omniDevModelsChanged)) { _ in
+            Task { await refresh() }
         }
     }
 

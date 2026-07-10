@@ -33,6 +33,10 @@ struct BackendClient {
         let installed: [InstalledModel]
     }
 
+    struct DeleteResult: Decodable {
+        let deleted: String
+    }
+
     struct PullProgress {
         let status: String
         let completed: Int64?
@@ -70,6 +74,11 @@ struct BackendClient {
 
     func models() async throws -> ModelsOverview {
         try await get("api/models")
+    }
+
+    @discardableResult
+    func deleteModel(_ name: String) async throws -> DeleteResult {
+        try await send("DELETE", "api/models", query: ["name": name])
     }
 
     /// Stream `ollama pull` progress events for a model.

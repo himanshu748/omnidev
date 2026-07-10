@@ -133,10 +133,26 @@ ensure_venv() {
   log "Engine bootstrap complete"
 }
 
+# Fingerprint the settings-derived env so a healthy backend from a previous
+# launch is reused only when it was started with the same configuration.
+env_fingerprint() {
+  printf '%s|%s|%s|%s|%s|%s|%s' \
+    "$BACKEND_PORT" "${AI_PROVIDER:-}" "${DEVOPS_READ_ONLY:-}" \
+    "${OLLAMA_MODEL:-}" "${OLLAMA_VISION_MODEL:-}" \
+    "${GEMINI_API_KEY:-}" "${AWS_ACCESS_KEY_ID:-}" \
+    | shasum -a 256 | cut -d' ' -f1
+}
+
 start_backend() {
   if is_http_up "$BACKEND_URL/health"; then
-    log "Backend already healthy at $BACKEND_URL"
-    return 0
+    local fp_file="$STATE_DIR/backend.env-fingerprint"
+    if [[ ! -f "$fp_file" || "$(cat "$fp_file")" == "$(env_fingerprint)" ]]; then
+      log "Backend already healthy at $BACKEND_URL"
+      return 0
+    fi
+    log "Backend healthy but launched with different settings — restarting it"
+    "$ROOT_DIR/scripts/macos/stop-omnidev.sh" "$ROOT_DIR" >/dev/null 2>&1 || true
+    sleep 1
   fi
 
   if port_is_listening "$BACKEND_PORT"; then
@@ -153,6 +169,7 @@ start_backend() {
     exec env PATH="$PATH" "$py" -m uvicorn app.main:app --host 127.0.0.1 --port "$BACKEND_PORT"
   ) >> "$STATE_DIR/backend.log" 2>&1 &
   echo "$!" > "$STATE_DIR/backend.pid"
+  env_fingerprint > "$STATE_DIR/backend.env-fingerprint"
 
   wait_for_url "$BACKEND_URL/health" "Backend"
 }

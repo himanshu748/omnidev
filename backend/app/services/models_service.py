@@ -159,6 +159,34 @@ async def provider_status() -> dict[str, Any]:
     return status
 
 
+def _same_model(a: str, b: str) -> bool:
+    """Match refs with Ollama's implicit `:latest` convention."""
+    return a == b or a == f"{b}:latest" or f"{a}:latest" == b
+
+
+async def delete_model(name: str) -> None:
+    """Delete an installed model from the local Ollama server."""
+    _require_ollama()
+    name = validate_model_ref(name)
+    if _same_model(name, settings.ollama_model) or _same_model(name, settings.ollama_vision_model):
+        raise ValueError(
+            f"Model {name!r} is the active default. Switch models before removing it."
+        )
+    url = settings.ollama_base_url.rstrip("/") + "/api/delete"
+    try:
+        resp = await _get_ollama_client().request("DELETE", url, json={"model": name})
+    except httpx.HTTPError as exc:
+        raise AIConfigurationError(
+            f"Cannot reach Ollama at {settings.ollama_base_url}."
+        ) from exc
+    if resp.status_code == 404:
+        raise FileNotFoundError(f"Model {name!r} is not installed.")
+    if resp.status_code >= 400:
+        raise AIConfigurationError(
+            f"Ollama returned {resp.status_code} deleting {name!r}."
+        )
+
+
 async def pull_model_events(name: str) -> AsyncIterator[str]:
     """
     Pull a model, yielding newline-delimited JSON progress events from Ollama.

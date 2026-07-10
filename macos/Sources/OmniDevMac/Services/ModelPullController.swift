@@ -12,6 +12,9 @@ final class ModelPullController: ObservableObject {
     }
 
     @Published private(set) var phase: Phase = .idle
+    /// The model the current (or last) pull is for, so every surface can
+    /// attribute progress to the right row.
+    @Published private(set) var model: String?
 
     var isPulling: Bool {
         if case .pulling = phase { return true }
@@ -20,6 +23,7 @@ final class ModelPullController: ObservableObject {
 
     func pull(model: String, client: BackendClient, onFinished: @escaping () -> Void = {}) {
         guard !isPulling else { return }
+        self.model = model
         phase = .pulling(status: "starting", fraction: nil)
 
         Task {
@@ -31,10 +35,17 @@ final class ModelPullController: ObservableObject {
                     )
                 }
                 phase = .done
+                NotificationCenter.default.post(name: .omniDevModelsChanged, object: model)
                 onFinished()
             } catch {
                 phase = .failed(error.localizedDescription)
             }
         }
     }
+}
+
+extension Notification.Name {
+    /// Posted after a model is pulled or deleted, so every models surface
+    /// (cockpit card, onboarding) refreshes its snapshot.
+    static let omniDevModelsChanged = Notification.Name("omniDevModelsChanged")
 }

@@ -9,6 +9,9 @@ final class LocalStackManager: ObservableObject {
     @Published private(set) var aiProvider = ""
     @Published private(set) var aiModel = ""
 
+    /// One pull at a time, visible from every surface (onboarding, cockpit).
+    let modelPull = ModelPullController()
+
     let rootURL: URL
     private(set) var backendPort: String
     private(set) var backendURL: URL
@@ -87,6 +90,20 @@ final class LocalStackManager: ObservableObject {
             "AI_PROVIDER": AppSettings.aiProvider,
             "DEVOPS_READ_ONLY": AppSettings.devopsReadOnly ? "1" : "0",
         ]
+        let model = AppSettings.ollamaModel
+        if !model.isEmpty {
+            environment["OLLAMA_MODEL"] = model
+            // Vision-capable picks drive Vision Lab too; text-only picks
+            // leave the vision default alone.
+            if LocalModelCatalog.isVisionCapable(model) {
+                environment["OLLAMA_VISION_MODEL"] = model
+            }
+        }
+        let geminiKey = AppSettings.geminiApiKey
+        if !geminiKey.isEmpty {
+            environment["GEMINI_API_KEY"] = geminiKey
+        }
+
         // Only override AWS when Settings holds a full key pair, so an empty
         // form still falls through to the boto3 credential chain (~/.aws).
         let awsKey = AppSettings.awsAccessKeyId
@@ -168,6 +185,11 @@ final class LocalStackManager: ObservableObject {
             process.currentDirectoryURL = rootURL
 
             var environment = ProcessInfo.processInfo.environment
+            // Settings own these; a value inherited from the launching shell
+            // must not shadow what the user configured (or cleared) in-app.
+            for key in ["OLLAMA_MODEL", "OLLAMA_VISION_MODEL", "GEMINI_API_KEY"] {
+                environment.removeValue(forKey: key)
+            }
             environment["OMNIDEV_PROJECT_ROOT"] = rootURL.path
             environment["PATH"] = "\(NSHomeDirectory())/.local/bin:/opt/homebrew/bin:/usr/local/bin:/opt/anaconda3/bin:/usr/bin:/bin:/usr/sbin:/sbin"
             for (key, value) in extraEnvironment {

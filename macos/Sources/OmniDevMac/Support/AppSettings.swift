@@ -10,10 +10,12 @@ enum AppSettings {
     static let onboardingCompletedKey = "onboardingCompleted"
     static let awsAccessKeyIdKey = "awsAccessKeyId"
     static let awsRegionKey = "awsRegion"
+    static let ollamaModelKey = "ollamaModel"
 
     static let defaultBackendPort = "8010"
     static let defaultAIProvider = "auto"
     static let defaultAWSRegion = "us-east-1"
+    static let defaultOllamaModel = "gemma4:12b"
 
     static var backendPort: String {
         resolve(env: "OMNIDEV_BACKEND_PORT", key: backendPortKey, fallback: defaultBackendPort)
@@ -36,6 +38,29 @@ enum AppSettings {
 
     static var awsRegion: String {
         resolve(env: "AWS_DEFAULT_REGION", key: awsRegionKey, fallback: defaultAWSRegion)
+    }
+
+    /// The local model both the engine default and vision default follow.
+    /// Empty means "use the backend's built-in default". Settings is the
+    /// single source of truth — inherited env vars are stripped before the
+    /// sidecar launches, so the picker always wins.
+    static var ollamaModel: String {
+        UserDefaults.standard.string(forKey: ollamaModelKey) ?? ""
+    }
+
+    /// Gemini API key lives in the login keychain, like the AWS secret.
+    /// Keychain-only on purpose: clearing the field must actually turn
+    /// cloud mode off, even if the app inherited GEMINI_API_KEY.
+    static var geminiApiKey: String {
+        KeychainStore.read(account: "gemini-api-key") ?? ""
+    }
+
+    static func setGeminiApiKey(_ key: String) {
+        if key.isEmpty {
+            KeychainStore.delete(account: "gemini-api-key")
+        } else {
+            KeychainStore.write(account: "gemini-api-key", value: key)
+        }
     }
 
     /// The AWS secret key never touches UserDefaults — it lives in the login
@@ -67,7 +92,7 @@ enum AppSettings {
 }
 
 enum AppInfo {
-    static let version = "0.4.1"
+    static let version = "0.5.0"
     static let repository = "himanshu748/omnidev"
     static let releasesURL = URL(string: "https://github.com/himanshu748/omnidev/releases")!
 }

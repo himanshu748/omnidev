@@ -14,7 +14,7 @@ from app.schemas.models import (
 )
 from app.services import models_service
 from app.services.ai_service import AIConfigurationError
-from app.routers.errors import internal_error, service_unavailable
+from app.routers.errors import bad_request, internal_error, not_found, service_unavailable
 
 router = APIRouter()
 
@@ -41,6 +41,28 @@ async def list_models():
         installed=installed,
         recommended=[RecommendedModel(**m) for m in models_service.RECOMMENDED_MODELS],
     )
+
+
+@router.delete("")
+async def delete_model(name: str):
+    """Delete an installed local model to free disk space."""
+    try:
+        ref = models_service.validate_model_ref(name)
+    except ValueError as exc:
+        raise bad_request(str(exc)) from exc
+
+    try:
+        await models_service.delete_model(ref)
+    except FileNotFoundError as exc:
+        raise not_found(str(exc)) from exc
+    except ValueError as exc:
+        raise bad_request(str(exc)) from exc
+    except AIConfigurationError as exc:
+        raise service_unavailable(str(exc)) from exc
+    except Exception as exc:
+        raise internal_error("Model deletion failed.") from exc
+
+    return {"deleted": ref}
 
 
 @router.post("/pull")
