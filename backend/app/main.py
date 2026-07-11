@@ -82,6 +82,29 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Loopback-only guard: refuse non-loopback clients unless explicitly allowed.
+# The API is unauthenticated and may hold cloud credentials, so this fails safe
+# if the backend is ever bound to a routable interface by mistake.
+_LOOPBACK_HOSTS = {"127.0.0.1", "::1", "::ffff:127.0.0.1"}
+
+
+@app.middleware("http")
+async def _loopback_only(request, call_next):
+    if not settings.allow_remote_clients:
+        client = request.client.host if request.client else None
+        if client not in _LOOPBACK_HOSTS:
+            from fastapi.responses import JSONResponse
+
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": "OmniDev's API is loopback-only. Set ALLOW_REMOTE_CLIENTS=1 "
+                    "to allow remote access (not recommended — the API has no authentication)."
+                },
+            )
+    return await call_next(request)
+
+
 # CORS
 app.add_middleware(
     CORSMiddleware,

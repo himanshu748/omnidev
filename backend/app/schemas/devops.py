@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 # ── Request ─────────────────────────────────────────────────
 class DevOpsCommandRequest(BaseModel):
-    message: str = Field(..., min_length=1, examples=["List my EC2 instances"])
+    message: str = Field(..., min_length=1, max_length=4000, examples=["List my EC2 instances"])
     confirm_destructive: bool = Field(
         False,
         description="Must be True for destructive actions (stop/terminate).",
@@ -25,7 +25,7 @@ class ParsedIntent(BaseModel):
 
 # ── Plan preview (no execution) ─────────────────────────────
 class DevOpsPlanRequest(BaseModel):
-    message: str = Field(..., min_length=1, examples=["Stop instance i-123"])
+    message: str = Field(..., min_length=1, max_length=4000, examples=["Stop instance i-123"])
 
 
 class DevOpsPlanResponse(BaseModel):

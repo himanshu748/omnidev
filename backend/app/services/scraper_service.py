@@ -24,7 +24,13 @@ from playwright.async_api import Browser, BrowserContext, Page
 from playwright_stealth import Stealth
 
 from app.schemas.scraper import ArticleContent, ExtractMode, LinkItem, PageMetadata
-from app.services.url_guard import BlockedURLError, validate_proxy, validate_public_url
+from app.services.url_guard import (
+    BlockedURLError,
+    is_blocked_host,
+    resolve_safe_url,
+    validate_proxy,
+    validate_public_url,
+)
 
 _stealth = Stealth()
 
@@ -42,6 +48,24 @@ _DANGEROUS_JS = _re.compile(
     r"\bimport\s*\(",
     _re.IGNORECASE,
 )
+
+
+async def _install_ssrf_route_guard(page: Page) -> None:
+    """
+    Abort any request whose host resolves to a private/reserved/metadata
+    address. The pre-navigation validate_public_url only checks the entry URL;
+    this re-checks EVERY request the browser makes — redirect hops, sub-resources,
+    and re-resolved DNS — so an open redirect or DNS rebinding to an internal
+    host is refused at fetch time. Runs before any other route handler.
+    """
+    async def _guard(route):
+        host = urlparse(route.request.url).hostname
+        if is_blocked_host(host):
+            await route.abort()
+        else:
+            await route.continue_()
+
+    await page.route("**/*", _guard)
 
 
 def _reject_dangerous_js(code: str) -> None:
@@ -390,8 +414,9 @@ async def scrape(
     Open a page, optionally apply stealth, extract content, and close.
     Returns dict matching ScrapeResponse fields.
     """
-    # SSRF guard: reject private/reserved/metadata targets before navigating.
-    url = validate_public_url(url)
+    # SSRF guard: validate the entry and resolve the full redirect chain so the
+    # browser only navigates to a fully-checked final URL (see resolve_safe_url).
+    url = await resolve_safe_url(url)
     proxy = validate_proxy(proxy)
     start_time = time.time()
 
@@ -408,7 +433,8 @@ async def scrape(
 
     page: Page = await context.new_page()
 
-    # Resource blocking
+    # Resource blocking (registered first so the SSRF guard, added below, runs
+    # ahead of it and can abort blocked hosts before this handler sees them).
     if block_resources:
         resource_types_to_block = set(block_resources)
 
@@ -419,6 +445,16 @@ async def scrape(
                 await route.continue_()
 
         await page.route("**/*", handle_route)
+
+    # SSRF re-validation on every request/redirect hop. Registered last so it
+    # runs first; allowed hosts fall through to any resource-block handler.
+    async def _ssrf_guard(route):
+        if is_blocked_host(urlparse(route.request.url).hostname):
+            await route.abort()
+        else:
+            await route.fallback()
+
+    await page.route("**/*", _ssrf_guard)
 
     status_code: int | None = None
 
@@ -613,7 +649,7 @@ async def crawl(
     bounded by a hard page cap (<=10), depth cap (<=2), and a total time budget.
     Returns {start_url, domain, pages: [{url, title, excerpt, depth, status}]}.
     """
-    start_url = validate_public_url(url)
+    start_url = await resolve_safe_url(url)
     max_pages = max(1, min(int(max_pages), 10))
     max_depth = max(0, min(int(max_depth), 2))
     start_time = time.time()
@@ -642,6 +678,7 @@ async def crawl(
             current, depth = queue.pop(0)
 
             page: Page = await context.new_page()
+            await _install_ssrf_route_guard(page)
             status_code: int | None = None
 
             def _capture(response, _target=current):
@@ -651,6 +688,12 @@ async def crawl(
 
             page.on("response", _capture)
             try:
+                # Re-resolve redirects for this hop; skip if it points internal.
+                try:
+                    current = await resolve_safe_url(current)
+                except BlockedURLError:
+                    await page.close()
+                    continue
                 await page.goto(current, wait_until="commit", timeout=timeout_ms)
                 try:
                     await page.wait_for_load_state("domcontentloaded", timeout=5000)

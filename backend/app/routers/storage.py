@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from botocore.exceptions import NoCredentialsError, PartialCredentialsError
-from fastapi import APIRouter, File, Form, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 
+from app.config import settings
 from app.schemas.storage import (
     BucketListResponse,
     DeleteResponse,
@@ -63,7 +64,21 @@ async def upload(
 ):
     """Upload a file to S3. If key is empty, the original filename is used."""
     resolved_key = key or file.filename or "unnamed"
-    data = await file.read()
+
+    # Read in bounded chunks so an oversized body is rejected without buffering
+    # the whole thing into memory.
+    max_bytes = settings.max_upload_mb * 1024 * 1024
+    chunks: list[bytes] = []
+    total = 0
+    while chunk := await file.read(1024 * 1024):
+        total += len(chunk)
+        if total > max_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Upload exceeds the {settings.max_upload_mb} MB limit.",
+            )
+        chunks.append(chunk)
+    data = b"".join(chunks)
     try:
         await upload_file(
             bucket=bucket,

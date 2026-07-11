@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import ipaddress
 import socket
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
+
+import httpx
 
 # Hostnames that must never be fetched, regardless of DNS.
 _BLOCKED_HOSTS = {
@@ -31,6 +33,33 @@ _BLOCKED_EXACT_IPS = {
 
 class BlockedURLError(ValueError):
     """The URL is not allowed (bad scheme, private/reserved IP, or DNS failure)."""
+
+
+def is_blocked_host(host: str | None) -> bool:
+    """
+    True if a host (literal IP or name) must not be fetched.
+
+    Unlike validate_public_url this takes a bare host, resolves it, and returns
+    a bool — used to re-check every redirect hop and navigation at request time,
+    where only the host is available. A name that resolves to ANY private /
+    reserved address (or fails to resolve) is treated as blocked.
+    """
+    if not host:
+        return True
+    host = host.strip().rstrip(".")
+    if host.lower() in _BLOCKED_HOSTS:
+        return True
+    try:
+        ipaddress.ip_address(host)
+        return _ip_is_blocked(host)
+    except ValueError:
+        pass  # not a literal IP — resolve it
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return True
+    resolved = {info[4][0] for info in infos}
+    return not resolved or any(_ip_is_blocked(ip) for ip in resolved)
 
 
 def _ip_is_blocked(ip: str) -> bool:
@@ -99,6 +128,44 @@ def validate_public_url(url: str, *, allow_schemes: tuple[str, ...] = ("http", "
                 f"Refusing to fetch {host!r}: it resolves to a private/reserved address ({ip})."
             )
     return url
+
+
+async def resolve_safe_url(url: str, *, max_redirects: int = 10) -> str:
+    """
+    Follow the redirect chain ourselves, validating every hop, and return the
+    final URL — safe to hand to the browser.
+
+    Chromium follows HTTP redirects internally without re-invoking Playwright's
+    route interception, so an open redirect from a public entry to an internal
+    host (169.254.169.254, 127.0.0.1, LAN) would otherwise bypass the guard.
+    Resolving the chain here means the browser only ever navigates to a
+    fully-validated final URL. Transport errors fall back to the (validated)
+    entry URL so a pre-flight hiccup doesn't break normal scraping.
+    """
+    validate_public_url(url)
+    current = url
+    try:
+        async with httpx.AsyncClient(follow_redirects=False, timeout=10.0) as client:
+            for _ in range(max_redirects):
+                if is_blocked_host(urlparse(current).hostname):
+                    raise BlockedURLError(
+                        f"Refusing a redirect to a private/reserved host: {urlparse(current).hostname}"
+                    )
+                async with client.stream("GET", current) as resp:
+                    if resp.status_code in (301, 302, 303, 307, 308) and "location" in resp.headers:
+                        current = urljoin(current, resp.headers["location"])
+                        continue
+                    if is_blocked_host(urlparse(current).hostname):
+                        raise BlockedURLError(
+                            f"Refusing a redirect to a private/reserved host: {urlparse(current).hostname}"
+                        )
+                    return current
+        raise BlockedURLError("Too many redirects.")
+    except httpx.HTTPError:
+        # Could not pre-flight (DNS/connect/timeout). The entry URL was already
+        # validated; let the browser proceed (its per-request guard still fires
+        # on any direct sub-request to an internal host).
+        return url
 
 
 def validate_proxy(proxy: str | None) -> str | None:

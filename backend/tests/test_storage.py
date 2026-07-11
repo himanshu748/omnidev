@@ -56,6 +56,26 @@ async def test_storage_endpoints(client, monkeypatch, coverage_tracker):
 
 
 @pytest.mark.asyncio
+async def test_upload_rejects_oversize_body(client, monkeypatch):
+    from app.config import settings
+
+    async def fake_upload_file(**kwargs):
+        return None
+
+    monkeypatch.setattr(storage_router, "upload_file", fake_upload_file)
+    monkeypatch.setattr(settings, "max_upload_mb", 1)
+
+    big = b"x" * (2 * 1024 * 1024)  # 2 MB > 1 MB cap
+    resp = await client.post(
+        "/api/storage/upload",
+        data={"bucket": "demo", "key": "big.bin"},
+        files={"file": ("big.bin", big, "application/octet-stream")},
+    )
+    assert resp.status_code == 413
+    assert "limit" in resp.json()["detail"].lower()
+
+
+@pytest.mark.asyncio
 async def test_storage_download_validation(client):
     resp = await client.get("/api/storage/download?bucket=demo&key=file.txt&expires_in=10")
     assert resp.status_code == 422

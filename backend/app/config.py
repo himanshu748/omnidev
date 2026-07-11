@@ -50,6 +50,17 @@ class Settings(BaseSettings):
     # Codegen "Land in repo" writes ONLY under this root.
     land_root: str = "~/OmniDev/projects"
 
+    # ── Cloud Storage ───────────────────────────────────────
+    # Max S3 upload size (MB). The body is read into memory, so this bounds
+    # per-request memory use and blocks a trivial DoS.
+    max_upload_mb: int = 100
+
+    # ── Network exposure ────────────────────────────────────
+    # The API has no authentication and may hold AWS/Gemini credentials, so it
+    # is meant for loopback only. Requests from non-loopback clients are refused
+    # unless this is set — a fail-safe against an accidental 0.0.0.0 bind.
+    allow_remote_clients: bool = False
+
     # ── Context7 (docs for codegen) ─────────────────────────
     context7_api_key: str = ""
 
