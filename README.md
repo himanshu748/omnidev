@@ -86,6 +86,18 @@ OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI — Command Cent
 
 Stop the engine sidecar any time with `scripts/macos/stop-omnidev.sh`. See [docs/MACOS_APP.md](docs/MACOS_APP.md) for packaging details. Windows and Linux packages are planned next.
 
+## Claude Code on the Local Model
+
+Ollama exposes an Anthropic-compatible API, so Claude Code can run entirely on the same local Gemma model OmniDev manages — no cloud, no API key:
+
+```bash
+make claude-local
+# or directly:
+ANTHROPIC_BASE_URL=http://localhost:11434 ANTHROPIC_AUTH_TOKEN=ollama claude --model gemma4:12b
+```
+
+Since OmniDev's onboarding installs Ollama's default model for you, any machine running OmniDev is one command away from a fully-offline Claude Code session. Expect weaker tool-calling than Claude's own models — best for quick offline edits, not complex agentic work. OmniDev's MCP server (`claude mcp add omnidev`) is the complementary integration: cloud Claude for the reasoning, free local Gemma for delegated generation.
+
 ## Product Surface
 
 - The native macOS app is the product: Command Center, streaming Chat, and all module pages are SwiftUI views over the local FastAPI engine.

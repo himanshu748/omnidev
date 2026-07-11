@@ -33,6 +33,10 @@ models: ## Pull the default local model for fully-offline use
 mcp: ## Run the MCP server on stdio (register with: claude mcp add omnidev)
 	cd $(BACKEND) && .venv/bin/python -m app.mcp
 
+.PHONY: claude-local
+claude-local: ## Run Claude Code on the local Gemma model (no cloud, no API key)
+	ANTHROPIC_BASE_URL=http://localhost:11434 ANTHROPIC_AUTH_TOKEN=ollama claude --model gemma4:12b
+
 .PHONY: test
 test: ## Run backend tests
 	cd $(BACKEND) && .venv/bin/pytest -q
