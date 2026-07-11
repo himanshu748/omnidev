@@ -14,8 +14,16 @@ MIN_SYSTEM_VERSION="13.0"
 APP_VERSION="$(sed -n 's/.*static let version = "\(.*\)".*/\1/p' "$MACOS_PROJECT/Sources/OmniDevMac/Support/AppSettings.swift")"
 
 chmod +x "$ROOT_DIR/scripts/macos/launch-omnidev.sh" "$ROOT_DIR/scripts/macos/stop-omnidev.sh"
-swift build --package-path "$MACOS_PROJECT" -c release >/dev/null
-BUILD_BIN="$(swift build --package-path "$MACOS_PROJECT" -c release --show-bin-path)/$APP_NAME"
+# Universal binary so the same .app runs on Apple Silicon and Intel Macs.
+# --arch needs full Xcode; two --triple builds + lipo work with bare CLT.
+swift build --package-path "$MACOS_PROJECT" -c release --triple arm64-apple-macosx >/dev/null
+swift build --package-path "$MACOS_PROJECT" -c release --triple x86_64-apple-macosx >/dev/null
+ARM_BIN="$(swift build --package-path "$MACOS_PROJECT" -c release --triple arm64-apple-macosx --show-bin-path)/$APP_NAME"
+X86_BIN="$(swift build --package-path "$MACOS_PROJECT" -c release --triple x86_64-apple-macosx --show-bin-path)/$APP_NAME"
+UNIVERSAL_DIR="$MACOS_PROJECT/.build/universal"
+mkdir -p "$UNIVERSAL_DIR"
+lipo -create "$ARM_BIN" "$X86_BIN" -output "$UNIVERSAL_DIR/$APP_NAME"
+BUILD_BIN="$UNIVERSAL_DIR/$APP_NAME"
 
 mkdir -p "$APP_DIR"
 rm -rf "$APP_PATH"
@@ -25,7 +33,7 @@ chmod +x "$MACOS_DIR/$APP_NAME"
 
 # Bundle.module resolves against Contents/Resources inside a .app; without
 # the SwiftPM resource bundle the accessor fatalErrors at launch.
-cp -R "$(dirname "$BUILD_BIN")/OmniDevMac_OmniDevMac.bundle" "$RESOURCES_DIR/"
+cp -R "$(dirname "$ARM_BIN")/OmniDevMac_OmniDevMac.bundle" "$RESOURCES_DIR/"
 
 # Bundle the engine (backend source + launch scripts) so the packaged app
 # self-installs into ~/Library/Application Support/OmniDev on first run.
