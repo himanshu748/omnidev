@@ -351,6 +351,84 @@ extension BackendClient {
         struct DeleteAck: Decodable { let key: String }
         let _: DeleteAck = try await send("DELETE", "api/storage/files", query: ["bucket": bucket, "key": key])
     }
+
+    // MARK: - Knowledge
+
+    struct KnowledgeSource: Decodable, Identifiable {
+        let id: Int
+        let path: String
+        let kind: String
+        let lastIndexedAt: String?
+        let fileCount: Int
+        let chunkCount: Int
+    }
+
+    struct KnowledgeSourceList: Decodable {
+        let sources: [KnowledgeSource]
+    }
+
+    struct KnowledgeIndexStatus: Decodable {
+        let running: Bool
+        let sourceId: Int?
+        let filesTotal: Int
+        let filesDone: Int
+        let error: String?
+
+        var fraction: Double? {
+            guard running, filesTotal > 0 else { return nil }
+            return Double(filesDone) / Double(filesTotal)
+        }
+    }
+
+    struct KnowledgeHit: Decodable, Identifiable {
+        let sourceId: Int
+        let kind: String
+        let filePath: String
+        let snippet: String
+        let score: Double
+
+        var id: String { "\(sourceId):\(filePath):\(score)" }
+    }
+
+    struct KnowledgeSearchResult: Decodable {
+        let results: [KnowledgeHit]
+    }
+
+    func knowledgeSources() async throws -> [KnowledgeSource] {
+        let list: KnowledgeSourceList = try await get("api/knowledge/sources")
+        return list.sources
+    }
+
+    @discardableResult
+    func addKnowledgeSource(path: String, kind: String) async throws -> KnowledgeSource {
+        try await post("api/knowledge/sources", body: ["path": path, "kind": kind])
+    }
+
+    func deleteKnowledgeSource(id: Int) async throws {
+        struct DeleteAck: Decodable { let deleted: Int }
+        let _: DeleteAck = try await send("DELETE", "api/knowledge/sources/\(id)")
+    }
+
+    @discardableResult
+    func reindexKnowledgeSource(id: Int, full: Bool = false) async throws -> KnowledgeIndexStatus {
+        try await send(
+            "POST",
+            "api/knowledge/sources/\(id)/reindex",
+            query: full ? ["full": "true"] : [:]
+        )
+    }
+
+    func knowledgeStatus() async throws -> KnowledgeIndexStatus {
+        try await get("api/knowledge/status")
+    }
+
+    func knowledgeSearch(query: String, topK: Int = 8) async throws -> [KnowledgeHit] {
+        let result: KnowledgeSearchResult = try await post(
+            "api/knowledge/search",
+            body: ["query": query, "top_k": topK]
+        )
+        return result.results
+    }
 }
 
 /// Loosely-typed JSON for plan params and similar heterogeneous payloads.

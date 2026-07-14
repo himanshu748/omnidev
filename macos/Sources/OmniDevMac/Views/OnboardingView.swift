@@ -103,7 +103,20 @@ struct OnboardingView: View {
                 }
 
                 OnboardingStep(
-                    title: "AWS — optional",
+                    title: "Knowledge (optional)",
+                    detail: "Add a folder of notes, docs or code and OmniDev can answer questions about it, fully offline with citations.",
+                    state: .optional
+                ) {
+                    Button("Open Knowledge…") {
+                        NotificationCenter.default.post(name: .omniDevNavigate, object: OmniDevRoute.knowledge)
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.small)
+                }
+
+                OnboardingStep(
+                    title: "AWS (optional)",
                     detail: "The DevOps Agent and Cloud Storage use your AWS credentials. Keys from ~/.aws work automatically; you can also set a key pair in Settings.",
                     state: .optional
                 ) {

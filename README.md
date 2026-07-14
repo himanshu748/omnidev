@@ -13,12 +13,17 @@ Native macOS AI developer app. Ship, inspect, and operate software from one loca
 
 OmniDev is a fully native macOS app: every surface — cockpit, chat, DevOps, codegen, scraper, vision, storage — is SwiftUI, backed by a supervised local FastAPI engine on loopback. It brings together AI-assisted code generation, AWS operations, browser automation, visual analysis, and S3 file management in one place.
 
-Everything runs on your machine. With a local [Ollama](https://ollama.com) server, every AI-backed module — DevOps Agent, Code Gen, and Vision Lab — works completely offline with no API key and no data leaving your Mac. Prefer a hosted model? Set a free `GEMINI_API_KEY` and OmniDev uses Gemini instead. Risky agent actions always require human confirmation.
+Everything runs on your machine. With a local [Ollama](https://ollama.com) server, every AI-backed module (Knowledge, DevOps Agent, Code Gen and Vision Lab) works completely offline with no API key and no data leaving your Mac. Prefer a hosted model? Set a free `GEMINI_API_KEY` and OmniDev uses Gemini instead. Risky agent actions always require human confirmation.
+
+## Ask Your Mac, Offline (new in 0.6)
+
+Add any folder (an Obsidian vault, a project's docs, a whole repo) and OmniDev chunks it, embeds it with a small local model (`mxbai-embed-large`, one ~670MB download) and stores the index in `~/.omnidev`. Flip the Knowledge toggle in Chat and answers are grounded in your own files, with citations. Indexing is incremental (only changed files re-embed), the index never leaves your Mac, and the same index is served to Claude Code through MCP (`search_knowledge`).
 
 ## What It Does
 
 | Module | Purpose | Backend |
 |--------|---------|---------|
+| Knowledge | Index your notes, docs, code and chat history locally, then ask grounded questions with file citations. Works with wifi off. | Ollama embeddings + SQLite |
 | DevOps Agent | Parse natural-language AWS requests, inspect resources, and gate destructive actions behind confirmation. | Ollama or Gemini + boto3 |
 | Code Gen | Generate project files for common web/backend frameworks with validation and browser-isolated preview/download flows. | Ollama or Gemini + optional Context7 |
 | Web Scraper | Extract text, HTML, metadata, links, PDFs, or screenshots from authorized pages with Playwright-powered browser automation. | Playwright |
@@ -69,6 +74,7 @@ Then, inside a Claude Code session:
 | `scrape_url` / `crawl_site` | SSRF-guarded Playwright scraping and bounded same-domain crawling. |
 | `generate_project` / `refine_project` | Validated multi-file codegen — files are returned as data, never written or executed. |
 | `aws_plan` | Preview the boto3 plan for a natural-language AWS command. **Never executes** — approval stays in the OmniDev UI. |
+| `search_knowledge` / `index_folder` / `list_knowledge_sources` | Query and manage the local knowledge index. Claude Code inherits everything you indexed, fully offline. |
 | `list_models` / `pull_model` | Inspect provider status and pull local models. |
 
 The server is a thin stdio bridge to the running backend (set `OMNIDEV_BACKEND_URL` if yours isn't on `http://127.0.0.1:8000`). From `backend/` you can also run it directly with `python -m app.mcp` or `make mcp`.
@@ -138,7 +144,7 @@ omnidev/
 
 ### Option A — Download the app (recommended)
 
-Grab `OmniDev-vX.Y.Z.zip` from [GitHub Releases](https://github.com/himanshu748/omnidev/releases), unzip, and drag `OmniDev.app` to Applications. The build is unsigned — on first launch, right-click → Open (or `xattr -d com.apple.quarantine /Applications/OmniDev.app`).
+Grab `OmniDev-vX.Y.Z.dmg` from [GitHub Releases](https://github.com/himanshu748/omnidev/releases), open it, and drag `OmniDev.app` to Applications (a zip of the same app is also attached). The build is unsigned, so on first launch right-click → Open (or `xattr -d com.apple.quarantine /Applications/OmniDev.app`).
 
 The engine self-installs into `~/Library/Application Support/OmniDev` on first run (needs Python 3.11+ on the machine) and starts automatically every time the app opens. In-app **Check for Updates…** points at new releases.
 
@@ -212,7 +218,8 @@ All backend routes are served from `http://localhost:8000` by default (`8010` un
 | `GET` | `/health` | Service health check; reports active AI provider and model. |
 | `POST` | `/api/devops/command` | Natural-language AWS command; destructive operations require `confirm_destructive: true`. |
 | `POST` | `/api/devops/plan` | Plan preview for a natural-language AWS command — never executes (used by the MCP `aws_plan` tool). |
-| `POST` | `/api/chat/stream` | Streaming chat with SQLite session memory (`session_id`) and optional MCP tool calling (`use_tools`). |
+| `POST` | `/api/chat/stream` | Streaming chat with SQLite session memory (`session_id`), optional MCP tool calling (`use_tools`) and knowledge grounding (`use_knowledge`). |
+| `POST` | `/api/knowledge/sources` | Register a folder (or chat history) in the local knowledge index; `/api/knowledge/search` retrieves grounded excerpts. |
 | `GET` | `/api/mcp/catalog` | Curated MCP server catalog; `/api/mcp/servers` CRUD + per-server tool listing. |
 | `POST` | `/api/git/land` | Commit a validated generated project under `~/OmniDev/projects/<slug>` — no shell, no hooks, no remotes. |
 | `POST` | `/api/codegen/generate` | Returns validated generated files and instructions. Backend does not execute generated code. |

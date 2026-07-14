@@ -62,9 +62,31 @@ async def chat_stream(body: ChatRequest):
     system = body.system or DEFAULT_SYSTEM
 
     async def _events():
+        nonlocal system
         answer_parts: list[str] = []
         yield json.dumps({"session_id": session_id}) + "\n"
         try:
+            if body.use_knowledge:
+                from app.services import knowledge_service
+
+                hits = await knowledge_service.search(body.message)
+                if hits:
+                    cited = []
+                    grounding_lines = []
+                    for hit in hits:
+                        if hit["file_path"] not in cited:
+                            cited.append(hit["file_path"])
+                        grounding_lines.append(
+                            f"[{hit['file_path']}]\n{hit['snippet']}"
+                        )
+                    system = (
+                        system
+                        + "\n\nGround your answer in these excerpts from the "
+                        "user's local files. Cite file names when you use "
+                        "them. If the excerpts do not answer the question, "
+                        "say so.\n\n" + "\n\n---\n\n".join(grounding_lines)
+                    )
+                    yield json.dumps({"knowledge": {"cited_files": cited}}) + "\n"
             if body.use_tools:
                 # Import here so chat works even if MCP deps are absent.
                 from app.services.mcp_client_service import MCPError, run_tool_chat

@@ -92,7 +92,7 @@ enum AppSettings {
 }
 
 enum AppInfo {
-    static let version = "0.5.3"
+    static let version = "0.6.0"
     static let repository = "himanshu748/omnidev"
     static let releasesURL = URL(string: "https://github.com/himanshu748/omnidev/releases")!
 }

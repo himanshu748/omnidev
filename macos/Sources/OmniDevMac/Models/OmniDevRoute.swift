@@ -3,6 +3,7 @@ import Foundation
 enum OmniDevRoute: String, CaseIterable, Identifiable {
     case cockpit
     case chat
+    case knowledge
     case devops
     case codegen
     case scraper
@@ -13,7 +14,9 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
     var id: String { rawValue }
 
     /// The feature modules, excluding the cockpit and chat surfaces.
-    static let modules: [OmniDevRoute] = [.devops, .codegen, .scraper, .vision, .storage, .mcp]
+    static let modules: [OmniDevRoute] = [
+        .knowledge, .devops, .codegen, .scraper, .vision, .storage, .mcp,
+    ]
 
     var title: String {
         switch self {
@@ -21,6 +24,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
             return "Command Center"
         case .chat:
             return "Chat"
+        case .knowledge:
+            return "Knowledge"
         case .devops:
             return "DevOps Agent"
         case .codegen:
@@ -42,6 +47,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
             return "Status, models, and modules"
         case .chat:
             return "Stream the local model"
+        case .knowledge:
+            return "Ask your files, offline"
         case .devops:
             return "AWS plans and boto3 actions"
         case .codegen:
@@ -63,6 +70,8 @@ enum OmniDevRoute: String, CaseIterable, Identifiable {
             return "rectangle.grid.2x2"
         case .chat:
             return "bubble.left.and.text.bubble.right"
+        case .knowledge:
+            return "books.vertical"
         case .devops:
             return "flowchart"
         case .codegen:

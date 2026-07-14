@@ -12,3 +12,5 @@ python-multipart
 pytest
 pytest-asyncio
 moto
+numpy
+pypdf

@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-07-13
+
+### ✨ Added
+- **Knowledge (local RAG)**: register any folder (notes, docs or a whole repo) plus the built-in chat history, and OmniDev chunks it, embeds it locally with `mxbai-embed-large` via Ollama (Gemini embeddings when keyed) and stores vectors in `~/.omnidev/omnidev.db`. New `/api/knowledge/*` endpoints (sources CRUD, background indexing with progress, search), incremental re-indexing (only changed files re-embed), light `.gitignore` support, PDF/HTML/Markdown extraction and a single-flight embedding queue so chat latency stays protected.
+- **Knowledge page** in the app: add and remove folders via the native folder picker, watch indexing progress, re-index and search the index directly. If the embedding model is missing, a one-click download fixes it and re-runs indexing.
+- **Grounded chat**: a Knowledge toggle in Chat sends `use_knowledge` to `/api/chat/stream`; answers are grounded in retrieved excerpts and the cited files render in the transcript.
+- **MCP tools**: `search_knowledge`, `list_knowledge_sources` and `index_folder`, so Claude Code and any MCP client inherit the local index, fully offline.
+- **DMG packaging**: releases now attach `OmniDev-vX.Y.Z.dmg` with the standard drag-to-Applications layout, alongside the zip.
+
+### 🎨 Changed
+- Chat's `POST /api/chat/stream` accepts `use_knowledge` and emits a `{"knowledge": {"cited_files": [...]}}` event before deltas.
+- New backend deps: `numpy` (vector search) and `pypdf` (PDF extraction).
+
 ### ✨ Added
 - **MCP marketplace** — give the local model tools. A curated catalog (Filesystem, Fetch, Memory, Time, Git, Sequential Thinking) installs MCP servers that Gemma 4 can call from chat via a new Tools toggle; every tool call and result renders in the transcript. Safety by construction: only catalog entries can be installed (no arbitrary commands via API or UI), path params must be directories inside `$HOME`, server processes get a minimal environment (PATH/HOME only — backend credentials are never leaked), results are truncated before re-entering context, and tool rounds are bounded. New endpoints under `/api/mcp/*`; native "MCP Marketplace" page in the app.
 - **Conversation memory** — chat is session-backed (SQLite in `~/.omnidev`), so "now add auth" works. `POST /api/chat/stream` accepts `session_id` (returned as the stream's first event) plus session list/history/delete endpoints; the native Chat gets a New Chat button and remembers the thread.

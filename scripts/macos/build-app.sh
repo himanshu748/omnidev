@@ -107,4 +107,16 @@ cat > "$APP_CONTENTS/Info.plist" <<PLIST
 </plist>
 PLIST
 
+# Drag-to-Applications DMG alongside the raw .app (still unsigned; the
+# release notes carry the right-click-to-open instructions).
+DMG_STAGING="$APP_DIR/dmg-staging"
+DMG_PATH="$APP_DIR/OmniDev-v$APP_VERSION.dmg"
+rm -rf "$DMG_STAGING" "$DMG_PATH"
+mkdir -p "$DMG_STAGING"
+cp -R "$APP_PATH" "$DMG_STAGING/"
+ln -s /Applications "$DMG_STAGING/Applications"
+hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGING" -ov -format UDZO "$DMG_PATH" >/dev/null
+rm -rf "$DMG_STAGING"
+
 echo "$APP_PATH"
+echo "$DMG_PATH"

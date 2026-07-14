@@ -9,7 +9,18 @@ from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
 from app.config import settings
-from app.routers import chat, codegen, devops, git, mcp, models, scraper, storage, vision
+from app.routers import (
+    chat,
+    codegen,
+    devops,
+    git,
+    knowledge,
+    mcp,
+    models,
+    scraper,
+    storage,
+    vision,
+)
 
 START_TIME = time.time()
 COVERED: set[str] = set()
@@ -39,6 +50,11 @@ EXPECTED_ENDPOINTS = [
     "GET /api/mcp/catalog",
     "GET /api/mcp/servers",
     "POST /api/mcp/servers",
+    "POST /api/knowledge/sources",
+    "GET /api/knowledge/sources",
+    "DELETE /api/knowledge/sources",
+    "POST /api/knowledge/search",
+    "GET /api/knowledge/status",
 ]
 
 
@@ -64,6 +80,7 @@ def create_app() -> FastAPI:
     app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
     app.include_router(git.router, prefix="/api/git", tags=["Git Landing"])
     app.include_router(mcp.router, prefix="/api/mcp", tags=["MCP Marketplace"])
+    app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge"])
     app.state.browser = object()
 
     @app.get("/health", tags=["System"])

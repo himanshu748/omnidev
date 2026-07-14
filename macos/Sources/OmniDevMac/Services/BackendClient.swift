@@ -103,16 +103,23 @@ struct BackendClient {
         case delta(String)
         case toolCall(tool: String, arguments: String)
         case toolResult(tool: String, result: String)
+        case knowledge(citedFiles: [String])
     }
 
     /// Stream chat events for a prompt: session id first, then deltas and
-    /// (with `useTools`) MCP tool activity.
+    /// (with `useTools`) MCP tool activity. With `useKnowledge` the answer is
+    /// grounded in the local index and cited files arrive as a knowledge event.
     func chatStream(
         message: String,
         sessionId: String?,
-        useTools: Bool
+        useTools: Bool,
+        useKnowledge: Bool = false
     ) -> AsyncThrowingStream<ChatEvent, Error> {
-        var body: [String: Any] = ["message": message, "use_tools": useTools]
+        var body: [String: Any] = [
+            "message": message,
+            "use_tools": useTools,
+            "use_knowledge": useKnowledge,
+        ]
         if let sessionId {
             body["session_id"] = sessionId
         }
@@ -122,6 +129,9 @@ struct BackendClient {
             }
             if let id = object["session_id"] as? String {
                 return .sessionId(id)
+            }
+            if let knowledge = object["knowledge"] as? [String: Any] {
+                return .knowledge(citedFiles: knowledge["cited_files"] as? [String] ?? [])
             }
             if let delta = object["delta"] as? String {
                 return .delta(delta)
@@ -255,7 +265,7 @@ struct BackendClient {
     }
 
     private static func ensureOK(_ response: URLResponse, data: Data) throws {
-        guard let http = response as? HTTPURLResponse, http.statusCode != 200 else { return }
+        guard let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) else { return }
         throw BackendError.http(http.statusCode, extractDetail(String(data: data, encoding: .utf8) ?? ""))
     }
 

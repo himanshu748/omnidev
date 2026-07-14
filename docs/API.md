@@ -221,6 +221,30 @@ DELETE /api/storage/files?bucket={bucket}&key={key}
 
 ---
 
+## 📚 Knowledge (local RAG)
+
+### Register a Source
+
+```http
+POST /api/knowledge/sources
+Content-Type: application/json
+
+{ "path": "/Users/you/notes", "kind": "docs" }
+```
+
+`kind` is `docs`, `code` or `chat` (chat ignores `path` and indexes the built-in chat history). Returns `201` with the source and starts background indexing. `GET /api/knowledge/sources` lists sources, `DELETE /api/knowledge/sources/{id}` removes one, `POST /api/knowledge/sources/{id}/reindex?full=true` re-embeds everything and `GET /api/knowledge/status` reports indexing progress.
+
+### Search
+
+```http
+POST /api/knowledge/search
+Content-Type: application/json
+
+{ "query": "how does the login flow work?", "top_k": 8 }
+```
+
+Returns matching chunks with `file_path`, `snippet` and cosine `score`. Chat grounding: pass `"use_knowledge": true` to `POST /api/chat/stream` and the stream emits a `{"knowledge": {"cited_files": [...]}}` event before the answer deltas.
+
 ## 🔐 Authentication
 
 OmniDev keeps external service keys in backend environment variables. Gemini, AWS, and Context7 credentials are configured server-side and are never exposed to clients. In Ollama mode no AI credential is needed at all — requests go to the local Ollama server.

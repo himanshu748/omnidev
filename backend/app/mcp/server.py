@@ -108,7 +108,7 @@ async def _request_json(method: str, path: str, **kwargs) -> dict:
             response = await client.request(method, path, **kwargs)
     except httpx.ConnectError as exc:
         raise _unreachable() from exc
-    if response.status_code != 200:
+    if not 200 <= response.status_code < 300:
         raise RuntimeError(_http_detail(response, response.content))
     return response.json()
 
@@ -240,6 +240,42 @@ async def aws_plan(command: str) -> str:
     operation, params, destructive/read_only flags, impact, and scope.
     Applying a plan requires the OmniDev UI and its confirmation flow."""
     result = await _request_json("POST", "/api/devops/plan", json={"message": command})
+    return json.dumps(result, indent=2)
+
+
+@mcp.tool()
+async def search_knowledge(query: str, top_k: int = 8) -> str:
+    """Search the user's local knowledge index (their indexed docs, code and
+    chat history) and return the best-matching excerpts as JSON with file
+    paths and scores. Fully local: the index and the embedding model live on
+    this machine. Use this to ground answers in the user's own files."""
+    result = await _request_json(
+        "POST", "/api/knowledge/search", json={"query": query, "top_k": top_k}
+    )
+    return json.dumps(result, indent=2)
+
+
+@mcp.tool()
+async def list_knowledge_sources() -> str:
+    """List the folders (and built-in chat history) registered in the local
+    knowledge index, with file and chunk counts. Returns JSON."""
+    result = await _request_json("GET", "/api/knowledge/sources")
+    return json.dumps(result, indent=2)
+
+
+@mcp.tool()
+async def index_folder(path: str, kind: str = "") -> str:
+    """Register a local folder in the knowledge index and start indexing it
+    in the background. `kind` is docs or code; when omitted it is guessed
+    from the folder contents. Poll progress via the OmniDev app or re-call
+    search_knowledge once indexing settles."""
+    if not kind:
+        folder = Path(path).expanduser()
+        code_markers = {".git", "package.json", "pyproject.toml", "Cargo.toml", "go.mod"}
+        kind = "code" if any((folder / m).exists() for m in code_markers) else "docs"
+    result = await _request_json(
+        "POST", "/api/knowledge/sources", json={"path": path, "kind": kind}
+    )
     return json.dumps(result, indent=2)
 
 

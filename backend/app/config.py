@@ -33,6 +33,14 @@ class Settings(BaseSettings):
     ollama_model: str = "gemma4:12b"
     ollama_vision_model: str = "gemma4:12b"
 
+    # ── Knowledge (local RAG) ───────────────────────────────
+    # Dedicated small embedder so generation headroom stays free; never
+    # embed with the chat model.
+    ollama_embed_model: str = "mxbai-embed-large"
+    gemini_embed_model: str = "gemini-embedding-001"
+    # Retrieval defaults for grounded chat.
+    knowledge_top_k: int = 8
+
     # ── AWS ─────────────────────────────────────────────────
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""

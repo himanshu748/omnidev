@@ -10,6 +10,7 @@ struct ChatView: View {
     @State private var isStreaming = false
     @State private var sessionId: String?
     @State private var toolsEnabled = false
+    @State private var knowledgeEnabled = false
     @State private var activeStream: Task<Void, Never>?
     @FocusState private var inputFocused: Bool
 
@@ -86,6 +87,12 @@ struct ChatView: View {
             .toggleStyle(.button)
             .help("Let the model call tools from enabled MCP servers")
 
+            Toggle(isOn: $knowledgeEnabled) {
+                Image(systemName: "books.vertical")
+            }
+            .toggleStyle(.button)
+            .help("Ground answers in your local knowledge index (cites files)")
+
             TextField("Message the local model…", text: $draft, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1...5)
@@ -135,10 +142,14 @@ struct ChatView: View {
         let client = manager.backendClient
         let currentSession = sessionId
         let useTools = toolsEnabled
+        let useKnowledge = knowledgeEnabled
         activeStream = Task {
             do {
                 let stream = client.chatStream(
-                    message: prompt, sessionId: currentSession, useTools: useTools
+                    message: prompt,
+                    sessionId: currentSession,
+                    useTools: useTools,
+                    useKnowledge: useKnowledge
                 )
                 for try await event in stream {
                     switch event {
@@ -146,6 +157,12 @@ struct ChatView: View {
                         sessionId = id
                     case .delta(let delta):
                         appendToAnswer(delta)
+                    case .knowledge(let citedFiles):
+                        guard !citedFiles.isEmpty else { break }
+                        let names = citedFiles
+                            .map { ($0 as NSString).abbreviatingWithTildeInPath }
+                            .joined(separator: "  ·  ")
+                        insertBeforeAnswer(ChatMessage(role: .tool, text: "📚 \(names)"))
                     case .toolCall(let tool, let arguments):
                         insertBeforeAnswer(ChatMessage(
                             role: .tool,

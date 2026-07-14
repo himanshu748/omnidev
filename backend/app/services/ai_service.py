@@ -449,6 +449,61 @@ async def generate_structured(
         return parsed
 
 
+# ── Embeddings ──────────────────────────────────────────────
+async def embed_texts(texts: list[str]) -> list[list[float]]:
+    """
+    Embed a batch of texts with the active provider's embedding model.
+
+    Ollama uses /api/embed with the dedicated small embedder (never the chat
+    model). Gemini uses the embeddings endpoint. Raises AIConfigurationError
+    for setup problems (server unreachable, model not pulled).
+    """
+    if not texts:
+        return []
+    if get_provider() == "ollama":
+        model = settings.ollama_embed_model
+        url = settings.ollama_base_url.rstrip("/") + "/api/embed"
+        try:
+            resp = await _get_ollama_client().post(url, json={"model": model, "input": texts})
+        except httpx.HTTPError as exc:
+            raise AIConfigurationError(
+                f"Cannot reach Ollama at {settings.ollama_base_url}. "
+                + OLLAMA_INSTALL_HINT.format(model=model)
+            ) from exc
+        if resp.status_code == 404:
+            raise AIConfigurationError(
+                f"Embedding model {model!r} is not available locally. Run 'ollama pull {model}'."
+            )
+        if resp.status_code >= 400:
+            detail = ""
+            try:
+                detail = resp.json().get("error", "")
+            except Exception:
+                detail = resp.text[:200]
+            if "not found" in detail.lower():
+                raise AIConfigurationError(
+                    f"Embedding model {model!r} is not available locally. "
+                    f"Run 'ollama pull {model}'."
+                )
+            raise AIResponseError(f"Ollama embed request failed ({resp.status_code}): {detail}")
+        embeddings = resp.json().get("embeddings") or []
+        if len(embeddings) != len(texts):
+            raise AIResponseError("Ollama embed reply did not match the input batch size.")
+        return embeddings
+
+    def _embed():
+        return get_client().models.embed_content(
+            model=settings.gemini_embed_model,
+            contents=texts,
+        )
+
+    response = await asyncio.to_thread(_embed)
+    result = [list(item.values or []) for item in (response.embeddings or [])]
+    if len(result) != len(texts):
+        raise AIResponseError("Gemini embed reply did not match the input batch size.")
+    return result
+
+
 # ── Vision ──────────────────────────────────────────────────
 async def analyze_image_bytes(
     prompt: str,

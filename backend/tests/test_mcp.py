@@ -300,6 +300,9 @@ def test_mcp_stdio_handshake_lists_tools():
         "generate_project",
         "refine_project",
         "aws_plan",
+        "search_knowledge",
+        "list_knowledge_sources",
+        "index_folder",
         "list_models",
         "pull_model",
     }

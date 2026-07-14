@@ -14,6 +14,9 @@ class ChatRequest(BaseModel):
     session_id: str | None = Field(default=None, max_length=64)
     # Let the model call tools from enabled MCP servers (local provider only).
     use_tools: bool = False
+    # Ground the answer in the local knowledge index (cited files are
+    # reported in a {"knowledge": {...}} stream event).
+    use_knowledge: bool = False
 
 
 class SessionInfo(BaseModel):

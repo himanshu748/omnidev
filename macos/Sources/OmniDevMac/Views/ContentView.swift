@@ -60,6 +60,8 @@ struct ContentView: View {
                 CockpitView(manager: manager, selectedRoute: $selectedRoute)
             case .chat:
                 ChatView(manager: manager)
+            case .knowledge:
+                KnowledgeView(manager: manager)
             case .devops:
                 DevOpsView(manager: manager)
             case .codegen:
