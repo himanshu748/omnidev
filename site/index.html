@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>OmniDev, ask your Mac anything, offline</title>
+<meta name="description" content="Native macOS app. A local Gemma 4 model reads your files, including screenshots, answers with citations, and can edit code and run your tests. Nothing leaves your Mac." />
+<meta property="og:title" content="OmniDev" />
+<meta property="og:description" content="Ask your Mac anything, and let it do the work. Fully offline." />
+<meta property="og:type" content="website" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%234DA2FF'/><text x='50%25' y='58%25' font-size='34' text-anchor='middle' fill='%230A0C10' font-family='monospace'>&gt;_</text></svg>" />
+<style>
+  :root{
+    --bg:#0A0C10; --panel:#12151B; --ink:#EEF1F7; --dim:#8791A2;
+    --accent:#4DA2FF; --green:#56D385; --line:#1E2430;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:960px;margin:0 auto;padding:0 24px}
+  header{padding:64px 0 8px}
+  .mark{display:flex;align-items:center;gap:12px;font-weight:600;letter-spacing:-.01em}
+  .glyph{width:34px;height:34px;border-radius:9px;background:var(--accent);color:#0A0C10;
+    display:grid;place-items:center;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:17px}
+  h1{font-size:clamp(34px,5.5vw,54px);line-height:1.1;letter-spacing:-.03em;margin:40px 0 18px;max-width:16ch}
+  .lede{font-size:19px;color:var(--dim);max-width:62ch;margin:0 0 32px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .btn{display:inline-block;padding:12px 20px;border-radius:9px;text-decoration:none;font-weight:600;font-size:15px}
+  .btn.primary{background:var(--accent);color:#08111F}
+  .btn.ghost{border:1px solid var(--line);color:var(--ink)}
+  .note{font-size:13.5px;color:var(--dim)}
+  figure{margin:52px 0 0}
+  img{width:100%;border-radius:12px;border:1px solid var(--line);display:block}
+  figcaption{font-size:13.5px;color:var(--dim);margin-top:12px;max-width:70ch}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.09em;color:var(--dim);
+    margin:72px 0 20px;font-weight:600}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+  .card h3{margin:0 0 8px;font-size:16px}
+  .card p{margin:0;font-size:14.5px;color:var(--dim)}
+  ul.plain{list-style:none;padding:0;margin:0}
+  ul.plain li{padding:11px 0;border-bottom:1px solid var(--line);font-size:15px;color:var(--dim)}
+  ul.plain li:last-child{border-bottom:0}
+  ul.plain b{color:var(--ink);font-weight:600}
+  code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13.5px;
+    background:#161A22;border:1px solid var(--line);border-radius:5px;padding:1.5px 6px}
+  footer{margin:88px 0 64px;padding-top:24px;border-top:1px solid var(--line);
+    font-size:13.5px;color:var(--dim);display:flex;gap:18px;flex-wrap:wrap}
+  footer a{color:var(--dim)}
+  .badge{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--green);
+    border:1px solid var(--green);border-radius:999px;padding:3px 11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="mark"><span class="glyph">&gt;_</span> OmniDev</div>
+</header>
+
+<h1>Ask your Mac anything, and let it do the work.</h1>
+<p class="lede">
+  A native macOS app. A local Gemma 4 model reads your files, including your screenshots,
+  answers with citations, and can edit code and run your tests. Nothing leaves your machine:
+  no account, no API key, no bill.
+</p>
+
+<div class="cta">
+  <a class="btn primary" href="https://github.com/himanshu748/omnidev/releases/latest">Download for macOS</a>
+  <a class="btn ghost" href="https://github.com/himanshu748/omnidev">View source</a>
+</div>
+<p class="note">
+  Free and MIT licensed. Universal binary for Apple silicon and Intel. Builds are unsigned,
+  so the first launch needs right-click then Open.
+</p>
+
+<figure>
+  <img src="demo.gif" alt="OmniDev answering a question whose answer exists only inside a screenshot, offline" />
+  <figcaption>
+    A real recording. The payment reference existed only inside a PNG, read by on-device OCR
+    and cited back. The <code>.env</code> file sitting in the same folder was refused, not indexed.
+    The wait for the local model is sped up; everything else is real time.
+  </figcaption>
+</figure>
+
+<h2>Agent mode</h2>
+<figure style="margin-top:0">
+  <img src="demo-agent.gif" alt="OmniDev's agent fixing a failing test and asking permission before running pytest" />
+  <figcaption>
+    Give it a task instead of a question. It read the files, found the inverted operator, fixed it,
+    then stopped and asked permission before running pytest.
+  </figcaption>
+</figure>
+
+<h2>What it does</h2>
+<div class="grid">
+  <div class="card">
+    <h3>Ask your files</h3>
+    <p>Index your Desktop, Documents and Downloads. Notes, PDFs, Office and iWork docs, code, and screenshots read with on-device OCR. Answers cite the file they came from.</p>
+  </div>
+  <div class="card">
+    <h3>Agent mode</h3>
+    <p>It reads, edits, runs your tests and reports back, asking permission before touching anything outside the folders you trust.</p>
+  </div>
+  <div class="card">
+    <h3>Point at one file</h3>
+    <p>Ask about a single document, screenshot or PDF with no indexing at all. Nothing is stored.</p>
+  </div>
+  <div class="card">
+    <h3>Serves other tools</h3>
+    <p>An MCP server exposes the same local index and model to Claude Code, Claude Desktop and Cursor, still fully offline.</p>
+  </div>
+</div>
+
+<h2>What it will never do</h2>
+<ul class="plain">
+  <li><b>Never index your secrets.</b> Keys, keychains, browser profiles, password vaults, <code>.env</code> files and shell histories are refused before they are opened, even if you add the folder above them.</li>
+  <li><b>Never delete your work.</b> The agent has no delete tool, commands that remove files are refused, and overwriting a file always asks first. Every change is backed up and restorable.</li>
+  <li><b>Never phone home.</b> Embeddings and generation run on your machine. There is no telemetry and no account.</li>
+  <li><b>Never hang on iCloud.</b> Files stored in the cloud with no local copy are skipped and reported, never silently downloaded.</li>
+</ul>
+
+<h2>Requirements</h2>
+<ul class="plain">
+  <li>macOS on Apple silicon or Intel, with <a href="https://ollama.com" style="color:var(--accent)">Ollama</a> for the local model. Onboarding installs the model for you.</li>
+  <li>About 8 GB of disk for the default model. 16 GB of RAM recommended; a lighter model is offered on 8 GB machines.</li>
+  <li>Optional: set a Gemini key to use a hosted model instead. <span class="badge">offline by default</span></li>
+</ul>
+
+<footer>
+  <a href="https://github.com/himanshu748/omnidev">GitHub</a>
+  <a href="https://github.com/himanshu748/omnidev/releases/latest">Releases</a>
+  <a href="https://github.com/himanshu748/omnidev/blob/main/CHANGELOG.md">Changelog</a>
+  <a href="https://github.com/himanshu748/omnidev/blob/main/LICENSE">MIT licence</a>
+  <span>Built by himanshu748.</span>
+</footer>
+
+</div>
+</body>
+</html>
