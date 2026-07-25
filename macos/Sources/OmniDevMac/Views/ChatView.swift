@@ -7,22 +7,68 @@ import SwiftUI
 /// With the Agent toggle on the prompt runs through `POST /api/agent/stream`
 /// instead: a plan/act loop that reads and edits files in your workspaces and
 /// asks permission for anything outside them.
+/// Conversation state lives here rather than in the view, because SwiftUI
+/// destroys a detail view's @State the moment you navigate to another page.
+/// Losing a transcript (and cancelling a running generation) just because the
+/// user pressed Cmd-1 to glance at the Command Center is unacceptable when a
+/// local model can take a minute to answer.
+@MainActor
+final class ChatStore: ObservableObject {
+    @Published var messages: [ChatMessage] = []
+    @Published var draft = ""
+    @Published var isStreaming = false
+    @Published var pendingApproval: BackendClient.AgentApproval?
+    @Published var toolsEnabled = false
+    @Published var knowledgeEnabled = false
+    @Published var agentEnabled = false
+
+    var sessionId: String?
+    var activeStream: Task<Void, Never>?
+
+    func reset() {
+        activeStream?.cancel()
+        activeStream = nil
+        isStreaming = false
+        messages = []
+        sessionId = nil
+        pendingApproval = nil
+    }
+
+    /// Index of the trailing (in-progress) assistant message.
+    func answerIndex() -> Int? {
+        messages.lastIndex { $0.role == .assistant }
+    }
+
+    func appendToAnswer(_ delta: String) {
+        if let index = answerIndex() {
+            messages[index].text += delta
+        }
+    }
+
+    func insertBeforeAnswer(_ message: ChatMessage) {
+        if let index = answerIndex() {
+            messages.insert(message, at: index)
+        } else {
+            messages.append(message)
+        }
+    }
+
+    func failAnswer(_ description: String) {
+        if let index = answerIndex(), messages[index].text.isEmpty {
+            messages[index].text = "⚠︎ \(description)"
+            messages[index].isError = true
+        }
+    }
+}
+
 struct ChatView: View {
     @ObservedObject var manager: LocalStackManager
-    @State private var messages: [ChatMessage] = []
-    @State private var draft = ""
-    @State private var isStreaming = false
-    @State private var sessionId: String?
-    @State private var toolsEnabled = false
-    @State private var knowledgeEnabled = false
-    @State private var agentEnabled = false
-    @State private var pendingApproval: BackendClient.AgentApproval?
-    @State private var activeStream: Task<Void, Never>?
+    @ObservedObject var store: ChatStore
     @FocusState private var inputFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            if messages.isEmpty {
+            if store.messages.isEmpty {
                 emptyState
             } else {
                 transcript
@@ -39,16 +85,16 @@ struct ChatView: View {
                 } label: {
                     Label("New Chat", systemImage: "square.and.pencil")
                 }
-                .disabled(messages.isEmpty)
+                .disabled(store.messages.isEmpty)
             }
         }
         .onAppear {
             inputFocused = true
         }
-        .sheet(item: $pendingApproval) { approval in
+        .sheet(item: $store.pendingApproval) { approval in
             ApprovalSheet(approval: approval) { decision in
                 let client = manager.backendClient
-                pendingApproval = nil
+                store.pendingApproval = nil
                 Task { try? await client.resolveApproval(id: approval.id, decision: decision) }
             }
         }
@@ -65,7 +111,7 @@ struct ChatView: View {
                  : "Streams from \(manager.aiModel) — nothing leaves your Mac.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
-            Text(agentEnabled
+            Text(store.agentEnabled
                  ? "Agent mode: it reads and edits files in your workspaces, and asks before anything else."
                  : "Conversations are remembered, so follow-ups like “now add auth” work.")
                 .font(.caption)
@@ -79,15 +125,15 @@ struct ChatView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 14) {
-                    ForEach(messages) { message in
+                    ForEach(store.messages) { message in
                         ChatBubble(message: message)
                             .id(message.id)
                     }
                 }
                 .padding(20)
             }
-            .onChange(of: messages.last?.text) { _ in
-                if let last = messages.last {
+            .onChange(of: store.messages.last?.text) { _ in
+                if let last = store.messages.last {
                     proxy.scrollTo(last.id, anchor: .bottom)
                 }
             }
@@ -96,39 +142,39 @@ struct ChatView: View {
 
     private var inputBar: some View {
         HStack(spacing: 10) {
-            Toggle(isOn: $toolsEnabled) {
+            Toggle(isOn: $store.toolsEnabled) {
                 Image(systemName: "wrench.and.screwdriver")
             }
             .toggleStyle(.button)
             .help("Let the model call tools from enabled MCP servers")
 
-            Toggle(isOn: $knowledgeEnabled) {
+            Toggle(isOn: $store.knowledgeEnabled) {
                 Image(systemName: "books.vertical")
             }
             .toggleStyle(.button)
             .help("Ground answers in your local knowledge index (cites files)")
 
-            Toggle(isOn: $agentEnabled) {
+            Toggle(isOn: $store.agentEnabled) {
                 Image(systemName: "wand.and.rays")
             }
             .toggleStyle(.button)
-            .disabled(isStreaming)
+            .disabled(store.isStreaming)
             .help("Agent mode: let the model read, edit and verify files step by step")
 
-            TextField(agentEnabled ? "Give the agent a task…" : "Message the local model…",
-                      text: $draft, axis: .vertical)
+            TextField(store.agentEnabled ? "Give the agent a task…" : "Message the local model…",
+                      text: $store.draft, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1...5)
                 .focused($inputFocused)
                 .onSubmit(send)
 
             Button(action: send) {
-                Image(systemName: isStreaming ? "stop.circle.fill" : "arrow.up.circle.fill")
+                Image(systemName: store.isStreaming ? "stop.circle.fill" : "arrow.up.circle.fill")
                     .font(.system(size: 24))
-                    .foregroundStyle(canSend || isStreaming ? Color.omniAccent : Color.secondary)
+                    .foregroundStyle(canSend || store.isStreaming ? Color.omniAccent : Color.secondary)
             }
             .buttonStyle(.plain)
-            .disabled(!canSend && !isStreaming)
+            .disabled(!canSend && !store.isStreaming)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -139,39 +185,36 @@ struct ChatView: View {
     }
 
     private var canSend: Bool {
-        !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !isStreaming
+        !store.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !store.isStreaming
     }
 
     private func newChat() {
-        activeStream?.cancel()
-        isStreaming = false
-        messages = []
-        sessionId = nil
+        store.reset()
     }
 
     private func send() {
-        if isStreaming {
-            activeStream?.cancel()
-            isStreaming = false
+        if store.isStreaming {
+            store.activeStream?.cancel()
+            store.isStreaming = false
             return
         }
-        let prompt = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        let prompt = store.draft.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !prompt.isEmpty else { return }
-        draft = ""
-        messages.append(ChatMessage(role: .user, text: prompt))
-        messages.append(ChatMessage(role: .assistant, text: ""))
-        isStreaming = true
+        store.draft = ""
+        store.messages.append(ChatMessage(role: .user, text: prompt))
+        store.messages.append(ChatMessage(role: .assistant, text: ""))
+        store.isStreaming = true
 
-        if agentEnabled {
+        if store.agentEnabled {
             runAgent(task: prompt)
             return
         }
 
         let client = manager.backendClient
-        let currentSession = sessionId
-        let useTools = toolsEnabled
-        let useKnowledge = knowledgeEnabled
-        activeStream = Task {
+        let currentSession = store.sessionId
+        let useTools = store.toolsEnabled
+        let useKnowledge = store.knowledgeEnabled
+        store.activeStream = Task {
             do {
                 let stream = client.chatStream(
                     message: prompt,
@@ -182,23 +225,23 @@ struct ChatView: View {
                 for try await event in stream {
                     switch event {
                     case .sessionId(let id):
-                        sessionId = id
+                        store.sessionId = id
                     case .delta(let delta):
-                        appendToAnswer(delta)
+                        store.appendToAnswer(delta)
                     case .knowledge(let citedFiles):
                         guard !citedFiles.isEmpty else { break }
                         let names = citedFiles
                             .map { ($0 as NSString).abbreviatingWithTildeInPath }
                             .joined(separator: "  ·  ")
-                        insertBeforeAnswer(ChatMessage(role: .tool, text: "📚 \(names)"))
+                        store.insertBeforeAnswer(ChatMessage(role: .tool, text: "📚 \(names)"))
                     case .toolCall(let tool, let arguments):
-                        insertBeforeAnswer(ChatMessage(
+                        store.insertBeforeAnswer(ChatMessage(
                             role: .tool,
                             text: arguments.isEmpty || arguments == "{}"
                                 ? "⚙ \(tool)" : "⚙ \(tool) \(arguments)"
                         ))
                     case .toolResult(let tool, let result):
-                        insertBeforeAnswer(ChatMessage(
+                        store.insertBeforeAnswer(ChatMessage(
                             role: .tool,
                             text: "→ \(tool): \(result.prefix(400))"
                         ))
@@ -207,12 +250,9 @@ struct ChatView: View {
             } catch is CancellationError {
                 // Stopped by the user; keep the partial answer.
             } catch {
-                if let index = answerIndex(), messages[index].text.isEmpty {
-                    messages[index].text = "⚠︎ \(error.localizedDescription)"
-                    messages[index].isError = true
-                }
+                store.failAnswer(error.localizedDescription)
             }
-            isStreaming = false
+            store.isStreaming = false
         }
     }
 
@@ -220,8 +260,8 @@ struct ChatView: View {
     /// they happen, and approvals interrupt with a sheet.
     private func runAgent(task: String) {
         let client = manager.backendClient
-        let useMCP = toolsEnabled
-        activeStream = Task {
+        let useMCP = store.toolsEnabled
+        store.activeStream = Task {
             do {
                 for try await event in client.agentStream(task: task, useMCP: useMCP) {
                     switch event {
@@ -229,7 +269,7 @@ struct ChatView: View {
                         let where_ = workspaces.isEmpty
                             ? "no workspaces yet"
                             : "\(workspaces.count) workspace\(workspaces.count == 1 ? "" : "s")"
-                        insertBeforeAnswer(ChatMessage(
+                        store.insertBeforeAnswer(ChatMessage(
                             role: .tool,
                             text: "🤖 agent on \(model.isEmpty ? "local model" : model) · "
                                 + "\(where_) · \(tools.count) tools"
@@ -237,15 +277,15 @@ struct ChatView: View {
                     case .step(let number, let thought):
                         let trimmed = thought.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { break }
-                        insertBeforeAnswer(ChatMessage(role: .tool, text: "① step \(number): \(trimmed)"))
+                        store.insertBeforeAnswer(ChatMessage(role: .tool, text: "① step \(number): \(trimmed)"))
                     case .checkpoint(let repo, let head, let dirty):
-                        insertBeforeAnswer(ChatMessage(
+                        store.insertBeforeAnswer(ChatMessage(
                             role: .tool,
                             text: "⎇ \((repo as NSString).lastPathComponent) at \(head)"
                                 + (dirty ? " (uncommitted changes present)" : "")
                         ))
                     case .toolCall(let tool, let arguments):
-                        insertBeforeAnswer(ChatMessage(
+                        store.insertBeforeAnswer(ChatMessage(
                             role: .tool,
                             text: arguments.isEmpty || arguments == "{}"
                                 ? "⚙ \(tool)" : "⚙ \(tool) \(arguments.prefix(300))"
@@ -256,50 +296,29 @@ struct ChatView: View {
                             text: "\(ok ? "→" : "✗") \(tool): \(result.prefix(400))"
                         )
                         message.isError = !ok
-                        insertBeforeAnswer(message)
+                        store.insertBeforeAnswer(message)
                     case .approvalRequired(let approval):
-                        pendingApproval = approval
+                        store.pendingApproval = approval
                     case .approvalResolved(let id, let decision):
-                        if pendingApproval?.id == id { pendingApproval = nil }
-                        insertBeforeAnswer(ChatMessage(
+                        if store.pendingApproval?.id == id { store.pendingApproval = nil }
+                        store.insertBeforeAnswer(ChatMessage(
                             role: .tool,
                             text: decision == "deny" ? "🚫 denied" : "✓ approved (\(decision))"
                         ))
                     case .delta(let delta):
-                        appendToAnswer(delta)
+                        store.appendToAnswer(delta)
                     }
                 }
             } catch is CancellationError {
-                pendingApproval = nil
+                store.pendingApproval = nil
             } catch {
-                pendingApproval = nil
-                if let index = answerIndex(), messages[index].text.isEmpty {
-                    messages[index].text = "⚠︎ \(error.localizedDescription)"
-                    messages[index].isError = true
-                }
+                store.pendingApproval = nil
+                store.failAnswer(error.localizedDescription)
             }
-            isStreaming = false
+            store.isStreaming = false
         }
     }
 
-    /// Index of the trailing (in-progress) assistant message.
-    private func answerIndex() -> Int? {
-        messages.lastIndex { $0.role == .assistant }
-    }
-
-    private func appendToAnswer(_ delta: String) {
-        if let index = answerIndex() {
-            messages[index].text += delta
-        }
-    }
-
-    private func insertBeforeAnswer(_ message: ChatMessage) {
-        if let index = answerIndex() {
-            messages.insert(message, at: index)
-        } else {
-            messages.append(message)
-        }
-    }
 }
 
 struct ChatMessage: Identifiable {

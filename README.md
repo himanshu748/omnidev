@@ -14,7 +14,7 @@ Native macOS app. A local Gemma 4 model reads your files (including screenshots)
 
 ![OmniDev answering a question about a screenshot, offline](docs/demo.gif)
 
-*The invoice number existed only inside a PNG. No wifi, no API key, no bill. The `.env` sitting in the same folder was refused, not indexed.*
+*A real screen recording of the app. The payment reference existed only inside a PNG, read by on-device OCR and cited back. No wifi, no API key, no bill. The `.env` in the same folder was refused, not indexed. The wait for the local model is sped up; everything else is real time.*
 
 ## Agent mode
 
@@ -22,7 +22,7 @@ Give it a task instead of a question. It reads, edits, runs your tests and repor
 
 ![OmniDev agent fixing a failing test on the local model](docs/demo-agent.gif)
 
-*Real run on gemma4:12b: five tool calls, one approval, fix confirmed by an independent pytest run.*
+*Also a real recording. The agent read the files, found the inverted operator, fixed it, then stopped and asked permission before running pytest. Verified afterwards: the file really is fixed and the test really passes. The thinking time is sped up.*
 
 **It cannot delete your work.** There is no delete tool. Shell commands that remove files are refused by name, `git stash`, `clean`, `reset --hard`, `npm ci` and `make clean` are all blocked, and replacing an existing file's contents always asks first even inside a trusted folder. Every file it changes is snapshotted beforehand and restorable by id.
 

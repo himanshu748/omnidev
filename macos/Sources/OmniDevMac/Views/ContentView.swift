@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var manager: LocalStackManager
+    @ObservedObject var chatStore: ChatStore
     @State private var selectedRoute: OmniDevRoute = .cockpit
     @State private var showOnboarding = false
     @AppStorage(AppSettings.onboardingCompletedKey) private var onboardingCompleted = false
@@ -59,7 +60,7 @@ struct ContentView: View {
             case .cockpit:
                 CockpitView(manager: manager, selectedRoute: $selectedRoute)
             case .chat:
-                ChatView(manager: manager)
+                ChatView(manager: manager, store: chatStore)
             case .knowledge:
                 KnowledgeView(manager: manager)
             case .devops:

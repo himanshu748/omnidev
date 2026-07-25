@@ -23,11 +23,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 @main
 struct OmniDevMacApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    @StateObject private var chatStore = ChatStore()
     @StateObject private var stackManager = LocalStackManager()
 
     var body: some Scene {
         WindowGroup("OmniDev", id: "main") {
-            ContentView(manager: stackManager)
+            ContentView(manager: stackManager, chatStore: chatStore)
                 .frame(minWidth: 1080, minHeight: 720)
                 .onAppear {
                     appDelegate.stackManager = stackManager
