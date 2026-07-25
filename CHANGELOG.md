@@ -6,6 +6,33 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-07-25
+
+### ✨ Added
+- **Screenshots and images are searchable.** Every indexed image is OCR'd on device with the macOS Vision framework: no model download, no cloud, no Tesseract. Measured at 42 ms per image warm, so it runs on everything rather than being opt-in. Scanned PDFs reuse the same path, rasterised page by page with Quartz when the text layer is empty.
+- **Whole-Mac coverage**: one-click "Add My Usual Folders" registers Desktop, Documents and Downloads, and the screenshots folder is read from your actual macOS setting rather than assumed to be `~/Desktop`. New formats: Office (docx, pptx, xlsx), iWork (pages, key, numbers), email (eml), and more code extensions.
+- **Ask about one specific file**, with no indexing at all: `POST /api/knowledge/ask-file` and the MCP tool `ask_file` extract just the relevant parts of any readable file, including images and PDFs. Nothing is stored.
+- **Hybrid retrieval**: BM25 keyword ranking (SQLite FTS5) fused with dense similarity via reciprocal rank fusion, so exact tokens like an error code or an invoice number are findable. Search also accepts filters for kind, date range and path prefix.
+- **Your index** panel showing excerpt counts, how many came from images, on-disk size and where it lives, plus a one-click **Delete My Index**.
+
+### 🔒 Security
+- **Non-overridable safety denylist**, checked before any file is opened, and it wins over an explicitly added folder: adding `~` still never indexes `~/.ssh`. Covers `~/Library`, SSH and GPG and AWS and Kubernetes credentials, keychains, browser profiles, password-manager vaults, plus patterns like `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.kdbx`, `.netrc`, `.npmrc` and shell histories.
+- **User exclusions** in Settings (comma-separated folders or globs) applied on top of the built-in list.
+- The index holds plaintext excerpts, so it is now created `0600` and excluded from Time Machine, and the app says plainly what is stored and where.
+
+### 🐛 Fixed
+- **iCloud-evicted files no longer hang indexing, ever.** A file evicted to iCloud is present in directory listings but blocks `open()` indefinitely at 0% CPU when the file provider is unhealthy. `~/Desktop` and `~/Documents` are exactly the folders this release invites you to add, and 34 such files exist on the developer's own Desktop. Detection uses `st_flags & SF_DATALESS`, which `stat()` answers without materialising the file. Evicted files are skipped and reported, never silently dropped, and `brctl download` is never called implicitly.
+- Every extraction now runs under a hard wall clock, so a stalled network volume or dead external disk degrades to one skipped file instead of a stuck job.
+- Indexing refuses to start below a free-disk floor and yields while chat or an agent is generating.
+
+### 🎨 Changed
+- Search no longer holds chunk text in memory. The resident matrix is ids and vectors only, and text is fetched for the final top-k after ranking. The cache also appends instead of rebuilding, so adding files no longer reloads everything already resident.
+- **sqlite-vec was evaluated and rejected.** Apple's system Python has no `enable_load_extension` at all (verified on `/usr/bin/python3` 3.9.6), so an extension-based vector store would fail to open on many Macs. FTS5 is compiled into every Python's SQLite, so the boring float32-plus-numpy path stays.
+- Coverage is reported honestly: sources show what was skipped and why, in a sentence you can act on ("Skipped 34 stored in iCloud (download them in Finder to include them)").
+
+### ✅ Verified
+Live, offline, reproducible via `docs/probes/`: a screenshot whose text exists only inside the image ranked first for a question about it (score 0.82) while a decoy document ranked lower; an exact-token query found the invoice number through the keyword path; a planted `.env` and `id_rsa` inside the indexed folder never reached the index; the index file was `0600`. Separately, indexing the real `~/Desktop` with its 34 evicted files completed in 6.6 seconds with zero hangs. Backend suite: 311 tests.
+
 ## [0.6.5] - 2026-07-14
 
 ### ✨ Added

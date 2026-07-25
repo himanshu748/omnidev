@@ -2,7 +2,14 @@
 
 **Version:** 1.0 · 2026-07-13
 **Owner:** himanshu748 · **Repo:** https://github.com/himanshu748/omnidev (local: `/Users/himanshujha/Documents/Codex/omnidev`)
-**Status:** the definitive brief for the next two releases. Written to be pasted into a fresh agent session with zero prior context. Current shipped version: **0.5.3** (`AppInfo.version` in `macos/Sources/OmniDevMac/Support/AppSettings.swift`).
+**Status: BOTH RELEASES SHIPPED.** v0.6.0 on 2026-07-14 (commit 9f5d8a4) and v0.6.5 on 2026-07-14 (commit e4e7df1). Kept for the record; the live brief is now `docs/PRD-v0.7.md`.
+
+**Deviations made while building v0.6.5, and why:**
+1. `apply_patch(path, unified_diff)` became `edit_file(path, old_text, new_text)`. Small local models reliably botch hunk headers and line numbers but handle exact-snippet replacement fine. A failed match echoes the closest region back via difflib so the model self-corrects. This is what made the live gemma4:12b run succeed first time.
+2. The agent records git HEAD before its first mutation but does **not** create a checkpoint commit. Once workspaces became the user's real repositories rather than only generated projects, committing their in-progress work unasked was worse than the problem it solved.
+3. Approval scope became allow_once / allow_always / deny, with allow_always scoped per tool plus parent directory for one run only.
+
+**Original status:** the definitive brief for the next two releases. Written to be pasted into a fresh agent session with zero prior context. Current shipped version: **0.5.3** (`AppInfo.version` in `macos/Sources/OmniDevMac/Support/AppSettings.swift`).
 
 ---
 

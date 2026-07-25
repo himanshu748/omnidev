@@ -108,6 +108,10 @@ final class LocalStackManager: ObservableObject {
         // form still falls through to the boto3 credential chain (~/.aws).
         let awsKey = AppSettings.awsAccessKeyId
         let awsSecret = AppSettings.awsSecretAccessKey
+        let exclusions = (UserDefaults.standard.string(forKey: AppSettings.knowledgeExclusionsKey) ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        environment["KNOWLEDGE_EXCLUSIONS"] = exclusions
+
         if !awsKey.isEmpty && !awsSecret.isEmpty {
             environment["AWS_ACCESS_KEY_ID"] = awsKey
             environment["AWS_SECRET_ACCESS_KEY"] = awsSecret
@@ -187,7 +191,7 @@ final class LocalStackManager: ObservableObject {
             var environment = ProcessInfo.processInfo.environment
             // Settings own these; a value inherited from the launching shell
             // must not shadow what the user configured (or cleared) in-app.
-            for key in ["OLLAMA_MODEL", "OLLAMA_VISION_MODEL", "GEMINI_API_KEY"] {
+            for key in ["OLLAMA_MODEL", "OLLAMA_VISION_MODEL", "GEMINI_API_KEY", "KNOWLEDGE_EXCLUSIONS"] {
                 environment.removeValue(forKey: key)
             }
             environment["OMNIDEV_PROJECT_ROOT"] = rootURL.path

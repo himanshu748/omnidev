@@ -361,6 +361,8 @@ extension BackendClient {
         let lastIndexedAt: String?
         let fileCount: Int
         let chunkCount: Int
+        /// A sentence naming what was skipped and why, empty when nothing was.
+        let skipped: String
     }
 
     struct KnowledgeSourceList: Decodable {
@@ -373,6 +375,8 @@ extension BackendClient {
         let filesTotal: Int
         let filesDone: Int
         let error: String?
+        let skipped: [String: Int]
+        let message: String
 
         var fraction: Double? {
             guard running, filesTotal > 0 else { return nil }
@@ -392,6 +396,38 @@ extension BackendClient {
 
     struct KnowledgeSearchResult: Decodable {
         let results: [KnowledgeHit]
+    }
+
+    struct KnowledgeStats: Decodable {
+        let chunks: Int
+        let byKind: [String: Int]
+        let databaseBytes: Int
+        let databasePath: String
+        let ocrAvailable: Bool
+    }
+
+    struct AskFileResult: Decodable {
+        let filePath: String
+        let excerpts: [String]
+        let truncated: Bool
+    }
+
+    func knowledgeStats() async throws -> KnowledgeStats {
+        try await get("api/knowledge/stats")
+    }
+
+    func askFile(path: String, question: String) async throws -> AskFileResult {
+        try await post("api/knowledge/ask-file", body: ["path": path, "question": question])
+    }
+
+    struct DeleteIndexAck: Decodable {
+        let sources: Int
+        let chunks: Int
+    }
+
+    @discardableResult
+    func deleteKnowledgeIndex() async throws -> DeleteIndexAck {
+        try await send("DELETE", "api/knowledge/index")
     }
 
     func knowledgeSources() async throws -> [KnowledgeSource] {

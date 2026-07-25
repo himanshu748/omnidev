@@ -11,6 +11,7 @@ enum AppSettings {
     static let awsAccessKeyIdKey = "awsAccessKeyId"
     static let awsRegionKey = "awsRegion"
     static let ollamaModelKey = "ollamaModel"
+    static let knowledgeExclusionsKey = "knowledgeExclusions"
 
     static let defaultBackendPort = "8010"
     static let defaultAIProvider = "auto"
@@ -92,7 +93,7 @@ enum AppSettings {
 }
 
 enum AppInfo {
-    static let version = "0.6.5"
+    static let version = "0.7.0"
     static let repository = "himanshu748/omnidev"
     static let releasesURL = URL(string: "https://github.com/himanshu748/omnidev/releases")!
 }

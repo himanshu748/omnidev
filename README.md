@@ -15,9 +15,17 @@ OmniDev is a fully native macOS app: every surface — cockpit, chat, DevOps, co
 
 Everything runs on your machine. With a local [Ollama](https://ollama.com) server, every AI-backed module (Knowledge, DevOps Agent, Code Gen and Vision Lab) works completely offline with no API key and no data leaving your Mac. Prefer a hosted model? Set a free `GEMINI_API_KEY` and OmniDev uses Gemini instead. Risky agent actions always require human confirmation.
 
-## Ask Your Mac, Offline (new in 0.6)
+## Ask Your Mac, Offline (0.7)
 
-Add any folder (an Obsidian vault, a project's docs, a whole repo) and OmniDev chunks it, embeds it with a small local model (`mxbai-embed-large`, one ~670MB download) and stores the index in `~/.omnidev`. Flip the Knowledge toggle in Chat and answers are grounded in your own files, with citations. Indexing is incremental (only changed files re-embed), the index never leaves your Mac, and the same index is served to Claude Code through MCP (`search_knowledge`).
+Point OmniDev at your Desktop, Documents and Downloads and ask questions about anything in them. Notes, PDFs, Office and iWork documents, code, and **screenshots**: images are read with on-device OCR (macOS Vision, ~42 ms each, no download), so text that only ever existed inside a picture is searchable like everything else. Flip the Knowledge toggle in Chat and answers are grounded in your own files, with citations. Or point at one specific file and ask about it directly, with no indexing at all.
+
+Everything runs locally. Embeddings go to `localhost`, the index lives in `~/.omnidev`, and the same index is served to Claude Code through MCP (`search_knowledge`, `ask_file`).
+
+### What is never indexed
+
+The index stores plaintext excerpts, so some things are refused outright and cannot be enabled: `~/Library`, SSH and GPG and AWS credentials, keychains, browser profiles, password-manager vaults, and files matching `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.kdbx`, `.netrc`, `.npmrc` or shell histories. This holds even if you add a parent folder. You can exclude more in Settings, the index file is created `0600` and kept out of Time Machine, and **Delete My Index** erases everything in one click.
+
+Files stored in iCloud with no local copy are skipped rather than downloaded, and OmniDev tells you how many, because reading them can hang indefinitely.
 
 ## Agent Mode (new in 0.6.5)
 
@@ -32,7 +40,7 @@ Shell access is an argv allowlist (git without push or reset, pytest, npm test, 
 | Module | Purpose | Backend |
 |--------|---------|---------|
 | Agent | Give it a task: it reads, edits, runs tests and reports back, asking permission outside your workspaces. | Ollama or Gemini tool calling |
-| Knowledge | Index your notes, docs, code and chat history locally, then ask grounded questions with file citations. Works with wifi off. | Ollama embeddings + SQLite |
+| Knowledge | Index notes, docs, code, screenshots and chat history locally, then ask grounded questions with citations. Works with wifi off. | Vision OCR + Ollama embeddings + SQLite |
 | DevOps Agent | Parse natural-language AWS requests, inspect resources, and gate destructive actions behind confirmation. | Ollama or Gemini + boto3 |
 | Code Gen | Generate project files for common web/backend frameworks with validation and browser-isolated preview/download flows. | Ollama or Gemini + optional Context7 |
 | Web Scraper | Extract text, HTML, metadata, links, PDFs, or screenshots from authorized pages with Playwright-powered browser automation. | Playwright |

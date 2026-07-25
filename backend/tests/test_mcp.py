@@ -302,6 +302,7 @@ def test_mcp_stdio_handshake_lists_tools():
         "aws_plan",
         "search_knowledge",
         "list_knowledge_sources",
+        "ask_file",
         "index_folder",
         "list_models",
         "pull_model",

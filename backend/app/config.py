@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     gemini_embed_model: str = "gemini-embedding-001"
     # Retrieval defaults for grounded chat.
     knowledge_top_k: int = 8
+    # User exclusions applied on top of the non-overridable safety denylist
+    # in file_guards. Comma-separated folders or globs.
+    knowledge_exclusions: str = ""
 
     # ── AWS ─────────────────────────────────────────────────
     aws_access_key_id: str = ""

@@ -10,6 +10,7 @@ struct SettingsView: View {
     @AppStorage(AppSettings.ollamaModelKey) private var ollamaModel = ""
     @AppStorage(AppSettings.awsAccessKeyIdKey) private var awsAccessKeyId = ""
     @AppStorage(AppSettings.awsRegionKey) private var awsRegion = AppSettings.defaultAWSRegion
+    @AppStorage(AppSettings.knowledgeExclusionsKey) private var knowledgeExclusions = ""
 
     /// Secrets load from the keychain when the window appears — not at App
     /// body evaluation — and persist on change.
@@ -76,6 +77,20 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             } header: {
                 Text("Engine")
+            }
+
+            Section {
+                TextField(
+                    "Never index",
+                    text: $knowledgeExclusions,
+                    prompt: Text("~/Private, *.draft.md")
+                )
+                .autocorrectionDisabled()
+                Text("Comma-separated folders or patterns, applied on top of the built-in protections. Keys, keychains, browser profiles, .env files, shell histories and ~/Library are always excluded and cannot be indexed.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Knowledge Privacy")
             }
 
             Section {

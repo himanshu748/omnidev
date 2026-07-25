@@ -256,6 +256,22 @@ async def search_knowledge(query: str, top_k: int = 8) -> str:
 
 
 @mcp.tool()
+async def ask_file(path: str, question: str) -> str:
+    """Pull the parts of ONE local file that answer a question, without
+    indexing it. Works on any readable file on this Mac, including images and
+    screenshots (on-device OCR), PDFs, Office and iWork documents. Nothing is
+    stored. Use this when the user points at a specific file."""
+    result = await _request_json(
+        "POST", "/api/knowledge/ask-file", json={"path": path, "question": question}
+    )
+    excerpts = result.get("excerpts") or []
+    header = f"{result.get('file_path', path)}"
+    if result.get("truncated"):
+        header += " (most relevant excerpts)"
+    return header + "\n\n" + "\n\n---\n\n".join(excerpts)
+
+
+@mcp.tool()
 async def list_knowledge_sources() -> str:
     """List the folders (and built-in chat history) registered in the local
     knowledge index, with file and chunk counts. Returns JSON."""

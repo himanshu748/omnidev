@@ -15,6 +15,9 @@ struct KnowledgeView: View {
     @State private var searchHits: [BackendClient.KnowledgeHit] = []
     @State private var isSearching = false
     @State private var isPullingEmbedder = false
+    @State private var stats: BackendClient.KnowledgeStats?
+    @State private var confirmingDelete = false
+    @State private var isAddingUsualFolders = false
     @State private var pullFraction: Double?
 
     private let statusTimer = Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
@@ -31,6 +34,7 @@ struct KnowledgeView: View {
                 sourcesCard
                 if !sources.isEmpty {
                     searchCard
+                    privacyCard
                 }
             }
             .padding(20)
@@ -67,9 +71,20 @@ struct KnowledgeView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     HStack {
-                        Button("Add Folder…", action: addFolder)
+                        Button("Add My Usual Folders", action: addUsualFolders)
                             .buttonStyle(.borderedProminent)
+                            .disabled(isAddingUsualFolders)
+                            .help("Desktop, Documents, Downloads and your screenshots folder")
+                        Button("Add Folder…", action: addFolder)
                         Button("Index Chat History", action: addChatHistory)
+                    }
+                    if isAddingUsualFolders {
+                        HStack(spacing: 6) {
+                            ProgressView().controlSize(.small)
+                            Text("macOS will ask permission for each folder.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
             } else {
@@ -112,6 +127,12 @@ struct KnowledgeView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                }
+                if !source.skipped.isEmpty {
+                    Text(source.skipped)
+                        .font(.caption2)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
             Spacer()
@@ -188,12 +209,110 @@ struct KnowledgeView: View {
 
     // MARK: - Actions
 
+
+    /// What is stored, where, and how to erase it. The index holds plaintext
+    /// excerpts of everything indexed, so this is stated plainly rather than
+    /// buried in a doc.
+    private var privacyCard: some View {
+        ModuleCard(title: "Your index") {
+            if let stats {
+                HStack(spacing: 16) {
+                    Label("\(stats.chunks) excerpts", systemImage: "square.stack.3d.up")
+                    if let images = stats.byKind["image"], images > 0 {
+                        Label("\(images) from images", systemImage: "photo")
+                    }
+                    Label(byteText(stats.databaseBytes), systemImage: "internaldrive")
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+                Text("Stored unencrypted at \((stats.databasePath as NSString).abbreviatingWithTildeInPath), readable only by your user account and excluded from Time Machine. Nothing is uploaded: embeddings run on this Mac.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                if !stats.ocrAvailable {
+                    Text("On-device OCR is unavailable, so images are not searchable.")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+            }
+            Button(role: .destructive) {
+                confirmingDelete = true
+            } label: {
+                Label("Delete My Index", systemImage: "trash")
+            }
+            .controlSize(.small)
+            .confirmationDialog(
+                "Delete the entire knowledge index?",
+                isPresented: $confirmingDelete,
+                titleVisibility: .visible
+            ) {
+                Button("Delete Everything", role: .destructive, action: deleteIndex)
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("Every source and excerpt is erased. Your actual files are untouched. You can add folders again at any time.")
+            }
+        }
+    }
+
+    private func byteText(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(bytes))
+    }
+
+    /// Desktop, Documents, Downloads and the configured screenshots folder.
+    /// Each triggers its own macOS permission prompt, so they go one at a time.
+    private func addUsualFolders() {
+        isAddingUsualFolders = true
+        let client = manager.backendClient
+        let home = FileManager.default.homeDirectoryForCurrentUser
+        let candidates = [
+            home.appendingPathComponent("Desktop"),
+            home.appendingPathComponent("Documents"),
+            home.appendingPathComponent("Downloads"),
+        ]
+        Task {
+            defer { isAddingUsualFolders = false }
+            var failures: [String] = []
+            for url in candidates {
+                guard FileManager.default.fileExists(atPath: url.path) else { continue }
+                do {
+                    try await client.addKnowledgeSource(path: url.path, kind: "docs")
+                } catch {
+                    failures.append(url.lastPathComponent)
+                }
+            }
+            if !failures.isEmpty {
+                errorMessage = "Could not add: \(failures.joined(separator: ", ")). "
+                    + "They may already be sources, or macOS denied access."
+            }
+            await refresh()
+        }
+    }
+
+    private func deleteIndex() {
+        let client = manager.backendClient
+        Task {
+            do {
+                try await client.deleteKnowledgeIndex()
+                searchHits = []
+                errorMessage = nil
+            } catch {
+                errorMessage = error.localizedDescription
+            }
+            await refresh()
+        }
+    }
+
     private func refresh() async {
         let client = manager.backendClient
         do {
             sources = try await client.knowledgeSources()
             let latest = try await client.knowledgeStatus()
             status = latest
+            stats = try? await client.knowledgeStats()
             if let indexError = latest.error, !latest.running {
                 errorMessage = indexError
             } else if latest.running {

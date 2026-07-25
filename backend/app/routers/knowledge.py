@@ -6,6 +6,9 @@ from fastapi import APIRouter
 
 from app.routers.errors import bad_request, not_found, service_unavailable
 from app.schemas.knowledge import (
+    AskFileRequest,
+    AskFileResponse,
+    IndexStatsResponse,
     IndexStatusResponse,
     SearchHit,
     SearchRequest,
@@ -56,11 +59,45 @@ async def delete_source(source_id: int):
     return {"deleted": source_id}
 
 
+@router.post("/ask-file", response_model=AskFileResponse)
+async def ask_file(body: AskFileRequest):
+    """
+    Pull the relevant parts of one file for a question, without indexing it.
+
+    Nothing is persisted, so this works on any readable file on the machine.
+    """
+    try:
+        result = await knowledge_service.read_for_question(body.path, body.question)
+    except knowledge_service.KnowledgeError as exc:
+        raise bad_request(str(exc)) from exc
+    except AIConfigurationError as exc:
+        raise service_unavailable(str(exc)) from exc
+    return AskFileResponse(**result)
+
+
+@router.get("/stats", response_model=IndexStatsResponse)
+async def stats():
+    """Index size, composition and whether on-device OCR is available."""
+    return IndexStatsResponse(**await knowledge_service.index_stats())
+
+
+@router.delete("/index")
+async def delete_index():
+    """Erase every source and chunk. The index holds plaintext excerpts."""
+    return await knowledge_service.delete_everything()
+
+
 @router.post("/search", response_model=SearchResponse)
 async def search(body: SearchRequest):
     try:
         results = await knowledge_service.search(
-            body.query, top_k=body.top_k, source_ids=body.source_ids
+            body.query,
+            top_k=body.top_k,
+            source_ids=body.source_ids,
+            kinds=body.kinds,
+            after=body.after,
+            before=body.before,
+            path_prefix=body.path_prefix,
         )
     except AIConfigurationError as exc:
         raise service_unavailable(str(exc)) from exc

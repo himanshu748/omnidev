@@ -55,11 +55,11 @@ Two design choices that were correct for "a folder of docs" break at laptop scal
 
 `_load_matrix_sync()` loads **every chunk's embedding and its full text** into a Python list on every cache miss, and `_index_version` invalidates that cache after **every** indexing run. At 30k chunks that is roughly 120 MB of vectors plus 60 MB of Python strings rebuilt from SQLite each time anything changes. At 100k chunks it is a swap event on a 16GB machine, which is exactly the failure mode already documented in memory (12b generation collapsing to 0.4 tok/s under pressure).
 
-**Fix:** keep vectors on disk and never hold chunk text in memory.
+**Fix:** never hold chunk text in memory, and stop rebuilding the whole matrix.
 
-- Adopt **sqlite-vec** (deliberately skipped in v0.6.0 to avoid extension-loading risk across Pythons). Ship it as a wheel pinned in requirements, with a guarded fallback to the current numpy path when the extension fails to load, so a broken install degrades instead of crashing.
-- Fetch `text` only for the final top-k rows, by chunk id, after ranking.
-- Make cache invalidation incremental: a completed index job should append to the store, not force a full reload.
+- **sqlite-vec is rejected, and this reverses the recommendation in v1.0 of this document.** Measured 2026-07-14: Apple's system Python (`/usr/bin/python3`, 3.9.6) has no `enable_load_extension` attribute at all, so any sqlite extension is unloadable there. The app bootstraps its engine venv from whatever Python it finds, so on a stranger's Mac the vector store would simply fail to open. FTS5, by contrast, is compiled into every Python's SQLite including Apple's (verified on both). Boring beats clever: keep float32 blobs plus numpy, and spend the effort on the two things that actually hurt.
+- Load **only ids and vectors** into the in-memory matrix. Fetch `text` by chunk id for the final top-k rows after ranking. This is the change that matters: text was several times the size of the vectors.
+- Make the cache **incremental**. Appending new rows must not force a full reload of everything already resident.
 
 ### 3.2 Retrieval is pure dense vector, which gets noisy at scale
 
@@ -140,6 +140,43 @@ An index of an entire laptop is itself a sensitive artifact, stored as **plainte
 - Set the database file mode to `0600` and exclude it from Time Machine via `tmutil addexclusion`.
 - A visible **"Delete my index"** button that drops all chunks and vectors, plus a per-source delete that already exists.
 - README must state plainly what is stored and where. For strangers, this is a trust feature, not a footnote.
+
+## 8.5 Guardrails (the non-negotiable list)
+
+Indexing a whole laptop means pointing an automated reader at everything a person owns. Every guardrail below is mandatory, each has a test, and the release does not ship without all of them.
+
+**Never hang.** Ranked by how they were actually hit:
+
+| Risk | Guard |
+|---|---|
+| iCloud-evicted file blocks `open()` forever | `st_flags & 0x40000000` check before every read, file skipped and counted (section 3.3) |
+| Any other stalling read (network volume, dead external disk, fuse mount) | Every extraction runs in a worker with a hard wall-clock timeout; on expiry the file is skipped, never retried in that pass |
+| A pathological file (huge, deeply nested, zip bomb) | Size cap before read, page cap for PDFs, entry cap for Office archives |
+| Indexing starves chat | One embedding batch in flight at a time, and indexing yields while a chat or agent stream is active |
+
+**Never index a secret.** A non-overridable denylist checked at discovery, before a file is ever opened:
+
+- Directories: `~/Library`, `~/.ssh`, `~/.gnupg`, `~/.aws`, `~/.config/gh`, `~/.kube`, `~/.docker`, any `.git` internals, browser profiles (Chrome, Safari, Firefox, Arc), password-manager vaults (1Password, Keychains, KeePass, Bitwarden), `Mobile Documents` (iCloud staging), and every existing `EXCLUDED_DIRS` entry.
+- Filename patterns: `.env*`, `*.pem`, `*.key`, `*.p12`, `*.keystore`, `id_rsa*`, `id_ed25519*`, `*.kdbx`, `credentials`, `.netrc`, `.npmrc`, `.pypirc`, `*.mobileprovision`, `*_history` shell histories.
+- Plus a user-editable exclusion list in Settings, applied on top, folders and globs.
+
+The denylist wins over an explicitly added source: if a user adds `~` as a docs folder, `~/.ssh` is still skipped. There is no override flag, because the failure mode (a private key sitting in a plaintext chunk table, retrievable by any question that happens to match it) is far worse than the inconvenience.
+
+**Treat the index as sensitive, because it is.** It is plaintext excerpts of everything indexed:
+
+- Database file mode `0600` on creation and re-asserted on open.
+- Excluded from Time Machine via `tmutil addexclusion`, so backups do not silently duplicate it.
+- A prominent **Delete my index** action that drops every chunk and vector, plus the existing per-source delete.
+- The README states plainly what is stored, where, and how to erase it.
+- Nothing about the index is ever sent anywhere. Ollama embedding calls go to `localhost`. The Gemini path is opt-in via a key and must be labelled in the UI as the one mode where excerpts leave the Mac.
+
+**Respect the machine.** A laptop that gets hot and slow during indexing gets uninstalled:
+
+- Refuse to start indexing below a free-disk floor, with a clear message.
+- Cap the resident matrix; past a chunk ceiling, warn rather than swap the machine to death (the v0.5.2 incident: 0.4 tok/s under memory pressure).
+- Indexing is pausable and resumable, and progress survives a restart because completed files are already committed.
+
+**Fail loudly, never silently.** A skipped file the user does not know about is a wrong answer waiting to happen. The Knowledge page shows counts per reason: evicted, timed out, too large, excluded, unreadable. "Indexed 4,812 files, skipped 19 (in iCloud), 3 (timed out)" is the standard, not a bare success.
 
 ## 9. Phasing inside v0.7.0
 
