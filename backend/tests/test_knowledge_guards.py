@@ -383,3 +383,40 @@ def test_html_extraction_drops_scripts(tmp_path):
     path.write_text("<html><script>var secret='hidden';</script><body>Visible text</body></html>")
     text = extractors.extract_text(path)
     assert "Visible text" in text and "secret" not in text
+
+
+# ── Platform portability ────────────────────────────────────
+def test_requirements_keep_pyobjc_macos_only():
+    """
+    CI runs the backend suite on Ubuntu, where pyobjc cannot build at all
+    (it shells out to /usr/bin/sw_vers). Without the marker the whole
+    install fails, which is exactly how v0.7.0's first CI run broke.
+    """
+    from pathlib import Path as P
+
+    requirements = (P(__file__).resolve().parents[1] / "requirements.txt").read_text()
+    for package in ("pyobjc-framework-Vision", "pyobjc-framework-Quartz"):
+        line = next(
+            (l for l in requirements.splitlines() if l.strip().startswith(package)), None
+        )
+        assert line is not None, f"{package} missing from requirements"
+        assert 'sys_platform == "darwin"' in line, (
+            f"{package} must be marked macOS only or Linux installs break"
+        )
+
+
+def test_image_extraction_degrades_without_ocr(tmp_path, monkeypatch):
+    """A machine without PyObjC must skip images, not crash the index."""
+    monkeypatch.setattr(extractors, "_load_vision", lambda: None)
+    monkeypatch.setattr(extractors, "_vision_unavailable_reason", "simulated")
+    assert extractors.ocr_available() is False
+
+    image = tmp_path / "shot.png"
+    image.write_bytes(b"\x89PNG\r\n\x1a\n")
+    with pytest.raises(extractors.ExtractionError):
+        extractors.extract_text(image)
+
+    # Text formats are unaffected.
+    doc = tmp_path / "note.md"
+    doc.write_text("# Still works")
+    assert "Still works" in extractors.extract_text(doc)

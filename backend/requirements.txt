@@ -14,5 +14,7 @@ pytest-asyncio
 moto
 numpy
 pypdf
-pyobjc-framework-Vision
-pyobjc-framework-Quartz
+# On-device OCR for images and scanned PDFs. macOS only: these cannot
+# build on Linux, and CI runs the backend suite on Ubuntu.
+pyobjc-framework-Vision; sys_platform == "darwin"
+pyobjc-framework-Quartz; sys_platform == "darwin"
