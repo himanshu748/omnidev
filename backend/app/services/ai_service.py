@@ -378,6 +378,161 @@ async def ollama_chat_round(
     return resp.json().get("message") or {}
 
 
+# ── Provider-agnostic tool-calling round (agent mode) ───────
+def _to_ollama_tools(specs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": spec["name"],
+                "description": spec.get("description", "")[:1000],
+                "parameters": spec.get("parameters") or {"type": "object", "properties": {}},
+            },
+        }
+        for spec in specs
+    ]
+
+
+def _to_ollama_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    converted: list[dict[str, Any]] = []
+    for message in messages:
+        role = message["role"]
+        if role == "tool":
+            converted.append(
+                {
+                    "role": "tool",
+                    "content": message.get("content", ""),
+                    "tool_name": message.get("tool_name", ""),
+                }
+            )
+        elif role == "assistant" and message.get("tool_calls"):
+            converted.append(
+                {
+                    "role": "assistant",
+                    "content": message.get("content", "") or "",
+                    "tool_calls": [
+                        {"function": {"name": call["name"], "arguments": call["arguments"]}}
+                        for call in message["tool_calls"]
+                    ],
+                }
+            )
+        else:
+            converted.append({"role": role, "content": message.get("content", "") or ""})
+    return converted
+
+
+def _to_gemini_contents(messages: list[dict[str, Any]]) -> list[Any]:
+    contents: list[Any] = []
+    for message in messages:
+        role = message["role"]
+        if role == "system":
+            continue  # passed separately as system_instruction
+        if role == "tool":
+            contents.append(
+                types.Content(
+                    role="user",
+                    parts=[
+                        types.Part.from_function_response(
+                            name=message.get("tool_name", "tool"),
+                            response={"result": message.get("content", "")},
+                        )
+                    ],
+                )
+            )
+        elif role == "assistant" and message.get("tool_calls"):
+            contents.append(
+                types.Content(
+                    role="model",
+                    parts=[
+                        types.Part.from_function_call(
+                            name=call["name"], args=call["arguments"] or {}
+                        )
+                        for call in message["tool_calls"]
+                    ],
+                )
+            )
+        else:
+            contents.append(
+                types.Content(
+                    role="model" if role == "assistant" else "user",
+                    parts=[types.Part.from_text(text=message.get("content", "") or "")],
+                )
+            )
+    return contents
+
+
+async def chat_round_with_tools(
+    messages: list[dict[str, Any]],
+    *,
+    tools: list[dict[str, Any]],
+    system: str | None = None,
+    temperature: float | None = None,
+    max_tokens: int = 2048,
+) -> dict[str, Any]:
+    """
+    One non-streaming chat round with tool definitions, on either provider.
+
+    `tools` are provider-neutral {name, description, parameters} specs.
+    Returns {"content": str, "tool_calls": [{"name": str, "arguments": dict}]}
+    so the agent loop never has to care which provider answered.
+    """
+    if get_provider() == "ollama":
+        full = ([{"role": "system", "content": system}] if system else []) + list(messages)
+        reply = await ollama_chat_round(
+            _to_ollama_messages(full),
+            tools=_to_ollama_tools(tools),
+            temperature=temperature,
+            max_tokens=max_tokens,
+        )
+        calls = []
+        for call in reply.get("tool_calls") or []:
+            function = call.get("function") or {}
+            arguments = function.get("arguments")
+            if isinstance(arguments, str):
+                try:
+                    arguments = json.loads(arguments)
+                except json.JSONDecodeError:
+                    arguments = {}
+            calls.append({"name": function.get("name", ""), "arguments": arguments or {}})
+        return {"content": reply.get("content", "") or "", "tool_calls": calls}
+
+    declarations = [
+        types.FunctionDeclaration(
+            name=spec["name"],
+            description=spec.get("description", ""),
+            parameters=_to_gemini_schema(
+                spec.get("parameters") or {"type": "object", "properties": {}}
+            ),
+        )
+        for spec in tools
+    ]
+    config = types.GenerateContentConfig(
+        max_output_tokens=max_tokens,
+        system_instruction=system,
+        tools=[types.Tool(function_declarations=declarations)],
+        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),
+    )
+    if temperature is not None:
+        config.temperature = temperature
+
+    response = await asyncio.to_thread(
+        get_client().models.generate_content,
+        model=settings.gemini_model,
+        contents=_to_gemini_contents(messages),
+        config=config,
+    )
+    calls = []
+    text_parts: list[str] = []
+    for candidate in getattr(response, "candidates", []) or []:
+        for part in getattr(candidate.content, "parts", []) or []:
+            call = getattr(part, "function_call", None)
+            if call is not None and call.name:
+                calls.append({"name": call.name, "arguments": dict(call.args or {})})
+            elif getattr(part, "text", ""):
+                text_parts.append(part.text)
+    return {"content": "".join(text_parts), "tool_calls": calls}
+
+
 # ── Structured generation ───────────────────────────────────
 async def generate_structured(
     prompt: str,

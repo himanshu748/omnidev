@@ -10,6 +10,7 @@ import httpx
 
 from app.config import settings
 from app.routers import (
+    agent,
     chat,
     codegen,
     devops,
@@ -55,6 +56,11 @@ EXPECTED_ENDPOINTS = [
     "DELETE /api/knowledge/sources",
     "POST /api/knowledge/search",
     "GET /api/knowledge/status",
+    "POST /api/agent/stream",
+    "GET /api/agent/workspaces",
+    "POST /api/agent/workspaces",
+    "DELETE /api/agent/workspaces",
+    "POST /api/agent/approvals",
 ]
 
 
@@ -81,6 +87,7 @@ def create_app() -> FastAPI:
     app.include_router(git.router, prefix="/api/git", tags=["Git Landing"])
     app.include_router(mcp.router, prefix="/api/mcp", tags=["MCP Marketplace"])
     app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge"])
+    app.include_router(agent.router, prefix="/api/agent", tags=["Agent"])
     app.state.browser = object()
 
     @app.get("/health", tags=["System"])

@@ -152,6 +152,108 @@ struct BackendClient {
         }
     }
 
+    // MARK: - Agent mode
+
+    enum AgentEvent {
+        case started(model: String, workspaces: [String], tools: [String])
+        case step(number: Int, thought: String)
+        case toolCall(tool: String, arguments: String)
+        case toolResult(tool: String, result: String, ok: Bool)
+        case approvalRequired(AgentApproval)
+        case approvalResolved(id: String, decision: String)
+        case checkpoint(repo: String, head: String, dirty: Bool)
+        case delta(String)
+    }
+
+    struct AgentApproval: Identifiable, Equatable {
+        let id: String
+        let tool: String
+        let summary: String
+        let detail: String
+    }
+
+    struct ApprovalAck: Decodable {
+        let id: String
+        let decision: String
+    }
+
+    /// Run an agent task. Approvals arrive as events and must be answered with
+    /// `resolveApproval` or the run denies them when the timeout expires.
+    func agentStream(
+        task: String,
+        useMCP: Bool,
+        maxSteps: Int = 15
+    ) -> AsyncThrowingStream<AgentEvent, Error> {
+        let body: [String: Any] = [
+            "task": task,
+            "use_mcp": useMCP,
+            "max_steps": maxSteps,
+        ]
+        return streamNDJSON(path: "api/agent/stream", body: body) { object in
+            if let message = object["error"] as? String {
+                throw BackendError.stream(message)
+            }
+            if let started = object["agent"] as? [String: Any] {
+                return .started(
+                    model: started["model"] as? String ?? "",
+                    workspaces: started["workspaces"] as? [String] ?? [],
+                    tools: started["tools"] as? [String] ?? []
+                )
+            }
+            if let step = object["step"] as? [String: Any] {
+                return .step(
+                    number: (step["n"] as? NSNumber)?.intValue ?? 0,
+                    thought: step["thought"] as? String ?? ""
+                )
+            }
+            if let approval = object["approval_required"] as? [String: Any] {
+                return .approvalRequired(
+                    AgentApproval(
+                        id: approval["id"] as? String ?? "",
+                        tool: approval["tool"] as? String ?? "",
+                        summary: approval["summary"] as? String ?? "",
+                        detail: approval["detail"] as? String ?? ""
+                    )
+                )
+            }
+            if let resolved = object["approval_resolved"] as? [String: Any] {
+                return .approvalResolved(
+                    id: resolved["id"] as? String ?? "",
+                    decision: resolved["decision"] as? String ?? ""
+                )
+            }
+            if let checkpoint = object["checkpoint"] as? [String: Any] {
+                return .checkpoint(
+                    repo: checkpoint["repo"] as? String ?? "",
+                    head: checkpoint["head"] as? String ?? "",
+                    dirty: checkpoint["dirty"] as? Bool ?? false
+                )
+            }
+            if let call = object["tool_call"] as? [String: Any] {
+                let arguments = (call["arguments"] as? [String: Any])
+                    .flatMap { try? JSONSerialization.data(withJSONObject: $0) }
+                    .flatMap { String(data: $0, encoding: .utf8) } ?? ""
+                return .toolCall(tool: call["tool"] as? String ?? "?", arguments: arguments)
+            }
+            if let result = object["tool_result"] as? [String: Any] {
+                return .toolResult(
+                    tool: result["tool"] as? String ?? "?",
+                    result: result["result"] as? String ?? "",
+                    ok: result["ok"] as? Bool ?? true
+                )
+            }
+            if let delta = object["delta"] as? String {
+                return .delta(delta)
+            }
+            return nil
+        }
+    }
+
+    @discardableResult
+    func resolveApproval(id: String, decision: String) async throws -> ApprovalAck {
+        try await post("api/agent/approvals/\(id)", body: ["decision": decision], timeout: 30)
+    }
+
     // MARK: - Request helpers (shared with BackendModules)
 
     func get<T: Decodable>(_ path: String, query: [String: String] = [:]) async throws -> T {

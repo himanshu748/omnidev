@@ -245,6 +245,55 @@ Content-Type: application/json
 
 Returns matching chunks with `file_path`, `snippet` and cosine `score`. Chat grounding: pass `"use_knowledge": true` to `POST /api/chat/stream` and the stream emits a `{"knowledge": {"cited_files": [...]}}` event before the answer deltas.
 
+## 🤖 Agent Mode
+
+### Run a Task
+
+```http
+POST /api/agent/stream
+Content-Type: application/json
+
+{ "task": "fix the failing test in ~/code/app", "use_mcp": true, "max_steps": 15 }
+```
+
+Streams newline-delimited JSON. Event kinds, in the order they typically appear:
+
+| Event | Meaning |
+|-------|---------|
+| `{"agent": {...}}` | Run started: provider, model, workspaces, tool names, step cap |
+| `{"step": {"n": 1, "thought": "..."}}` | The model's reasoning before a round of tool calls |
+| `{"checkpoint": {"repo", "head", "dirty"}}` | git state recorded before the first mutation |
+| `{"tool_call": {"tool", "arguments"}}` | A tool is about to run |
+| `{"approval_required": {"id", "tool", "summary", "detail", "timeout_seconds"}}` | The run is paused, waiting for you |
+| `{"approval_resolved": {"id", "decision"}}` | How it was answered |
+| `{"tool_result": {"tool", "result", "ok"}}` | Tool output, `ok: false` when it failed |
+| `{"delta": "..."}` | The final summary |
+| `{"done": true}` | End of run |
+
+Disconnecting stops the run.
+
+### Answer an Approval
+
+```http
+POST /api/agent/approvals/{id}
+Content-Type: application/json
+
+{ "decision": "allow_once" }
+```
+
+`decision` is `allow_once`, `allow_always` (remembers that kind of action for the rest of this run) or `deny`. Approvals that go unanswered for `timeout_seconds` are denied, so a closed window can never authorise anything. `GET /api/agent/approvals` lists anything still waiting.
+
+### Workspaces
+
+```http
+POST /api/agent/workspaces
+Content-Type: application/json
+
+{ "path": "/Users/you/code/app" }
+```
+
+Inside a workspace the agent edits without asking; everywhere else each action needs approval, and shell commands always do. Workspaces must be inside your home folder and cannot be `$HOME`, `~/Library` or OmniDev's data directory. `GET /api/agent/workspaces` lists them (the landing root appears as `implicit`) and `DELETE /api/agent/workspaces?path=...` removes one.
+
 ## 🔐 Authentication
 
 OmniDev keeps external service keys in backend environment variables. Gemini, AWS, and Context7 credentials are configured server-side and are never exposed to clients. In Ollama mode no AI credential is needed at all — requests go to the local Ollama server.

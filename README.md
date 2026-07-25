@@ -19,10 +19,19 @@ Everything runs on your machine. With a local [Ollama](https://ollama.com) serve
 
 Add any folder (an Obsidian vault, a project's docs, a whole repo) and OmniDev chunks it, embeds it with a small local model (`mxbai-embed-large`, one ~670MB download) and stores the index in `~/.omnidev`. Flip the Knowledge toggle in Chat and answers are grounded in your own files, with citations. Indexing is incremental (only changed files re-embed), the index never leaves your Mac, and the same index is served to Claude Code through MCP (`search_knowledge`).
 
+## Agent Mode (new in 0.6.5)
+
+Flip the Agent toggle in Chat and a prompt becomes a task. OmniDev reads your files, edits them, runs the tests and tells you what it changed, streaming every step as it goes. It runs on the local model by default, so this works with wifi off.
+
+You decide where it may act. Folders you add under Settings, Agent are workspaces: inside one the agent works freely. Everywhere else, and for every shell command, it stops and shows you exactly what it wants to run or change, with Allow Once, Always Allow or Deny. An unanswered prompt is a denial, never an approval.
+
+Shell access is an argv allowlist (git without push or reset, pytest, npm test, swift build, make and friends), so the agent cannot reach a remote or rewrite history. It records your git HEAD before its first change, and never commits on your behalf.
+
 ## What It Does
 
 | Module | Purpose | Backend |
 |--------|---------|---------|
+| Agent | Give it a task: it reads, edits, runs tests and reports back, asking permission outside your workspaces. | Ollama or Gemini tool calling |
 | Knowledge | Index your notes, docs, code and chat history locally, then ask grounded questions with file citations. Works with wifi off. | Ollama embeddings + SQLite |
 | DevOps Agent | Parse natural-language AWS requests, inspect resources, and gate destructive actions behind confirmation. | Ollama or Gemini + boto3 |
 | Code Gen | Generate project files for common web/backend frameworks with validation and browser-isolated preview/download flows. | Ollama or Gemini + optional Context7 |

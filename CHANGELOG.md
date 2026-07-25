@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.5] - 2026-07-14
+
+### ✨ Added
+- **Agent mode**: a Chat toggle turns a prompt into a plan/act/observe loop that reads files, edits them, runs verification commands and reports back. Steps, tool calls and results stream into the transcript as they happen. Runs on the local model by default and automatically uses Gemini instead when a key is set.
+- **Agent workspaces**: folders you designate in Settings → Agent. Inside a workspace the agent reads and edits freely; anywhere else every single action stops and asks. `~/OmniDev/projects` is trusted automatically.
+- **Approval sheet**: out-of-workspace actions and every shell command surface a native prompt showing the exact command or the exact edit, with Allow Once, Always Allow (for the rest of that task) and Deny. Nothing is approved by default: if the prompt goes unanswered the action is denied.
+- **Agent tools**: `read_file`, `list_dir`, `write_file`, `edit_file`, `run_command` and `search_knowledge`, plus every enabled MCP marketplace server when the Tools toggle is on.
+- New `/api/agent/*` endpoints: `stream` (NDJSON run), `approvals/{id}`, and workspace CRUD.
+
+### 🔒 Security
+- `run_command` is an argv allowlist, never a shell string: git (read plus add/commit only), pytest, python3, node, npm/pnpm/yarn test or run, swift build/test, make, ruff, mypy, tsc. `push`, `remote`, `reset`, `clean`, `config` and `--hard` are refused outright, so the agent can never rewrite history or reach a remote.
+- Workspaces must live inside your home folder and can never be `$HOME` itself, `~/Library` or OmniDev's own data directory. Symlinks are resolved before the containment check, so a link inside a workspace cannot be used to escape it.
+- Writes through symlinks are refused, and the current git HEAD is recorded and reported before the first mutation so there is always a way back. The agent never creates a commit of its own.
+- The loop is capped at 15 steps and stops when the client disconnects.
+
+### 🎨 Changed
+- `edit_file` uses exact snippet replacement rather than unified diffs, and a failed match echoes back the closest text in the file. Small local models correct themselves from that; they rarely get diff hunk headers right.
+
+### ✅ Verified
+Live acceptance run on `gemma4:12b`, fully offline, reproducible via `docs/probes/live_agent.py`: given a planted failing test, the agent ran `list_dir`, read both files, applied the correct one-character fix with `edit_file`, asked permission for the shell command and ran `pytest` to confirm. 146 seconds, 5 tool calls, 1 approval, and an independent pytest run confirmed the fix. Backend suite: 279 tests.
+
 ## [0.6.0] - 2026-07-13
 
 ### ✨ Added

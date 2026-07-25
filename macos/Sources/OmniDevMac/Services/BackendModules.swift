@@ -477,3 +477,35 @@ enum JSONValue: Decodable {
         }
     }
 }
+
+// MARK: - Agent workspaces
+
+extension BackendClient {
+    struct AgentWorkspace: Decodable, Identifiable {
+        let path: String
+        let addedAt: String
+        let implicit: Bool
+
+        var id: String { path }
+        var name: String { (path as NSString).lastPathComponent }
+    }
+
+    struct AgentWorkspaceList: Decodable {
+        let workspaces: [AgentWorkspace]
+    }
+
+    func agentWorkspaces() async throws -> [AgentWorkspace] {
+        let list: AgentWorkspaceList = try await get("api/agent/workspaces")
+        return list.workspaces
+    }
+
+    @discardableResult
+    func addAgentWorkspace(path: String) async throws -> AgentWorkspace {
+        try await post("api/agent/workspaces", body: ["path": path])
+    }
+
+    func removeAgentWorkspace(path: String) async throws {
+        struct RemoveAck: Decodable { let removed: String }
+        let _: RemoveAck = try await send("DELETE", "api/agent/workspaces", query: ["path": path])
+    }
+}

@@ -29,6 +29,8 @@ struct SettingsView: View {
                 .tabItem { Label("General", systemImage: "gearshape") }
             modelTab
                 .tabItem { Label("Model", systemImage: "cpu") }
+            WorkspacesTab(manager: manager)
+                .tabItem { Label("Agent", systemImage: "wand.and.rays") }
             awsTab
                 .tabItem { Label("AWS", systemImage: "cloud") }
         }
@@ -199,6 +201,124 @@ struct SettingsView: View {
             Text("Changes take effect when the local services restart.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// Agent workspaces: folders the agent may edit without asking. Anything
+/// outside these prompts for approval on every action.
+private struct WorkspacesTab: View {
+    @ObservedObject var manager: LocalStackManager
+    @State private var workspaces: [BackendClient.AgentWorkspace] = []
+    @State private var errorText = ""
+    @State private var loading = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Agent workspaces")
+                .font(.headline)
+            Text("The agent reads and edits freely inside these folders. Anywhere else it asks you first, every time.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            List {
+                ForEach(workspaces) { workspace in
+                    HStack(spacing: 8) {
+                        Image(systemName: workspace.implicit ? "shippingbox" : "folder")
+                            .foregroundStyle(Color.omniAccent)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text(workspace.name).font(.body)
+                            Text((workspace.path as NSString).abbreviatingWithTildeInPath)
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if workspace.implicit {
+                            Text("built in")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Button {
+                                remove(workspace)
+                            } label: {
+                                Image(systemName: "minus.circle")
+                            }
+                            .buttonStyle(.plain)
+                            .help("Stop trusting this folder")
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                if workspaces.isEmpty && !loading {
+                    Text("No workspaces yet.")
+                        .font(.callout)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(minHeight: 200)
+
+            if !errorText.isEmpty {
+                Text(errorText)
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack {
+                Button("Add Folder…", action: pickFolder)
+                Spacer()
+                Button("Refresh", action: load)
+            }
+        }
+        .padding(20)
+        .onAppear(perform: load)
+    }
+
+    private func load() {
+        loading = true
+        let client = manager.backendClient
+        Task {
+            defer { loading = false }
+            do {
+                workspaces = try await client.agentWorkspaces()
+                errorText = ""
+            } catch {
+                errorText = error.localizedDescription
+            }
+        }
+    }
+
+    private func pickFolder() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Trust Folder"
+        panel.message = "Pick a folder the agent may edit without asking."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        let client = manager.backendClient
+        Task {
+            do {
+                try await client.addAgentWorkspace(path: url.path)
+                errorText = ""
+                load()
+            } catch {
+                errorText = error.localizedDescription
+            }
+        }
+    }
+
+    private func remove(_ workspace: BackendClient.AgentWorkspace) {
+        let client = manager.backendClient
+        Task {
+            do {
+                try await client.removeAgentWorkspace(path: workspace.path)
+                load()
+            } catch {
+                errorText = error.localizedDescription
+            }
         }
     }
 }
