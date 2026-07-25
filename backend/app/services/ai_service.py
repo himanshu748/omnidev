@@ -133,6 +133,17 @@ async def close_ai_clients() -> None:
             _ollama_client = None
 
 
+# Gemma 4 and other reasoning models spend part of the token budget on a
+# hidden `thinking` field, and num_predict caps thinking PLUS content
+# together. A modest budget can therefore be consumed entirely by thinking,
+# leaving content empty with done_reason="length" and no error at all.
+# Measured on gemma4:12b: num_predict=60 produced 157 thinking tokens and an
+# empty answer; the same prompt at 200 answered correctly. So a starved call
+# is retried once with real headroom before anyone sees an empty string.
+THINKING_RETRY_FLOOR = 1024
+THINKING_RETRY_MULTIPLIER = 4
+
+
 async def _ollama_chat(
     messages: list[dict[str, Any]],
     *,
@@ -140,6 +151,7 @@ async def _ollama_chat(
     temperature: float | None = None,
     max_tokens: int = 2048,
     format_schema: dict[str, Any] | None = None,
+    _retrying: bool = False,
 ) -> dict[str, Any]:
     model = model or settings.ollama_model
     payload: dict[str, Any] = {
@@ -173,7 +185,29 @@ async def _ollama_chat(
         except Exception:
             detail = resp.text[:200]
         raise AIResponseError(f"Ollama request failed ({resp.status_code}): {detail}")
-    return resp.json()
+
+    data = resp.json()
+    message = data.get("message") or {}
+    starved = (
+        not (message.get("content") or "").strip()
+        and (message.get("thinking") or "").strip()
+        and data.get("done_reason") == "length"
+    )
+    if starved and not _retrying:
+        return await _ollama_chat(
+            messages,
+            model=model,
+            temperature=temperature,
+            max_tokens=max(max_tokens * THINKING_RETRY_MULTIPLIER, THINKING_RETRY_FLOOR),
+            format_schema=format_schema,
+            _retrying=True,
+        )
+    if starved:
+        raise AIResponseError(
+            f"{model} used its entire token budget on reasoning and produced no "
+            "answer. Raise max_tokens for this request."
+        )
+    return data
 
 
 def _ollama_messages(system: str | None, prompt: str) -> list[dict[str, Any]]:
@@ -375,7 +409,29 @@ async def ollama_chat_round(
         except Exception:
             detail = resp.text[:200]
         raise AIResponseError(f"Ollama request failed ({resp.status_code}): {detail}")
-    return resp.json().get("message") or {}
+
+    data = resp.json()
+    message = data.get("message") or {}
+    starved = (
+        not (message.get("content") or "").strip()
+        and (message.get("thinking") or "").strip()
+        and data.get("done_reason") == "length"
+    )
+    if starved and not _retrying:
+        return await _ollama_chat(
+            messages,
+            model=model,
+            temperature=temperature,
+            max_tokens=max(max_tokens * THINKING_RETRY_MULTIPLIER, THINKING_RETRY_FLOOR),
+            format_schema=format_schema,
+            _retrying=True,
+        )
+    if starved:
+        raise AIResponseError(
+            f"{model} used its entire token budget on reasoning and produced no "
+            "answer. Raise max_tokens for this request."
+        )
+    return data.get("message") or {}
 
 
 # ── Provider-agnostic tool-calling round (agent mode) ───────

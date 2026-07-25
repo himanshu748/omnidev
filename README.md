@@ -1,21 +1,32 @@
 # OmniDev
 
-Native macOS AI developer app. Ship, inspect, and operate software from one local cockpit — fully offline with Ollama, or connected with Gemini.
+**Ask your Mac anything, and let it do the work. Fully offline.**
 
-[Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [macOS App](docs/MACOS_APP.md) · [Contributing](CONTRIBUTING.md)
+Native macOS app. A local Gemma 4 model reads your files (including screenshots), answers with citations, and can edit code and run your tests, without a single byte leaving your machine.
 
-![macOS](https://img.shields.io/badge/macOS-SwiftUI%20%2B%20WebKit-000000?logo=apple&logoColor=white)
+[Download](https://github.com/himanshu748/omnidev/releases/latest) · [Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [macOS App](docs/MACOS_APP.md) · [Contributing](CONTRIBUTING.md)
+
+![macOS](https://img.shields.io/badge/macOS-native%20SwiftUI-000000?logo=apple&logoColor=white)
 ![Ollama](https://img.shields.io/badge/AI-Ollama%20(offline)-222222?logo=ollama&logoColor=white)
-![Google Gemini](https://img.shields.io/badge/AI-Gemini%20(cloud)-4285F4?logo=google&logoColor=white)
+![Google Gemini](https://img.shields.io/badge/AI-Gemini%20(optional)-4285F4?logo=google&logoColor=white)
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.128%2B-009688?logo=fastapi&logoColor=white)
 ![License MIT](https://img.shields.io/badge/License-MIT-green)
 
-OmniDev is a fully native macOS app: every surface — cockpit, chat, DevOps, codegen, scraper, vision, storage — is SwiftUI, backed by a supervised local FastAPI engine on loopback. It brings together AI-assisted code generation, AWS operations, browser automation, visual analysis, and S3 file management in one place.
+![OmniDev answering a question about a screenshot, offline](docs/demo.gif)
 
-Everything runs on your machine. With a local [Ollama](https://ollama.com) server, every AI-backed module (Knowledge, DevOps Agent, Code Gen and Vision Lab) works completely offline with no API key and no data leaving your Mac. Prefer a hosted model? Set a free `GEMINI_API_KEY` and OmniDev uses Gemini instead. Risky agent actions always require human confirmation.
+*The invoice number existed only inside a PNG. No wifi, no API key, no bill. The `.env` sitting in the same folder was refused, not indexed.*
 
-## Ask Your Mac, Offline (0.7)
+## Agent mode
+
+Give it a task instead of a question. It reads, edits, runs your tests and reports back, asking permission before anything outside the folders you trust.
+
+![OmniDev agent fixing a failing test on the local model](docs/demo-agent.gif)
+
+*Real run on gemma4:12b: five tool calls, one approval, fix confirmed by an independent pytest run.*
+
+**It cannot delete your work.** There is no delete tool. Shell commands that remove files are refused by name, `git stash`, `clean`, `reset --hard`, `npm ci` and `make clean` are all blocked, and replacing an existing file's contents always asks first even inside a trusted folder. Every file it changes is snapshotted beforehand and restorable by id.
+
+## How the index works
 
 Point OmniDev at your Desktop, Documents and Downloads and ask questions about anything in them. Notes, PDFs, Office and iWork documents, code, and **screenshots**: images are read with on-device OCR (macOS Vision, ~42 ms each, no download), so text that only ever existed inside a picture is searchable like everything else. Flip the Knowledge toggle in Chat and answers are grounded in your own files, with citations. Or point at one specific file and ask about it directly, with no indexing at all.
 
@@ -26,14 +37,6 @@ Everything runs locally. Embeddings go to `localhost`, the index lives in `~/.om
 The index stores plaintext excerpts, so some things are refused outright and cannot be enabled: `~/Library`, SSH and GPG and AWS credentials, keychains, browser profiles, password-manager vaults, and files matching `.env*`, `*.pem`, `*.key`, `id_rsa*`, `*.kdbx`, `.netrc`, `.npmrc` or shell histories. This holds even if you add a parent folder. You can exclude more in Settings, the index file is created `0600` and kept out of Time Machine, and **Delete My Index** erases everything in one click.
 
 Files stored in iCloud with no local copy are skipped rather than downloaded, and OmniDev tells you how many, because reading them can hang indefinitely.
-
-## Agent Mode (new in 0.6.5)
-
-Flip the Agent toggle in Chat and a prompt becomes a task. OmniDev reads your files, edits them, runs the tests and tells you what it changed, streaming every step as it goes. It runs on the local model by default, so this works with wifi off.
-
-You decide where it may act. Folders you add under Settings, Agent are workspaces: inside one the agent works freely. Everywhere else, and for every shell command, it stops and shows you exactly what it wants to run or change, with Allow Once, Always Allow or Deny. An unanswered prompt is a denial, never an approval.
-
-Shell access is an argv allowlist (git without push or reset, pytest, npm test, swift build, make and friends), so the agent cannot reach a remote or rewrite history. It records your git HEAD before its first change, and never commits on your behalf.
 
 ## What It Does
 
@@ -54,7 +57,7 @@ OmniDev picks its AI provider through one setting, `AI_PROVIDER`:
 | Mode | Behaviour |
 |------|-----------|
 | `auto` (default) | Uses Gemini when `GEMINI_API_KEY` is set; otherwise falls back to local Ollama. |
-| `ollama` | Forces local Ollama — every AI service runs offline. |
+| `ollama` | Forces local Ollama, every AI service runs offline. |
 | `gemini` | Forces Google Gemini (cloud). |
 
 ### Run fully offline with Ollama
@@ -63,17 +66,17 @@ OmniDev picks its AI provider through one setting, `AI_PROVIDER`:
 # 1. Install Ollama (https://ollama.com), then:
 ollama serve
 
-# 2. Pull the default model — one model covers everything
+# 2. Pull the default model: one model covers everything
 ollama pull gemma4:12b        # text, structured intents, vision & OCR (~7.6GB, 256K context)
 ```
 
-No API keys required. [Gemma 4 12B](https://ollama.com/library/gemma4:12b) — the encoder-free unified multimodal model — handles DevOps intent parsing, code generation, and Vision Lab image analysis in a single download, with a 256K context window and the strongest coding of the laptop-class tiers (use Ollama ≥ 0.31 for the Apple Silicon multi-token-prediction speedup). On lower-memory machines, `ollama pull gemma4:e2b` and set both model vars to it. Override models and endpoint via `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`, and `OLLAMA_BASE_URL` in `backend/.env`; any Ollama model with structured-output support works.
+No API keys required. [Gemma 4 12B](https://ollama.com/library/gemma4:12b), the encoder-free unified multimodal model, handles DevOps intent parsing, code generation, and Vision Lab image analysis in a single download, with a 256K context window and the strongest coding of the laptop-class tiers (use Ollama ≥ 0.31 for the Apple Silicon multi-token-prediction speedup). On lower-memory machines, `ollama pull gemma4:e2b` and set both model vars to it. Override models and endpoint via `OLLAMA_MODEL`, `OLLAMA_VISION_MODEL`, and `OLLAMA_BASE_URL` in `backend/.env`; any Ollama model with structured-output support works.
 
 The `/health` endpoint reports the active provider and model.
 
 ## Use OmniDev from Claude Code (MCP)
 
-OmniDev ships an [MCP](https://modelcontextprotocol.io) server, so Claude Code, Claude Desktop, Cursor — any MCP client — can delegate work to your **free, private, on-device model** and the rest of the local engine.
+OmniDev ships an [MCP](https://modelcontextprotocol.io) server, so Claude Code, Claude Desktop, Cursor, any MCP client, can delegate work to your **free, private, on-device model** and the rest of the local engine.
 
 ```bash
 # From the repo root, with the backend set up (make setup) and running (make backend):
@@ -86,21 +89,21 @@ Then, inside a Claude Code session:
 
 | Tool | What it does |
 |------|--------------|
-| `local_llm` | Text generation on the local Gemma 4 model — zero cloud calls, zero cost. |
+| `local_llm` | Text generation on the local Gemma 4 model, zero cloud calls, zero cost. |
 | `local_vision` | Analyze or OCR a local image with the on-device vision model. |
 | `scrape_url` / `crawl_site` | SSRF-guarded Playwright scraping and bounded same-domain crawling. |
-| `generate_project` / `refine_project` | Validated multi-file codegen — files are returned as data, never written or executed. |
-| `aws_plan` | Preview the boto3 plan for a natural-language AWS command. **Never executes** — approval stays in the OmniDev UI. |
+| `generate_project` / `refine_project` | Validated multi-file codegen, files are returned as data, never written or executed. |
+| `aws_plan` | Preview the boto3 plan for a natural-language AWS command. **Never executes**, approval stays in the OmniDev UI. |
 | `search_knowledge` / `index_folder` / `list_knowledge_sources` | Query and manage the local knowledge index. Claude Code inherits everything you indexed, fully offline. |
 | `list_models` / `pull_model` | Inspect provider status and pull local models. |
 
 The server is a thin stdio bridge to the running backend (set `OMNIDEV_BACKEND_URL` if yours isn't on `http://127.0.0.1:8000`). From `backend/` you can also run it directly with `python -m app.mcp` or `make mcp`.
 
-MCP works in both directions: the app's **MCP Marketplace** installs curated servers (Filesystem, Fetch, Memory, Time, Git, Sequential Thinking) whose tools Gemma 4 calls from chat — flip the Tools toggle and watch every call land in the transcript. Only the curated catalog can be installed, folder access is scoped to directories you pick inside your home folder, and server processes never see backend credentials.
+MCP works in both directions: the app's **MCP Marketplace** installs curated servers (Filesystem, Fetch, Memory, Time, Git, Sequential Thinking) whose tools Gemma 4 calls from chat, flip the Tools toggle and watch every call land in the transcript. Only the curated catalog can be installed, folder access is scoped to directories you pick inside your home folder, and server processes never see backend credentials.
 
 ## The macOS App
 
-OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI — Command Center, streaming Chat, and all five modules are native views over the local engine (port 8010). The app supervises only the FastAPI sidecar; Node/Next.js is not needed to run it. First launch opens a native onboarding window that checks Ollama and pulls `gemma4:12b` with live progress, a menu-bar extra tracks engine health, and Settings (⌘,) controls provider, read-only DevOps mode, and the engine port.
+OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI, Command Center, streaming Chat, and all five modules are native views over the local engine (port 8010). The app supervises only the FastAPI sidecar; Node/Next.js is not needed to run it. First launch opens a native onboarding window that checks Ollama and pulls `gemma4:12b` with live progress, a menu-bar extra tracks engine health, and Settings (⌘,) controls provider, read-only DevOps mode, and the engine port.
 
 ```bash
 # Build and run the macOS app from source
@@ -111,7 +114,7 @@ Stop the engine sidecar any time with `scripts/macos/stop-omnidev.sh`. See [docs
 
 ## Claude Code on the Local Model
 
-Ollama exposes an Anthropic-compatible API, so Claude Code can run entirely on the same local Gemma model OmniDev manages — no cloud, no API key:
+Ollama exposes an Anthropic-compatible API, so Claude Code can run entirely on the same local Gemma model OmniDev manages, no cloud, no API key:
 
 ```bash
 make claude-local
@@ -119,7 +122,7 @@ make claude-local
 ANTHROPIC_BASE_URL=http://localhost:11434 ANTHROPIC_AUTH_TOKEN=ollama claude --model gemma4:12b
 ```
 
-Since OmniDev's onboarding installs Ollama's default model for you, any machine running OmniDev is one command away from a fully-offline Claude Code session. Expect weaker tool-calling than Claude's own models — best for quick offline edits, not complex agentic work. OmniDev's MCP server (`claude mcp add omnidev`) is the complementary integration: cloud Claude for the reasoning, free local Gemma for delegated generation.
+Since OmniDev's onboarding installs Ollama's default model for you, any machine running OmniDev is one command away from a fully-offline Claude Code session. Expect weaker tool-calling than Claude's own models, best for quick offline edits, not complex agentic work. OmniDev's MCP server (`claude mcp add omnidev`) is the complementary integration: cloud Claude for the reasoning, free local Gemma for delegated generation.
 
 ## Product Surface
 
@@ -159,13 +162,13 @@ omnidev/
 - Python 3.11+; Python 3.13 is used for local verification.
 - [Ollama](https://ollama.com) for offline AI (or a `GEMINI_API_KEY` for cloud AI).
 
-### Option A — Download the app (recommended)
+### Option A: Download the app (recommended)
 
 Grab `OmniDev-vX.Y.Z.dmg` from [GitHub Releases](https://github.com/himanshu748/omnidev/releases), open it, and drag `OmniDev.app` to Applications (a zip of the same app is also attached). The build is unsigned, so on first launch right-click → Open (or `xattr -d com.apple.quarantine /Applications/OmniDev.app`).
 
 The engine self-installs into `~/Library/Application Support/OmniDev` on first run (needs Python 3.11+ on the machine) and starts automatically every time the app opens. In-app **Check for Updates…** points at new releases.
 
-### Option B — Build from source
+### Option B: Build from source
 
 ```bash
 ./script/build_and_run.sh
@@ -173,7 +176,7 @@ The engine self-installs into `~/Library/Application Support/OmniDev` on first r
 
 This builds the SwiftUI app, starts the FastAPI engine sidecar from the checkout, and opens the native window.
 
-### Option C — Backend only (any OS)
+### Option C: Backend only (any OS)
 
 ```bash
 cd backend
@@ -195,12 +198,12 @@ Create `backend/.env` from `backend/.env.example`.
 # AI provider: auto | gemini | ollama  (auto = Gemini if key set, else local Ollama)
 AI_PROVIDER=auto
 
-# Ollama (local, offline) — gemma4:12b covers text + vision in one model
+# Ollama (local, offline): gemma4:12b covers text + vision in one model
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=gemma4:12b
 OLLAMA_VISION_MODEL=gemma4:12b
 
-# Gemini (cloud, optional — free key at https://aistudio.google.com/apikey)
+# Gemini (cloud, optional, free key at https://aistudio.google.com/apikey)
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-2.0-flash
 
@@ -234,11 +237,11 @@ All backend routes are served from `http://localhost:8000` by default (`8010` un
 |--------|----------|-------|
 | `GET` | `/health` | Service health check; reports active AI provider and model. |
 | `POST` | `/api/devops/command` | Natural-language AWS command; destructive operations require `confirm_destructive: true`. |
-| `POST` | `/api/devops/plan` | Plan preview for a natural-language AWS command — never executes (used by the MCP `aws_plan` tool). |
+| `POST` | `/api/devops/plan` | Plan preview for a natural-language AWS command, never executes (used by the MCP `aws_plan` tool). |
 | `POST` | `/api/chat/stream` | Streaming chat with SQLite session memory (`session_id`), optional MCP tool calling (`use_tools`) and knowledge grounding (`use_knowledge`). |
 | `POST` | `/api/knowledge/sources` | Register a folder (or chat history) in the local knowledge index; `/api/knowledge/search` retrieves grounded excerpts. |
 | `GET` | `/api/mcp/catalog` | Curated MCP server catalog; `/api/mcp/servers` CRUD + per-server tool listing. |
-| `POST` | `/api/git/land` | Commit a validated generated project under `~/OmniDev/projects/<slug>` — no shell, no hooks, no remotes. |
+| `POST` | `/api/git/land` | Commit a validated generated project under `~/OmniDev/projects/<slug>`, no shell, no hooks, no remotes. |
 | `POST` | `/api/codegen/generate` | Returns validated generated files and instructions. Backend does not execute generated code. |
 | `POST` | `/api/scraper/scrape` | Browser-based extraction for text, HTML, screenshots, links, metadata, and PDFs. |
 | `POST` | `/api/vision/analyze` | Multipart image analysis. |
@@ -251,6 +254,17 @@ All backend routes are served from `http://localhost:8000` by default (`8010` un
 See [docs/API.md](docs/API.md) for request and response examples.
 
 ## Agent Safety
+
+**The agent never deletes anything.** This is enforced in four places, each with a test:
+
+- There is no delete tool. `rm`, `rmdir`, `unlink`, `shred`, `trash`, `truncate` and `dd` are refused by name with an explanation, not a generic allowlist error.
+- Commands that remove work are blocked even though the base command is allowed: `git stash`, `git clean`, `git reset --hard`, `npm ci`, `make clean`, and any argument containing `--delete`, `--force`, `-rf` or `--prune`.
+- Replacing an existing file's contents is treated as destruction, so it asks for approval **even inside a trusted workspace**. Creating a new file does not.
+- Every file the agent changes is copied aside first, into `~/.omnidev/agent-backups`, and restorable by id through `POST /api/agent/backups/{id}/restore`.
+
+The agent also records your git HEAD before its first change and never commits on your behalf. Shell access is an argv allowlist, never a shell string, so there is no quoting or chaining to reason about, and it can never reach a remote or rewrite history.
+
+Approvals are per action, with allow once, always (for that run only) and deny. An unanswered prompt is a denial, never an approval, so a closed window cannot authorise anything.
 
 - Generated code is returned as files for review, download, or isolated browser preview; OmniDev does not run generated projects on the backend.
 - Code Gen blocks unsafe paths, duplicate case-insensitive paths, secret-like outputs, risky npm lifecycle hooks, and suspicious script bodies.

@@ -24,7 +24,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from app.services import knowledge_service, workspace_service
+from app.services import agent_backups, knowledge_service, workspace_service
 
 MAX_READ_CHARS = 60_000
 MAX_WRITE_CHARS = 400_000
@@ -35,28 +35,45 @@ COMMAND_OUTPUT_MAX_CHARS = 12_000
 # argv allowlist. A value of None means any arguments are allowed; a set
 # restricts the first argument (the subcommand).
 ALLOWED_COMMANDS: dict[str, set[str] | None] = {
+    # `stash` is deliberately absent: it removes the working tree's changes,
+    # which is a deletion from the user's point of view even though git can
+    # technically get them back.
     "git": {
         "status", "diff", "log", "show", "add", "commit",
-        "branch", "rev-parse", "ls-files", "stash",
+        "branch", "rev-parse", "ls-files",
     },
     "pytest": None,
     "python3": None,
     "node": None,
-    "npm": {"test", "run", "ci"},
+    # `ci` is absent: it wipes node_modules before installing.
+    "npm": {"test", "run"},
     "pnpm": {"test", "run"},
     "yarn": {"test", "run"},
     "swift": {"build", "test"},
+    # `make` takes an explicit target so `clean` can be refused by name.
     "make": None,
     "ruff": None,
     "mypy": None,
     "tsc": None,
 }
 
-# Refused even when the base command is allowed.
+# Refused even when the base command is allowed. Anything that removes work,
+# rewrites history or reaches a remote.
 BLOCKED_ARGS = {
     "push", "remote", "clean", "reset", "config", "rebase",
-    "filter-branch", "gc", "prune", "--hard",
+    "filter-branch", "gc", "prune", "--hard", "stash",
+    "ci", "prune", "uninstall", "purge",
 }
+
+# Programs that exist only to delete. Refused by name so a model that reaches
+# for one gets a clear explanation rather than a generic allowlist message.
+DELETION_COMMANDS = {
+    "rm", "rmdir", "unlink", "shred", "srm", "trash", "del", "erase",
+    "dd", "mkfs", "truncate",
+}
+
+# Substrings in any argument that indicate destruction.
+DESTRUCTIVE_ARG_MARKERS = ("--delete", "--force", "-rf", "-fr", "--prune", "clean")
 
 _EXCLUDED_LIST_DIRS = {
     ".git", "node_modules", ".venv", "venv", "__pycache__", ".next",
@@ -171,6 +188,29 @@ MUTATING_TOOLS = {"write_file", "edit_file", "run_command"}
 TOOL_NAMES = {spec["name"] for spec in TOOL_SPECS}
 
 
+def is_destructive(tool: str, arguments: dict[str, Any]) -> bool:
+    """
+    True when the call would destroy existing content.
+
+    The agent has no delete tool, but replacing a file's whole contents loses
+    what was there, which is the same loss to the person who wrote it. Those
+    calls always ask, even inside a trusted workspace.
+    """
+    if tool == "run_command":
+        return True
+    if tool != "write_file":
+        return False
+    path = target_path(tool, arguments)
+    if path is None:
+        return False
+    try:
+        if not path.is_file():
+            return False  # creating a new file destroys nothing
+        return path.stat().st_size > 0
+    except OSError:
+        return False
+
+
 # ── Path handling ───────────────────────────────────────────
 def resolve_path(raw: str) -> Path:
     if not raw or not str(raw).strip():
@@ -203,6 +243,9 @@ def needs_approval(tool: str, arguments: dict[str, Any]) -> bool:
         return True
     if tool == "search_knowledge":
         return False
+    # Overwriting existing content always asks, workspace or not.
+    if is_destructive(tool, arguments):
+        return True
     path = target_path(tool, arguments)
     if path is None:
         return True
@@ -217,7 +260,22 @@ def describe(tool: str, arguments: dict[str, Any]) -> tuple[str, str]:
     if tool == "write_file":
         content = str(arguments.get("content", ""))
         preview = content[:1500] + ("\n…(truncated)" if len(content) > 1500 else "")
-        return f"Write {arguments.get('path', '')}", preview
+        path = target_path(tool, arguments)
+        if path is not None and path.is_file():
+            try:
+                existing = path.read_text(encoding="utf-8", errors="replace")
+                old_lines = existing.count("\n") + 1
+            except OSError:
+                old_lines = 0
+            summary = (
+                f"REPLACE the entire contents of {path.name} "
+                f"({old_lines} existing lines will be overwritten)"
+            )
+            return summary, (
+                "A copy of the current file is saved first and can be restored.\n\n"
+                "New contents:\n" + preview
+            )
+        return f"Create {arguments.get('path', '')}", preview
     if tool == "edit_file":
         old = str(arguments.get("old_text", ""))[:700]
         new = str(arguments.get("new_text", ""))[:700]
@@ -277,14 +335,22 @@ def _write_file(path_raw: str, content: str) -> str:
         raise ToolError(f"{path} is a directory.")
     if path.is_symlink():
         raise ToolError(f"{path} is a symlink; refusing to write through it.")
+    existed = path.exists()
+    backup = agent_backups.snapshot(path, reason="write_file") if existed else None
     try:
         path.parent.mkdir(parents=True, exist_ok=True)
-        existed = path.exists()
         path.write_text(content, encoding="utf-8")
     except OSError as exc:
         raise ToolError(f"Could not write {path}: {exc}") from exc
     lines = content.count("\n") + 1
-    return f"{'Updated' if existed else 'Created'} {path} ({lines} lines)."
+    if not existed:
+        return f"Created {path} ({lines} lines)."
+    note = ""
+    if backup and backup.get("backed_up"):
+        note = f" The previous version is saved as backup {backup['id']}."
+    elif backup:
+        note = f" Warning: no backup was saved ({backup.get('note', 'unknown reason')})."
+    return f"Replaced {path} ({lines} lines).{note}"
 
 
 def _closest_region(haystack: str, needle: str) -> str:
@@ -332,6 +398,7 @@ def _edit_file(path_raw: str, old_text: str, new_text: str) -> str:
         )
 
     updated = original.replace(old_text, new_text, 1)
+    agent_backups.snapshot(path, reason="edit_file")
     try:
         path.write_text(updated, encoding="utf-8")
     except OSError as exc:
@@ -346,10 +413,22 @@ def _check_command(command: str, args: list[str]) -> None:
         raise ToolError("command is required.")
     if "/" in base or base.startswith("-"):
         raise ToolError(f"Pass a bare program name, not a path: {base!r}")
+    if base in DELETION_COMMANDS:
+        raise ToolError(
+            f"{base!r} deletes files, and OmniDev's agent never deletes anything. "
+            "If a file really must be removed, do it yourself and tell the agent."
+        )
     if base not in ALLOWED_COMMANDS:
         allowed = ", ".join(sorted(ALLOWED_COMMANDS))
         raise ToolError(f"Command {base!r} is not allowed. Allowed commands: {allowed}.")
     lowered = [str(a).lower() for a in args]
+    for argument in lowered:
+        for marker in DESTRUCTIVE_ARG_MARKERS:
+            if marker in argument:
+                raise ToolError(
+                    f"'{base} {argument}' looks destructive, so it is refused. "
+                    "OmniDev's agent never deletes or force-overwrites through the shell."
+                )
     for blocked in BLOCKED_ARGS:
         if blocked in lowered:
             raise ToolError(

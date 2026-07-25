@@ -216,3 +216,75 @@ def test_to_gemini_schema_roundtrip():
     assert converted.properties["files"].type.name == "ARRAY"
     assert converted.properties["files"].items.properties["path"].type.name == "STRING"
     assert converted.properties["mode"].enum == ["a", "b"]
+
+
+# ── Reasoning models can starve their own answer ────────────
+@pytest.mark.asyncio
+async def test_thinking_budget_starvation_is_retried(monkeypatch):
+    """
+    gemma4:12b spends part of num_predict on a hidden `thinking` field, and
+    num_predict caps thinking plus content together. Measured live: at
+    num_predict=60 the model produced 157 thinking tokens and an EMPTY
+    answer with done_reason="length". Callers used to receive "" silently.
+    """
+    calls: list[int] = []
+
+    class FakeResponse:
+        status_code = 200
+
+        def __init__(self, payload):
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+    async def fake_post(url, json=None, **kwargs):
+        budget = json["options"]["num_predict"]
+        calls.append(budget)
+        if budget < 500:
+            return FakeResponse(
+                {
+                    "message": {"content": "", "thinking": "long internal reasoning"},
+                    "done_reason": "length",
+                }
+            )
+        return FakeResponse(
+            {"message": {"content": "The answer is 42.", "thinking": "..."},
+             "done_reason": "stop"}
+        )
+
+    monkeypatch.setattr(
+        ai_service, "_get_ollama_client", lambda: type("C", (), {"post": staticmethod(fake_post)})()
+    )
+    monkeypatch.setattr(ai_service.settings, "ai_provider", "ollama")
+
+    result = await ai_service.generate_text("q", max_tokens=60)
+    assert result == "The answer is 42."
+    assert len(calls) == 2, "a starved call must be retried once with more headroom"
+    assert calls[1] >= ai_service.THINKING_RETRY_FLOOR
+
+
+@pytest.mark.asyncio
+async def test_persistent_starvation_raises_instead_of_returning_empty(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+
+        def json(self):
+            return {
+                "message": {"content": "", "thinking": "still reasoning"},
+                "done_reason": "length",
+            }
+
+    async def always_starved(url, json=None, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(
+        ai_service,
+        "_get_ollama_client",
+        lambda: type("C", (), {"post": staticmethod(always_starved)})(),
+    )
+    monkeypatch.setattr(ai_service.settings, "ai_provider", "ollama")
+
+    with pytest.raises(ai_service.AIResponseError) as exc:
+        await ai_service.generate_text("q", max_tokens=60)
+    assert "token budget" in str(exc.value)

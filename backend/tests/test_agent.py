@@ -179,7 +179,7 @@ async def test_write_file_creates_and_updates(workspace):
     result = await agent_tools.call_tool(
         "write_file", {"path": str(target), "content": "three\n"}
     )
-    assert "Updated" in result
+    assert "Replaced" in result
 
 
 @pytest.mark.asyncio
@@ -200,7 +200,7 @@ async def test_run_command_allowlist(workspace):
         await agent_tools.call_tool(
             "run_command", {"command": "rm", "args": ["-rf", "/"], "cwd": str(workspace)}
         )
-    assert "not allowed" in str(exc.value)
+    assert "never deletes" in str(exc.value)
 
     with pytest.raises(ToolError) as exc:
         await agent_tools.call_tool(
@@ -225,9 +225,13 @@ async def test_run_command_executes_allowed(workspace):
 
 # ── Approval policy ─────────────────────────────────────────
 def test_needs_approval_policy(workspace, tmp_path):
-    inside = {"path": str(workspace / "main.py"), "content": "x"}
+    new_inside = {"path": str(workspace / "brand_new.txt"), "content": "x"}
+    existing_inside = {"path": str(workspace / "main.py"), "content": "x"}
     outside = {"path": str(tmp_path / "elsewhere.txt"), "content": "x"}
-    assert not agent_tools.needs_approval("write_file", inside)
+    # Creating a new file in a workspace is free.
+    assert not agent_tools.needs_approval("write_file", new_inside)
+    # Overwriting one that already has content always asks.
+    assert agent_tools.needs_approval("write_file", existing_inside)
     assert agent_tools.needs_approval("write_file", outside)
     # Shell always asks, even inside a workspace.
     assert agent_tools.needs_approval("run_command", {"cwd": str(workspace), "command": "git"})
@@ -418,3 +422,129 @@ async def test_agent_stream_endpoint(client, workspace, monkeypatch, coverage_tr
     events = [json.loads(line) for line in resp.text.strip().splitlines()]
     assert "agent" in events[0]
     assert events[-1] == {"done": True}
+
+
+# ── Nothing is destroyed without an explicit yes ────────────
+@pytest.mark.asyncio
+async def test_no_deletion_command_is_reachable(workspace):
+    """There is no delete tool, and the shell cannot substitute for one."""
+    for command, args in [
+        ("rm", ["-rf", str(workspace)]),
+        ("rmdir", [str(workspace)]),
+        ("unlink", ["main.py"]),
+        ("trash", ["main.py"]),
+        ("shred", ["main.py"]),
+        ("truncate", ["-s", "0", "main.py"]),
+        ("dd", ["if=/dev/zero", "of=main.py"]),
+    ]:
+        with pytest.raises(ToolError) as exc:
+            await agent_tools.call_tool(
+                "run_command", {"command": command, "args": args, "cwd": str(workspace)}
+            )
+        assert "never deletes" in str(exc.value) or "not allowed" in str(exc.value)
+    assert (workspace / "main.py").exists()
+
+
+@pytest.mark.asyncio
+async def test_destructive_git_and_build_commands_refused(workspace):
+    for command, args in [
+        ("git", ["stash"]),
+        ("git", ["clean", "-fd"]),
+        ("git", ["reset", "--hard"]),
+        ("npm", ["ci"]),
+        ("make", ["clean"]),
+    ]:
+        with pytest.raises(ToolError):
+            await agent_tools.call_tool(
+                "run_command", {"command": command, "args": args, "cwd": str(workspace)}
+            )
+
+
+def test_overwriting_an_existing_file_is_destructive(workspace, tmp_path):
+    existing = {"path": str(workspace / "main.py"), "content": "new"}
+    fresh = {"path": str(workspace / "brand_new.py"), "content": "new"}
+    assert agent_tools.is_destructive("write_file", existing)
+    assert not agent_tools.is_destructive("write_file", fresh)
+    # Destructive writes ask even inside a trusted workspace.
+    assert agent_tools.needs_approval("write_file", existing)
+    assert not agent_tools.needs_approval("write_file", fresh)
+    # And the prompt says plainly what is lost.
+    summary, _ = agent_tools.describe("write_file", existing)
+    assert "REPLACE" in summary and "overwritten" in summary
+
+
+@pytest.mark.asyncio
+async def test_agent_cannot_overwrite_without_approval(workspace, monkeypatch):
+    original = (workspace / "main.py").read_text()
+    fake = _scripted([
+        {
+            "content": "",
+            "tool_calls": [
+                {
+                    "name": "write_file",
+                    "arguments": {"path": str(workspace / "main.py"), "content": "WIPED"},
+                }
+            ],
+        },
+        {"content": "I was not allowed.", "tool_calls": []},
+    ])
+    monkeypatch.setattr(agent_service, "chat_round_with_tools", fake)
+
+    prompted = False
+    async for event in agent_service.run_agent("wipe it", use_mcp=False):
+        if "approval_required" in event:
+            prompted = True
+            agent_service.resolve_approval(event["approval_required"]["id"], "deny")
+
+    assert prompted, "overwriting a file inside a workspace must still ask"
+    assert (workspace / "main.py").read_text() == original
+
+
+@pytest.mark.asyncio
+async def test_overwrite_is_backed_up_and_restorable(workspace, tmp_path, monkeypatch):
+    from app.config import settings
+    from app.services import agent_backups
+
+    monkeypatch.setattr(settings, "data_dir", str(tmp_path / "data"))
+    target = workspace / "main.py"
+    original = target.read_text()
+
+    result = await agent_tools.call_tool(
+        "write_file", {"path": str(target), "content": "completely different"}
+    )
+    assert "Replaced" in result and "backup" in result
+    assert target.read_text() == "completely different"
+
+    backups = agent_backups.list_backups()
+    assert backups and backups[0]["path"] == str(target)
+
+    agent_backups.restore(backups[0]["id"])
+    assert target.read_text() == original
+
+
+@pytest.mark.asyncio
+async def test_edit_is_backed_up_too(workspace, tmp_path, monkeypatch):
+    from app.config import settings
+    from app.services import agent_backups
+
+    monkeypatch.setattr(settings, "data_dir", str(tmp_path / "data"))
+    target = workspace / "main.py"
+    original = target.read_text()
+    await agent_tools.call_tool(
+        "edit_file",
+        {"path": str(target), "old_text": "return 'hello'", "new_text": "return 'bye'"},
+    )
+    assert "bye" in target.read_text()
+    backups = agent_backups.list_backups()
+    assert backups
+    agent_backups.restore(backups[0]["id"])
+    assert target.read_text() == original
+
+
+def test_restore_rejects_unknown_id(tmp_path, monkeypatch):
+    from app.config import settings
+    from app.services import agent_backups
+
+    monkeypatch.setattr(settings, "data_dir", str(tmp_path / "data"))
+    with pytest.raises(agent_backups.RestoreError):
+        agent_backups.restore("nope")

@@ -17,7 +17,7 @@ from app.schemas.agent import (
     WorkspaceInfo,
     WorkspaceListResponse,
 )
-from app.services import agent_service, workspace_service
+from app.services import agent_backups, agent_service, workspace_service
 from app.services.ai_service import AIConfigurationError, ensure_ai_configured
 
 router = APIRouter()
@@ -71,6 +71,21 @@ async def list_approvals():
     return PendingApprovalsResponse(
         approvals=[PendingApproval(**a) for a in agent_service.pending_approvals()]
     )
+
+
+@router.get("/backups")
+async def list_backups(limit: int = 50):
+    """Snapshots taken before the agent changed a file, newest first."""
+    return {"backups": agent_backups.list_backups(limit=limit)}
+
+
+@router.post("/backups/{backup_id}/restore")
+async def restore_backup(backup_id: str):
+    """Put a file back the way it was before the agent touched it."""
+    try:
+        return agent_backups.restore(backup_id)
+    except agent_backups.RestoreError as exc:
+        raise not_found(str(exc)) from exc
 
 
 @router.get("/workspaces", response_model=WorkspaceListResponse)

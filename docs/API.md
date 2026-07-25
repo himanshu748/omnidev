@@ -1,6 +1,6 @@
 # 📡 API Reference
 
-> OmniDev Backend — FastAPI REST API  
+> OmniDev Backend, FastAPI REST API  
 > Base URL: `http://localhost:8000`  
 > Interactive Docs: [Swagger UI](http://localhost:8000/docs) | [ReDoc](http://localhost:8000/redoc)
 
@@ -86,7 +86,7 @@ Content-Type: application/json
 | `stealth` | `bool` | `true` | Enable compatibility fingerprint adjustments for authorized pages; not a bot-protection bypass guarantee |
 | `wait_for` | `string?` | `null` | CSS selector to wait for before extraction |
 | `javascript` | `string?` | `null` | JavaScript to execute on the page |
-| `wait_seconds` | `number` | `0` | Seconds to wait after page load (0–30) |
+| `wait_seconds` | `number` | `0` | Seconds to wait after page load (0-30) |
 | `proxy` | `string?` | `null` | Optional proxy URL |
 | `block_resources` | `string[]?` | `null` | Resource types to block, such as `image`, `font`, or `stylesheet` |
 
@@ -294,9 +294,18 @@ Content-Type: application/json
 
 Inside a workspace the agent edits without asking; everywhere else each action needs approval, and shell commands always do. Workspaces must be inside your home folder and cannot be `$HOME`, `~/Library` or OmniDev's data directory. `GET /api/agent/workspaces` lists them (the landing root appears as `implicit`) and `DELETE /api/agent/workspaces?path=...` removes one.
 
+### Backups and Restore
+
+```http
+GET  /api/agent/backups
+POST /api/agent/backups/{id}/restore
+```
+
+The agent has no delete tool, but replacing a file's contents loses what was there, so every write and edit copies the file aside first. Backups live in `~/.omnidev/agent-backups` (mode `0600`, pruned by count and age) and restore puts the exact bytes back. Overwriting an existing file always requires approval, even inside a workspace; creating a new file does not.
+
 ## 🔐 Authentication
 
-OmniDev keeps external service keys in backend environment variables. Gemini, AWS, and Context7 credentials are configured server-side and are never exposed to clients. In Ollama mode no AI credential is needed at all — requests go to the local Ollama server.
+OmniDev keeps external service keys in backend environment variables. Gemini, AWS, and Context7 credentials are configured server-side and are never exposed to clients. In Ollama mode no AI credential is needed at all, requests go to the local Ollama server.
 
 ## ⚠️ Error Handling
 
@@ -309,7 +318,7 @@ All endpoints return errors in a consistent format:
 ```
 
 HTTP status codes follow REST conventions:
-- `200` — Success
-- `400` — Bad request / invalid input
-- `422` — Validation error (Pydantic)
-- `500` — Internal server error
+- `200`, Success
+- `400`, Bad request / invalid input
+- `422`, Validation error (Pydantic)
+- `500`, Internal server error
