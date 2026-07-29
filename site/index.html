@@ -149,19 +149,20 @@
   /* ---- sections ---- */
   section{margin-top:118px}
 
-  /* Measuring rail: one hairline down the gutter, ticked at each section.
-     Structural, not an overlay, and only where there is room for it. */
+  /* Measuring marks. Every width gets a tick at each section start, inside the
+     measure. Wide viewports also get the gutter rail the ticks belong to. */
+  section,.session{position:relative}
+  section::before,.session::before{
+    content:"";position:absolute;left:0;top:-24px;width:13px;height:1px;
+    background:var(--rule);
+  }
   @media (min-width:1420px){
     main{position:relative}
     main::before{
       content:"";position:absolute;left:-84px;top:6px;bottom:0;width:1px;
       background:var(--rule-soft);
     }
-    section,.session,.close{position:relative}
-    section::before,.session::before,.close::before{
-      content:"";position:absolute;left:-90px;top:11px;width:13px;height:1px;
-      background:var(--rule);
-    }
+    section::before,.session::before{left:-90px;top:11px}
   }
   h2{
     font-size:clamp(28px,3.8vw,40px);line-height:1.13;letter-spacing:-.028em;
@@ -179,9 +180,10 @@
     background:var(--panel-2);will-change:transform;
   }
   .frame img{width:100%;height:auto;display:block}
-  figure figcaption{margin-top:20px}
-  /* The recordings break the text measure: the page's one width change. */
-  @media (min-width:1180px){
+  figure figcaption{margin-top:28px}
+  /* The recordings break the text measure: the page's one width change.
+     Gated so the breakout always keeps at least 80px outside it. */
+  @media (min-width:1280px){
     figure .frame{margin-left:-60px;margin-right:-60px}
   }
 
