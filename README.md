@@ -1,49 +1,16 @@
 # OmniDev
 
-**Give Claude Code offline memory of your entire Mac.**
+**Ask your Mac anything, and let it do the work. Fully offline.**
 
-Point OmniDev at your folders and it indexes them locally, including your screenshots via on-device OCR. Then any MCP client, Claude Code, Claude Desktop, Cursor, can search them and ask questions about a single file. It is also a native macOS app with its own chat and coding agent, running on a local Gemma 4 model.
-
-Nothing leaves your machine. No account, no API key, no bill.
+Native macOS app. A local Gemma 4 model reads your files (including screenshots), answers with citations, and can edit code and run your tests, without a single byte leaving your machine.
 
 [Download](https://github.com/himanshu748/omnidev/releases/latest) · [Landing page](https://himanshu748.github.io/omnidev/) · [Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [Contributing](CONTRIBUTING.md)
 
 ![macOS](https://img.shields.io/badge/macOS-native%20SwiftUI-000000?logo=apple&logoColor=white)
 ![Ollama](https://img.shields.io/badge/AI-Ollama%20(offline)-222222?logo=ollama&logoColor=white)
-![MCP](https://img.shields.io/badge/MCP-stateless%20HTTP-4DA2FF)
+![Google Gemini](https://img.shields.io/badge/AI-Gemini%20(optional)-4285F4?logo=google&logoColor=white)
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
 ![License MIT](https://img.shields.io/badge/License-MIT-green)
-
-## Use it from Claude Code
-
-Run the app once, then:
-
-```bash
-./scripts/install-mcp.sh
-```
-
-That registers the engine over stateless streamable HTTP and verifies it by making a real `tools/list` call, so a failure is a message rather than a tool that silently never appears. One line by hand, if you prefer:
-
-```bash
-claude mcp add --scope user --transport http omnidev http://127.0.0.1:8010/mcp
-```
-
-There is no separate process to run and no Python path to get right: the running app already serves MCP. Because the transport is stateless, several clients can share one engine with no session to own. Then ask Claude Code things like:
-
-- *"search my notes for the deployment checklist"* → `search_knowledge`
-- *"what does ~/Desktop/Screenshot.png say?"* → `ask_file`, on-device OCR, nothing stored
-- *"summarise this PDF"* → `ask_file` on any readable file
-
-| Tool | What it does |
-|---|---|
-| `search_knowledge` | Hybrid search over your indexed docs, code, screenshots and past chats |
-| `ask_file` | Answer about one file with no indexing at all |
-| `index_folder` / `list_knowledge_sources` | Manage what is indexed |
-| `local_llm` / `local_vision` | Delegate generation or image analysis to the local model, free |
-| `scrape_url` / `crawl_site` | SSRF-guarded local browser extraction |
-| `aws_plan` | Preview a boto3 plan, never executes |
-
-Prefer a process you own, or want it working with the app closed? `./scripts/install-mcp.sh --print` emits a stdio config for any client.
 
 ![OmniDev answering a question about a screenshot, offline](docs/demo.gif)
 
@@ -147,7 +114,7 @@ Stop the engine sidecar any time with `scripts/macos/stop-omnidev.sh`. See [docs
 
 ## Claude Code on the Local Model
 
-Ollama exposes an Anthropic-compatible API, so Claude Code can run entirely on the same local Gemma model OmniDev manages, no cloud, no API key:
+Ollama exposes an Anthropic-compatible API, so Claude Code can point at the same local Gemma model OmniDev manages, with no cloud and no API key:
 
 ```bash
 make claude-local
@@ -155,7 +122,14 @@ make claude-local
 ANTHROPIC_BASE_URL=http://localhost:11434 ANTHROPIC_AUTH_TOKEN=ollama claude --model gemma4:12b
 ```
 
-Since OmniDev's onboarding installs Ollama's default model for you, any machine running OmniDev is one command away from a fully-offline Claude Code session. Expect weaker tool-calling than Claude's own models, best for quick offline edits, not complex agentic work. OmniDev's MCP server (`claude mcp add omnidev`) is the complementary integration: cloud Claude for the reasoning, free local Gemma for delegated generation.
+**Use this for generation, not for agentic work.** That is a measured limit, not a hedge:
+
+- Claude Code sends a **29,432 token** harness prompt (system prompt plus tool and skill definitions) before you type anything. Ollama serves most models with a 4,096 token context by default, so a small model fails immediately with `exceed_context_size_error`. `gemma4:12b` has a 256K context and fits it.
+- Fitting it is not the same as following it. Given a one line bug fix with `--permission-mode acceptEdits`, gemma4:12b described which tools it would use and never called `Edit`. The file was unchanged.
+
+So the honest scope is single shot generation: drafting a function, explaining a file, writing a commit message. For work that requires reading, editing and verifying, use Claude's own models, or use **OmniDev's own agent** (the Agent toggle in Chat), which is built around this exact limitation: narrow tools, forgiving errors and a plan/act loop, rather than a 29k token harness the model has to interpret.
+
+For delegating generation to the local model from a cloud Claude session, use the MCP `local_llm` tool instead. Cloud model for the reasoning, free local Gemma for the tokens.
 
 ## Product Surface
 
