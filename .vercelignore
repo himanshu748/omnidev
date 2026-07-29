@@ -1,0 +1,5 @@
+# The deployment is the static landing page and nothing else.
+# Everything is excluded, then site/ and the config are added back.
+/*
+!/site
+!/vercel.json
