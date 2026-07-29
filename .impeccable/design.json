@@ -1,0 +1,471 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-29T20:52:00Z",
+  "title": "Design System: OmniDev",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Ground",
+        "canonical": "#0B0D11",
+        "tonalRamp": [
+          "oklch(0.15 0.012 265)",
+          "oklch(0.26 0.014 265)",
+          "oklch(0.37 0.016 265)",
+          "oklch(0.48 0.016 265)",
+          "oklch(0.59 0.014 265)",
+          "oklch(0.70 0.012 265)",
+          "oklch(0.83 0.008 265)",
+          "oklch(0.95 0.004 265)"
+        ]
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Panel",
+        "canonical": "#101319",
+        "tonalRamp": [
+          "oklch(0.15 0.010 265)",
+          "oklch(0.26 0.012 265)",
+          "oklch(0.37 0.014 265)",
+          "oklch(0.48 0.014 265)",
+          "oklch(0.59 0.012 265)",
+          "oklch(0.70 0.010 265)",
+          "oklch(0.83 0.007 265)",
+          "oklch(0.95 0.004 265)"
+        ]
+      },
+      "panel-2": {
+        "role": "neutral",
+        "displayName": "Panel Inset",
+        "canonical": "#0E1116",
+        "tonalRamp": [
+          "oklch(0.15 0.010 265)",
+          "oklch(0.26 0.012 265)",
+          "oklch(0.37 0.013 265)",
+          "oklch(0.48 0.013 265)",
+          "oklch(0.59 0.011 265)",
+          "oklch(0.70 0.009 265)",
+          "oklch(0.83 0.006 265)",
+          "oklch(0.95 0.003 265)"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#1C222B",
+        "tonalRamp": [
+          "oklch(0.15 0.012 255)",
+          "oklch(0.26 0.016 255)",
+          "oklch(0.37 0.018 255)",
+          "oklch(0.48 0.018 255)",
+          "oklch(0.59 0.016 255)",
+          "oklch(0.70 0.013 255)",
+          "oklch(0.83 0.009 255)",
+          "oklch(0.95 0.005 255)"
+        ]
+      },
+      "rule-soft": {
+        "role": "neutral",
+        "displayName": "Rule Soft",
+        "canonical": "#161B23",
+        "tonalRamp": [
+          "oklch(0.15 0.011 255)",
+          "oklch(0.26 0.014 255)",
+          "oklch(0.37 0.016 255)",
+          "oklch(0.48 0.016 255)",
+          "oklch(0.59 0.014 255)",
+          "oklch(0.70 0.011 255)",
+          "oklch(0.83 0.008 255)",
+          "oklch(0.95 0.004 255)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#E7EBF1",
+        "tonalRamp": [
+          "oklch(0.15 0.008 255)",
+          "oklch(0.26 0.010 255)",
+          "oklch(0.37 0.011 255)",
+          "oklch(0.48 0.011 255)",
+          "oklch(0.59 0.010 255)",
+          "oklch(0.72 0.009 255)",
+          "oklch(0.84 0.008 255)",
+          "oklch(0.95 0.006 255)"
+        ]
+      },
+      "dim": {
+        "role": "neutral",
+        "displayName": "Dim",
+        "canonical": "#98A3B3",
+        "tonalRamp": [
+          "oklch(0.15 0.014 255)",
+          "oklch(0.26 0.018 255)",
+          "oklch(0.37 0.021 255)",
+          "oklch(0.48 0.023 255)",
+          "oklch(0.59 0.024 255)",
+          "oklch(0.70 0.023 255)",
+          "oklch(0.84 0.016 255)",
+          "oklch(0.95 0.008 255)"
+        ]
+      },
+      "signal": {
+        "role": "primary",
+        "displayName": "Signal Blue",
+        "canonical": "#4DA2FF",
+        "tonalRamp": [
+          "oklch(0.15 0.052 250)",
+          "oklch(0.26 0.082 250)",
+          "oklch(0.38 0.108 250)",
+          "oklch(0.50 0.134 250)",
+          "oklch(0.62 0.152 250)",
+          "oklch(0.72 0.130 250)",
+          "oklch(0.84 0.082 250)",
+          "oklch(0.95 0.031 250)"
+        ]
+      },
+      "signal-lift": {
+        "role": "primary",
+        "displayName": "Signal Lift",
+        "canonical": "#6BB4FF",
+        "tonalRamp": [
+          "oklch(0.15 0.048 250)",
+          "oklch(0.26 0.076 250)",
+          "oklch(0.38 0.100 250)",
+          "oklch(0.50 0.124 250)",
+          "oklch(0.64 0.140 250)",
+          "oklch(0.75 0.118 250)",
+          "oklch(0.86 0.074 250)",
+          "oklch(0.95 0.028 250)"
+        ]
+      },
+      "signal-ink": {
+        "role": "primary",
+        "displayName": "Signal Ink",
+        "canonical": "#06101E",
+        "tonalRamp": [
+          "oklch(0.13 0.026 255)",
+          "oklch(0.24 0.032 255)",
+          "oklch(0.36 0.034 255)",
+          "oklch(0.47 0.032 255)",
+          "oklch(0.59 0.028 255)",
+          "oklch(0.71 0.022 255)",
+          "oklch(0.83 0.014 255)",
+          "oklch(0.95 0.007 255)"
+        ]
+      },
+      "allow": {
+        "role": "tertiary",
+        "displayName": "Allow Green",
+        "canonical": "#5FD08A",
+        "tonalRamp": [
+          "oklch(0.15 0.040 152)",
+          "oklch(0.26 0.064 152)",
+          "oklch(0.38 0.086 152)",
+          "oklch(0.50 0.106 152)",
+          "oklch(0.62 0.122 152)",
+          "oklch(0.76 0.128 152)",
+          "oklch(0.86 0.082 152)",
+          "oklch(0.95 0.032 152)"
+        ]
+      },
+      "refuse": {
+        "role": "tertiary",
+        "displayName": "Refuse Red",
+        "canonical": "#FF7B72",
+        "tonalRamp": [
+          "oklch(0.15 0.046 25)",
+          "oklch(0.26 0.074 25)",
+          "oklch(0.38 0.100 25)",
+          "oklch(0.50 0.124 25)",
+          "oklch(0.62 0.144 25)",
+          "oklch(0.73 0.148 25)",
+          "oklch(0.85 0.086 25)",
+          "oklch(0.95 0.033 25)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The single h1. Two beats, second beat broken to its own line in signal blue, capped at 19ch."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section h2s. Complete sentences with a period, capped at 26ch."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The hero prose line, set in Dim and capped at 66ch. Section prose runs one step down at 17.5px, capped at 68ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Document base. Prose lists 15.5px, buttons 15px at weight 600, fineprint 14px."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "The honesty line under a panel or figure, naming what is measured and what is illustrative. Capped at 74ch."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Recorded session transcript. Set white-space: pre so columns hold. Drops to 12.5px below 640px."
+      },
+      "readout": {
+        "displayName": "Readout",
+        "purpose": "Spec sheet rows. Values carry tabular-nums so counting digits do not jitter."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Instrument bar, footer, command chips, denylist entries, inline code."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Uppercase mono panel head titles and row labels. Panel heads run a hair wider at 0.09em."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "ease-settle",
+        "value": "expo.out",
+        "purpose": "The system default. Hero intro, every scroll reveal, spec row stagger, leader draw, number count-up."
+      },
+      {
+        "name": "ease-scrub",
+        "value": "none",
+        "purpose": "Linear, required for anything tied to scroll position: hero drift and media frame parallax."
+      },
+      {
+        "name": "ease-wipe",
+        "value": "power2.out",
+        "purpose": "The transcript ask line wiping in via clipPath inset(0 100% 0 0)."
+      },
+      {
+        "name": "ease-chip",
+        "value": "back.out(2)",
+        "purpose": "The only overshoot in the system. Refusal chips popping in at 0.94 scale, 22ms apart."
+      },
+      {
+        "name": "ease-lift",
+        "value": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "purpose": "CSS button hover transform, the one non-GSAP ease."
+      },
+      {
+        "name": "duration-hover",
+        "value": "0.2s",
+        "purpose": "Button background, border and 2px lift."
+      },
+      {
+        "name": "duration-bar",
+        "value": "0.4s",
+        "purpose": "Instrument bar condensing: background, border and backdrop-filter."
+      },
+      {
+        "name": "reveal-start",
+        "value": "top 86%",
+        "purpose": "Default ScrollTrigger entry point for a reveal. Panels use 82% to 78%, the session uses 76%."
+      },
+      {
+        "name": "stagger-row",
+        "value": "0.055s",
+        "purpose": "Spec readout rows and leaders. Transcript lines use 0.1s, denylist entries 0.03s, chips 0.022s."
+      },
+      {
+        "name": "parallax-range",
+        "value": "46px to -46px",
+        "purpose": "Media frame drift against scroll on a 0.6 scrub. Hero elements drift -90px, -58px and -32px on a 0.5 scrub."
+      },
+      {
+        "name": "reduced-motion-guard",
+        "value": "gsap.matchMedia('(prefers-reduced-motion: no-preference)')",
+        "purpose": "Every animation is applied inside this guard. Nothing is hidden in CSS, so a failed script renders a complete page."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "s",
+        "value": "640px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The download action. A lit key cap on a dark panel, used twice on the page.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\">Download for macOS</a>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 9px; padding: 13px 22px; border-radius: 9px; border: 1px solid transparent; text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; background: var(--signal, #4DA2FF); color: var(--signal-ink, #06101E); transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-primary:hover { background: var(--signal-lift, #6BB4FF); transform: translateY(-2px); } .ds-btn-primary:focus-visible { outline: 2px solid var(--signal, #4DA2FF); outline-offset: 3px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "The secondary action. A hairline outline that fills to the recessed tone on hover.",
+      "html": "<a class=\"ds-btn-ghost\" href=\"#\">View source</a>",
+      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; gap: 9px; padding: 13px 22px; border-radius: 9px; border: 1px solid var(--rule, #1C222B); text-decoration: none; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; background: transparent; color: var(--ink, #E7EBF1); transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); } .ds-btn-ghost:hover { border-color: var(--rule-lift, #2C3542); background: var(--panel-2, #0E1116); transform: translateY(-2px); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--signal, #4DA2FF); outline-offset: 3px; }"
+    },
+    {
+      "name": "Instrument Bar",
+      "kind": "nav",
+      "refersTo": "bar",
+      "description": "Sticky 58px bar. Reports state rather than navigating. Shown here in its condensed form, which is the only sanctioned backdrop-filter in the system.",
+      "html": "<div class=\"ds-bar ds-bar-compact\"><div class=\"ds-bar-in\"><span class=\"ds-mark\"><svg class=\"ds-glyph\" viewBox=\"0 0 28 28\" aria-hidden=\"true\"><circle cx=\"14\" cy=\"14\" r=\"13\" fill=\"none\" stroke=\"#4DA2FF\" stroke-width=\"2\"/><circle cx=\"14\" cy=\"14\" r=\"9\" fill=\"#0B0D11\"/><path d=\"M10 11l3 3-3 3M15.5 17.5h3.5\" fill=\"none\" stroke=\"#4DA2FF\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg> omnidev</span><span class=\"ds-bar-meta\"><span>v0.7.1</span><span>MIT</span><span>universal binary</span><span class=\"ds-dot\">runs offline</span></span></div></div>",
+      "css": ".ds-bar { border-bottom: 1px solid transparent; background: rgba(11, 13, 17, 0); transition: background 0.4s ease, border-color 0.4s ease, backdrop-filter 0.4s ease; } .ds-bar-compact { background: rgba(11, 13, 17, 0.82); backdrop-filter: saturate(160%) blur(14px); -webkit-backdrop-filter: saturate(160%) blur(14px); border-bottom-color: var(--rule, #1C222B); } .ds-bar-in { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 58px; padding: 0 24px; font-family: ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, monospace; font-size: 12.5px; letter-spacing: 0.02em; } .ds-mark { display: flex; align-items: center; gap: 9px; font-weight: 600; color: var(--ink, #E7EBF1); } .ds-glyph { width: 28px; height: 28px; flex: none; display: block; } .ds-bar-meta { display: flex; gap: 14px; color: var(--dim, #98A3B3); } .ds-dot { display: inline-flex; align-items: center; gap: 6px; color: var(--allow, #5FD08A); } .ds-dot::before { content: \"\"; width: 6px; height: 6px; border-radius: 50%; background: var(--allow, #5FD08A); flex: none; }"
+    },
+    {
+      "name": "Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The system's only container. The head strip is a citation line: what the panel shows on the left, where it came from on the right.",
+      "html": "<div class=\"ds-panel\"><div class=\"ds-panel-head\"><span>denylist</span><span class=\"ds-panel-val\">file_guards.py</span></div><div class=\"ds-panel-body\">Panel body, on the raised tone.</div></div>",
+      "css": ".ds-panel { border: 1px solid var(--rule, #1C222B); border-radius: 12px; background: var(--panel, #101319); overflow: hidden; color: var(--ink, #E7EBF1); } .ds-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 16px; border-bottom: 1px solid var(--rule, #1C222B); background: var(--panel-2, #0E1116); font-family: ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, monospace; font-size: 11.5px; letter-spacing: 0.09em; text-transform: uppercase; color: var(--dim, #98A3B3); } .ds-panel-val { letter-spacing: 0.02em; text-transform: none; } .ds-panel-body { padding: 20px 16px; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif; font-size: 16px; line-height: 1.65; }"
+    },
+    {
+      "name": "Spec Readout Row",
+      "kind": "custom",
+      "refersTo": "readout-row",
+      "description": "Key, dotted leader, right-aligned tabular value. Red marks an absence or refusal, green marks a grant. The leader draws from scaleX 0 on entry.",
+      "html": "<ul class=\"ds-readout\"><li><span class=\"ds-k\">OCR per image</span><span class=\"ds-fill\"></span><span class=\"ds-v\">42 ms warm median</span></li><li><span class=\"ds-k\">Account required</span><span class=\"ds-fill\"></span><span class=\"ds-v ds-no\">none</span></li><li><span class=\"ds-k\">Price</span><span class=\"ds-fill\"></span><span class=\"ds-v ds-yes\">0, MIT licensed</span></li></ul>",
+      "css": ".ds-readout { list-style: none; margin: 0; padding: 0; font-family: ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, monospace; font-size: 13px; line-height: 1.65; } .ds-readout li { display: flex; align-items: baseline; gap: 14px; padding: 11px 16px; border-bottom: 1px solid var(--rule-soft, #161B23); } .ds-readout li:last-child { border-bottom: 0; } .ds-k { color: var(--ink, #E7EBF1); flex: none; } .ds-fill { flex: 1; border-bottom: 1px dotted var(--rule, #1C222B); transform: translateY(-3px); transform-origin: left center; min-width: 14px; } .ds-v { color: var(--dim, #98A3B3); flex: none; text-align: right; font-variant-numeric: tabular-nums; } .ds-v.ds-no { color: var(--refuse, #FF7B72); } .ds-v.ds-yes { color: var(--allow, #5FD08A); }"
+    },
+    {
+      "name": "Token Chip",
+      "kind": "chip",
+      "refersTo": "token-chip",
+      "description": "A label, not a control. The struck variant marks a command the agent refuses by name, so it carries no hover state.",
+      "html": "<span class=\"ds-toks\"><span class=\"ds-tok\">npm test</span><span class=\"ds-tok ds-tok-struck\">rm</span><span class=\"ds-tok ds-tok-struck\">git reset --hard</span><span class=\"ds-tok ds-tok-struck\">-rf</span></span>",
+      "css": ".ds-toks { display: flex; flex-wrap: wrap; gap: 7px; } .ds-tok { font-family: ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, monospace; font-size: 12.5px; color: var(--ink, #E7EBF1); background: var(--panel-2, #0E1116); border: 1px solid var(--rule, #1C222B); border-radius: 6px; padding: 2.5px 8px; white-space: nowrap; } .ds-tok-struck { color: var(--refuse, #FF7B72); border-color: #37232A; }"
+    },
+    {
+      "name": "Session Transcript",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "The opening proof. Recorded output in mono with white-space pre, scores in signal blue, refusals in red and the model's answer hanging off a 1px signal rule.",
+      "html": "<div class=\"ds-panel ds-tx-wrap\"><div class=\"ds-panel-head\"><span>local session</span><span class=\"ds-dot\">0 bytes uploaded</span></div><div class=\"ds-tx\"><span class=\"ds-line ds-muted\">~/Desktop  ~/Documents  ~/Downloads     indexed on device</span><span class=\"ds-line ds-ask\">&gt; where is the payment reference?<span class=\"ds-caret\">▍</span></span><span class=\"ds-line ds-hit\">  receipt.png            read by OCR    <span class=\"ds-score\">0.82</span></span><span class=\"ds-line ds-no\">  .env                   refused, never indexed</span><span class=\"ds-answer\">The reference is in receipt.png, read on device by macOS Vision.\n<span class=\"ds-cite\">cited: receipt.png</span></span></div></div>",
+      "css": ".ds-tx-wrap { border: 1px solid var(--rule, #1C222B); border-radius: 12px; background: var(--panel, #101319); overflow: hidden; } .ds-tx { padding: 20px 16px; font-family: ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, monospace; font-size: 13.5px; line-height: 1.75; overflow-x: auto; } .ds-line { display: block; white-space: pre; } .ds-ask { color: var(--ink, #E7EBF1); } .ds-muted { color: var(--dim, #98A3B3); } .ds-hit { color: var(--ink, #E7EBF1); } .ds-score { color: var(--signal, #4DA2FF); } .ds-no { color: var(--refuse, #FF7B72); } .ds-caret { color: var(--signal, #4DA2FF); } @media (prefers-reduced-motion: no-preference) { .ds-caret { animation: ds-blink 1.1s steps(1, end) infinite 1.4s; } } @keyframes ds-blink { 0%, 50% { opacity: 1; } 50.01%, 100% { opacity: 0; } } .ds-answer { display: block; white-space: pre-wrap; color: var(--ink, #E7EBF1); border-left: 1px solid var(--signal, #4DA2FF); padding-left: 13px; margin-top: 14px; } .ds-cite { color: var(--dim, #98A3B3); }"
+    },
+    {
+      "name": "Media Frame",
+      "kind": "custom",
+      "refersTo": "frame",
+      "description": "A 14px rounded, hairline bordered box holding a real recording. It drifts against the scroll and un-crops on entry, and its content is never cropped to buy the effect.",
+      "html": "<figure class=\"ds-fig\"><div class=\"ds-frame\"><img src=\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1078' height='420'><rect width='1078' height='420' fill='%230E1116'/><text x='40' y='220' fill='%2398A3B3' font-family='monospace' font-size='22'>real screen recording</text></svg>\" alt=\"Recording placeholder\" /></div><figcaption class=\"ds-caption\">A real screen recording. State plainly what is measured and what was sped up.</figcaption></figure>",
+      "css": ".ds-fig { margin: 0; } .ds-frame { border: 1px solid var(--rule, #1C222B); border-radius: 14px; overflow: hidden; background: var(--panel-2, #0E1116); will-change: transform; } .ds-frame img { width: 100%; height: auto; display: block; } .ds-caption { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif; font-size: 13.5px; line-height: 1.7; color: var(--dim, #98A3B3); margin: 14px 0 0; max-width: 74ch; }"
+    },
+    {
+      "name": "Inline Code",
+      "kind": "custom",
+      "refersTo": "inline-code",
+      "description": "A mono chip inside prose, for file paths, file modes and filenames.",
+      "html": "<p class=\"ds-prose\">It is created <code class=\"ds-code\">0600</code>, kept out of Time Machine and the denylist lives in <code class=\"ds-code\">file_guards.py</code>.</p>",
+      "css": ".ds-prose { font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", system-ui, sans-serif; font-size: 15.5px; line-height: 1.65; color: var(--dim, #98A3B3); margin: 0; } .ds-code { font-family: ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Consolas, monospace; font-size: 12.5px; background: var(--panel, #101319); border: 1px solid var(--rule, #1C222B); border-radius: 5px; padding: 1px 6px; color: var(--ink, #E7EBF1); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Instrument Panel",
+    "overview": "OmniDev runs entirely on your machine, so the page that sells it behaves like a machine you own rather than a brochure for one. The surface is a cool near black chassis with hairline rules, measured readouts and real recorded output. Nothing is illustrated: the screenshots are real screen recordings, the 0.82 retrieval score is a measured number from a recorded probe and the refused command list is transcribed from agent_tools.py. The page earns trust by showing instrument readings, not by asserting adjectives.\n\nDensity is high and deliberate. Prose is capped by explicit ch measures so nothing sprawls, panels stack in a 1000px column and the vertical rhythm is a long 118px between sections so each claim gets a room of its own. Type does the classifying: the system SF stack carries every human sentence, monospace carries every machine value. That split is the loudest signal in the system and it is never blurred.\n\nDepth is structural, never decorative. There is not one box-shadow and not one gradient in the build. Surfaces separate by a three step tonal ladder plus 1px hairlines, and the sense of physical layering comes entirely from motion: parallax drift on media frames, staggered reveals, a spec sheet that reads itself out with drawing leaders and counting values. Confirmed rejections: the AI product hero of gradient glow, orb or blob backdrops, four identical feature cards and a second accent hue.",
+    "keyCharacteristics": [
+      "Cool near black ground (#0B0D11) with a three step tonal ladder, no shadows anywhere",
+      "Exactly one accent (signal blue) plus two strictly functional status colors",
+      "System SF for prose, monospace for every machine-produced value",
+      "1px hairlines in two weights as the only division device",
+      "Motion supplies depth and is applied only by JS under a reduced-motion guard",
+      "Every text block carries an explicit ch cap"
+    ],
+    "rules": [
+      {
+        "name": "The One Blue Rule",
+        "body": "There is one accent hue in this system. Signal blue is a mark, not a material: it appears as a text color, a 1px rule, a focus ring or a solid key cap. It is never a fill behind content, a gradient stop or a glow. If a new element needs emphasis and blue is already on screen nearby, the answer is hierarchy, not a second accent.",
+        "section": "colors"
+      },
+      {
+        "name": "The Functional Color Rule",
+        "body": "Green means allowed, red means refused or absent. Neither is ever decorative, neither ever brands a surface and neither ever colors a control the user can click. A red token in this system is a factual claim about what the product will not do.",
+        "section": "colors"
+      },
+      {
+        "name": "The Dim Default Rule",
+        "body": "Body prose defaults to Dim (#98A3B3), not Ink. Ink is spent on headings and on the specific words inside a sentence that carry the claim, marked with <b>. Emphasis is a step up in lightness, never a color change.",
+        "section": "colors"
+      },
+      {
+        "name": "The Mono Is Measurement Rule",
+        "body": "Monospace is reserved for what the machine produced or is measured by: transcript lines, spec values, file names, denylist patterns, version and license chips, inline code. Prose is never mono and a machine value is never sans. A version number in a sentence is still mono, wrapped in the inline code chip.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Beat Headline Rule",
+        "body": "The h1 is one sentence in two beats, the second broken onto its own line and set in signal blue (\"Ask your Mac anything, and let it do the work. / Fully offline.\"). The 19ch cap enforces the break at every width. Do not write a three beat h1 and do not color more than the final beat.",
+        "section": "typography"
+      },
+      {
+        "name": "The Optical Weight Rule",
+        "body": "Headings are 680 and 660, not 700 and 600. The variable system face renders those a hair lighter, which is what keeps the tight negative tracking from clotting at 72px. Use the exact weights, not the round ones.",
+        "section": "typography"
+      },
+      {
+        "name": "The Single Breakpoint Rule",
+        "body": "One media query, at 640px. Above it the page is fluid by construction: clamp() type, ch measures and a 1000px cap. Do not add a tablet tier or a desktop tier to solve a problem that fluid type already solves.",
+        "section": "layout"
+      },
+      {
+        "name": "The Measure Cap Rule",
+        "body": "Every text block declares an explicit ch cap. No paragraph is allowed to run the full 1000px column. If a new block has no cap, it is not finished.",
+        "section": "layout"
+      },
+      {
+        "name": "The No Shadow Rule",
+        "body": "No box-shadow, no gradient, no glow, at any elevation, in any state. A surface that needs to lift uses the tonal ladder plus a hairline. A control that needs to respond uses a 2px translate.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "Every division is exactly 1px, in one of two weights. Rule (#1C222B) draws structural edges: panel borders, panel head underlines, section top rules, chip borders. Rule Soft (#161B23) draws interior divisions: rows inside a panel, items inside a list. Never a 2px border and never a double rule.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One Blur Rule",
+        "body": "backdrop-filter appears once, on the condensing instrument bar, because it is the only element that overlaps scrolling content. Do not extend it to panels, cards, images or modals. This is a sanctioned exception, not a material.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Motion Is Not Structure Rule",
+        "body": "Every animation is applied by JavaScript inside gsap.matchMedia('(prefers-reduced-motion: no-preference)'). Nothing starts hidden in CSS, nothing depends on a script to become visible and the one CSS animation (the blinking caret) sits inside the same media query. A blocked script, a failed vendor file or a reduced-motion preference renders a complete, readable page. Verified on the shipped build: 0 hidden elements under reduced motion. Any new animation follows the same construction or it does not ship.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Vendored Script Rule",
+        "body": "GSAP 3.15.0 and ScrollTrigger are vendored first party into site/vendor/ and loaded by relative path. The page's own copy claims it \"loads no third party font, script or analytics\", so that claim is a build constraint: any future library is vendored into the repo or not added. No CDN tag, no webfont, no analytics snippet, no embedded iframe.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Radius Follows Size Rule",
+        "body": "Radius scales with the element it wraps: 5px to 6px on inline chips and code, 9px on buttons, 12px on panels, 14px on media frames. Never a pill, never a fully rounded control, never a circle except the 6px status dot.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do put every machine-produced value in mono and every human sentence in sans. The split is the system's loudest signal.",
+      "Do cite the source in the panel head. If a panel shows transcribed data, its right-hand value names the file or version it came from.",
+      "Do caption anything that could be mistaken for a mockup, stating plainly which numbers are measured and which are illustrative.",
+      "Do cap every text block with an explicit ch measure.",
+      "Do use the exact optical weights 680 and 660 for display and headline.",
+      "Do apply all motion through JS under gsap.matchMedia('(prefers-reduced-motion: no-preference)'), so the page is complete with the script blocked.",
+      "Do vendor any new library into the repo and load it by relative path, per The Vendored Script Rule.",
+      "Do reserve green for what the product allows and red for what it refuses, on non-interactive elements only."
+    ],
+    "donts": [
+      "Don't add a box-shadow, a gradient or a glow anywhere, in any state.",
+      "Don't introduce a second accent hue. One blue, plus the two functional status colors.",
+      "Don't load a webfont, a CDN script, an analytics tag or an embedded iframe. The page states that it loads none, and that statement is a build constraint.",
+      "Don't extend backdrop-filter beyond the instrument bar. It is sanctioned there because the bar overlaps content, and nowhere else.",
+      "Don't hide an element in CSS and reveal it with JS. Ship it visible and animate from a visible state.",
+      "Don't set prose in monospace or a measured value in sans.",
+      "Don't build the four-identical-feature-card grid, the orb or blob backdrop or the hero glow. These are the specific rejections this world was built against.",
+      "Don't crop a recording to make a motion effect work. The frame moves, the content stays whole.",
+      "Don't use a color for emphasis inside prose. Step from Dim to Ink instead.",
+      "Don't swap the terminal-prompt mark for the nested-square LogoMark tile."
+    ]
+  }
+}

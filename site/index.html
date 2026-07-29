@@ -10,9 +10,10 @@
 <meta property="og:description" content="Ask your Mac anything, and let it do the work. Fully offline." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://omnidev-flame.vercel.app/" />
-<meta property="og:image" content="https://omnidev-flame.vercel.app/demo.gif" />
+<meta property="og:image" content="https://omnidev-flame.vercel.app/brand/og.png" />
 <meta name="twitter:card" content="summary_large_image" />
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%234DA2FF'/><text x='50%25' y='58%25' font-size='34' text-anchor='middle' fill='%230A0C10' font-family='monospace'>&gt;_</text></svg>" />
+<link rel="icon" type="image/png" href="brand/favicon.png" />
+<link rel="apple-touch-icon" href="brand/omnidev-logo.png" />
 <style>
   :root{
     --ground:#0B0D11;
@@ -67,14 +68,16 @@
   }
   .mark{display:flex;align-items:center;gap:9px;font-weight:600;color:var(--ink)}
   .glyph{
-    width:26px;height:26px;border-radius:7px;background:var(--signal);color:#06101E;
-    display:grid;place-items:center;font-size:13px;font-weight:700;flex:none;
+    width:28px;height:28px;flex:none;display:block;
+    transform-origin:left center;
+    transition:transform .4s cubic-bezier(.4,0,.2,1);
   }
+  .bar.compact .glyph{transform:scale(.8)}
   .bar-meta{display:flex;gap:14px;color:var(--dim);flex-wrap:wrap;justify-content:flex-end}
   .bar-meta span{white-space:nowrap}
 
   /* ---- hero ---- */
-  .hero{padding:104px 0 0;position:relative}
+  .hero{padding:56px 0 0;position:relative}
   h1{
     font-size:clamp(40px,6.6vw,72px);
     line-height:1.02;
@@ -86,7 +89,7 @@
   h1 .off{color:var(--signal);display:block}
   .lede{
     font-size:19px;line-height:1.6;color:var(--dim);
-    max-width:66ch;margin:0 0 36px;
+    max-width:66ch;margin:0 0 28px;
   }
   .lede b{color:var(--ink);font-weight:600}
 
@@ -94,7 +97,7 @@
   .btn{
     display:inline-flex;align-items:center;gap:9px;
     padding:13px 22px;border-radius:9px;text-decoration:none;
-    font-size:15px;font-weight:600;letter-spacing:-.01em;
+    font-size:15.5px;font-weight:600;letter-spacing:-.01em;
     border:1px solid transparent;
     transition:background .2s ease,border-color .2s ease,transform .2s cubic-bezier(.4,0,.2,1);
   }
@@ -123,7 +126,7 @@
   .dot::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--allow);flex:none}
 
   /* ---- session transcript ---- */
-  .session{margin-top:64px}
+  .session{margin-top:40px}
   .tx{padding:20px 16px;font-family:var(--mono);font-size:13.5px;line-height:1.75;overflow-x:auto}
   .tx .line{display:block;white-space:pre}
   .tx .ask{color:var(--ink)}
@@ -145,6 +148,21 @@
 
   /* ---- sections ---- */
   section{margin-top:118px}
+
+  /* Measuring rail: one hairline down the gutter, ticked at each section.
+     Structural, not an overlay, and only where there is room for it. */
+  @media (min-width:1420px){
+    main{position:relative}
+    main::before{
+      content:"";position:absolute;left:-84px;top:6px;bottom:0;width:1px;
+      background:var(--rule-soft);
+    }
+    section,.session,.close{position:relative}
+    section::before,.session::before,.close::before{
+      content:"";position:absolute;left:-90px;top:11px;width:13px;height:1px;
+      background:var(--rule);
+    }
+  }
   h2{
     font-size:clamp(28px,3.8vw,40px);line-height:1.13;letter-spacing:-.028em;
     font-weight:660;margin:0 0 18px;max-width:26ch;
@@ -152,13 +170,20 @@
   .say{font-size:17.5px;line-height:1.65;color:var(--dim);max-width:68ch;margin:0 0 34px}
   .say b{color:var(--ink);font-weight:600}
 
-  /* ---- parallax frames ---- */
-  figure{margin:0}
+  /* ---- parallax frames ----
+     Clearance exceeds the parallax range so a drifting frame never
+     reaches the caption below it or the prose above it. */
+  figure{margin:44px 0}
   .frame{
     border:1px solid var(--rule);border-radius:14px;overflow:hidden;
     background:var(--panel-2);will-change:transform;
   }
   .frame img{width:100%;height:auto;display:block}
+  figure figcaption{margin-top:20px}
+  /* The recordings break the text measure: the page's one width change. */
+  @media (min-width:1180px){
+    figure .frame{margin-left:-60px;margin-right:-60px}
+  }
 
   /* ---- readout rows ---- */
   .readout{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:13px}
@@ -271,7 +296,7 @@ FINISH: unreviewed and undocumented is unfinished; this build ends with the fini
 
 <div class="bar" id="bar">
   <div class="wrap bar-in">
-    <div class="mark"><span class="glyph">&gt;_</span> omnidev</div>
+    <div class="mark"><img class="glyph" src="brand/omnidev-logo.png" width="28" height="28" alt="OmniDev" /> omnidev</div>
     <div class="bar-meta">
       <span>v0.7.1</span>
       <span class="hide-s">MIT</span>
@@ -322,8 +347,8 @@ image and was read on device by macOS Vision.
     </div>
     <p class="caption">
       Reproduced from the recorded probe in <code>docs/probes</code>. The <code>0.82</code> score is the
-      measured one, from a run where a screenshot outranked a decoy document. File names are
-      illustrative. The refusal is real: <code>.env</code> is on a denylist that is checked before the
+      measured one, from a run where a screenshot outranked a decoy document. The file names and the
+      decoy's own score are illustrative. The refusal is real: <code>.env</code> is on a denylist that is checked before the
       file is ever opened.
     </p>
   </div>
@@ -338,7 +363,7 @@ image and was read on device by macOS Vision.
     </p>
     <figure>
       <div class="frame" data-parallax>
-        <img src="demo.gif" width="1078" height="765" alt="OmniDev answering a question whose answer exists only inside a screenshot, with no network connection" />
+        <img src="demo.gif" width="1078" height="765" loading="lazy" decoding="async" alt="OmniDev answering a question whose answer exists only inside a screenshot, with no network connection" />
       </div>
       <figcaption class="caption">
         A real screen recording. The payment reference existed only inside a PNG, read by on device
@@ -516,7 +541,7 @@ image and was read on device by macOS Vision.
          .from('[data-hero="2"]', { y: 22, opacity: 0, duration: .9 }, '-=.78')
          .from('[data-hero="3"]', { y: 18, opacity: 0, duration: .8, stagger: .09 }, '-=.66');
 
-    [['[data-hero="1"]', -90], ['[data-hero="2"]', -58], ['.actions', -32]].forEach(function (p) {
+    [['[data-hero="1"]', -90], ['[data-hero="2"]', -58], ['.hero .actions', -32]].forEach(function (p) {
       gsap.to(p[0], {
         y: p[1], ease: 'none',
         scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: .5 }
@@ -535,8 +560,8 @@ image and was read on device by macOS Vision.
 
     /* Frames drift against the scroll. Nothing is cropped to buy the effect. */
     gsap.utils.toArray('[data-parallax]').forEach(function (el) {
-      gsap.fromTo(el, { y: 46 }, {
-        y: -46, ease: 'none',
+      gsap.fromTo(el, { y: 26 }, {
+        y: -26, ease: 'none',
         scrollTrigger: { trigger: el, start: 'top bottom', end: 'bottom top', scrub: .6 }
       });
       gsap.from(el, {
