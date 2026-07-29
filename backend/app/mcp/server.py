@@ -38,6 +38,20 @@ _CANDIDATE_URLS = (
 _resolved_url: str | None = None
 
 
+def set_backend_url(url: str) -> None:
+    """
+    Pin the backend URL instead of probing for it.
+
+    Used when the MCP surface is mounted inside the engine (app/main.py):
+    the server IS the backend, so probing fixed ports would be both wasteful
+    and wrong whenever the engine runs anywhere other than 8000 or 8010. An
+    explicit OMNIDEV_BACKEND_URL still wins, because the operator asked for it.
+    """
+    global _resolved_url
+    if _ENV_URL is None:
+        _resolved_url = url
+
+
 async def _backend_url() -> str:
     """Find the running OmniDev backend, caching the first URL that answers."""
     global _resolved_url
@@ -71,8 +85,15 @@ IMAGE_CONTENT_TYPES = {
     ".gif": "image/gif",
 }
 
+# stateless_http: every HTTP request is independent, with no server-side
+# session to create, resume or leak. That is what lets the MCP surface be
+# mounted straight into the running backend (see app/main.py) instead of
+# spawning a separate stdio process per client, and it means several clients
+# can use it at once without coordinating.
 mcp = FastMCP(
     "omnidev",
+    stateless_http=True,
+    json_response=True,
     instructions=(
         "OmniDev runs a local Gemma 4 model and developer tools entirely on "
         "this machine — no cloud calls, no API keys, no cost. Use local_llm "

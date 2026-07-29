@@ -1,16 +1,49 @@
 # OmniDev
 
-**Ask your Mac anything, and let it do the work. Fully offline.**
+**Give Claude Code offline memory of your entire Mac.**
 
-Native macOS app. A local Gemma 4 model reads your files (including screenshots), answers with citations, and can edit code and run your tests, without a single byte leaving your machine.
+Point OmniDev at your folders and it indexes them locally, including your screenshots via on-device OCR. Then any MCP client, Claude Code, Claude Desktop, Cursor, can search them and ask questions about a single file. It is also a native macOS app with its own chat and coding agent, running on a local Gemma 4 model.
 
-[Download](https://github.com/himanshu748/omnidev/releases/latest) · [Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [macOS App](docs/MACOS_APP.md) · [Contributing](CONTRIBUTING.md)
+Nothing leaves your machine. No account, no API key, no bill.
+
+[Download](https://github.com/himanshu748/omnidev/releases/latest) · [Landing page](https://himanshu748.github.io/omnidev/) · [Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [Contributing](CONTRIBUTING.md)
 
 ![macOS](https://img.shields.io/badge/macOS-native%20SwiftUI-000000?logo=apple&logoColor=white)
 ![Ollama](https://img.shields.io/badge/AI-Ollama%20(offline)-222222?logo=ollama&logoColor=white)
-![Google Gemini](https://img.shields.io/badge/AI-Gemini%20(optional)-4285F4?logo=google&logoColor=white)
+![MCP](https://img.shields.io/badge/MCP-stateless%20HTTP-4DA2FF)
 ![Python 3.13](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
 ![License MIT](https://img.shields.io/badge/License-MIT-green)
+
+## Use it from Claude Code
+
+Run the app once, then:
+
+```bash
+./scripts/install-mcp.sh
+```
+
+That registers the engine over stateless streamable HTTP and verifies it by making a real `tools/list` call, so a failure is a message rather than a tool that silently never appears. One line by hand, if you prefer:
+
+```bash
+claude mcp add --scope user --transport http omnidev http://127.0.0.1:8010/mcp
+```
+
+There is no separate process to run and no Python path to get right: the running app already serves MCP. Because the transport is stateless, several clients can share one engine with no session to own. Then ask Claude Code things like:
+
+- *"search my notes for the deployment checklist"* → `search_knowledge`
+- *"what does ~/Desktop/Screenshot.png say?"* → `ask_file`, on-device OCR, nothing stored
+- *"summarise this PDF"* → `ask_file` on any readable file
+
+| Tool | What it does |
+|---|---|
+| `search_knowledge` | Hybrid search over your indexed docs, code, screenshots and past chats |
+| `ask_file` | Answer about one file with no indexing at all |
+| `index_folder` / `list_knowledge_sources` | Manage what is indexed |
+| `local_llm` / `local_vision` | Delegate generation or image analysis to the local model, free |
+| `scrape_url` / `crawl_site` | SSRF-guarded local browser extraction |
+| `aws_plan` | Preview a boto3 plan, never executes |
+
+Prefer a process you own, or want it working with the app closed? `./scripts/install-mcp.sh --print` emits a stdio config for any client.
 
 ![OmniDev answering a question about a screenshot, offline](docs/demo.gif)
 

@@ -9,6 +9,8 @@ import threading
 
 import httpx
 import pytest
+import pytest_asyncio
+from contextlib import asynccontextmanager
 
 from app.mcp import server as mcp_server
 from app.mcp.server import FileInput
@@ -307,3 +309,100 @@ def test_mcp_stdio_handshake_lists_tools():
         "list_models",
         "pull_model",
     }
+
+
+# ── Stateless MCP mounted in the engine ─────────────────────
+def _mcp_payloads(body: str):
+    """Streamable HTTP answers as JSON or as a single SSE event."""
+    import json as _json
+
+    for line in body.splitlines():
+        line = line.strip()
+        if line.startswith("data:"):
+            line = line[5:].strip()
+        if line.startswith("{"):
+            yield _json.loads(line)
+
+
+@asynccontextmanager
+async def mounted_mcp_client():
+    """
+    The real app with the MCP session manager running, as in production.
+
+    Deliberately not a fixture: the session manager's cancel scope must be
+    entered and exited in the same task, and a pytest-asyncio fixture does
+    not guarantee that. base_url is a real loopback address because the MCP
+    transport rejects unknown Host headers with 421.
+    """
+    import httpx
+
+    from app.main import app as real_app
+    from app.mcp.server import mcp as mcp_server
+
+    async with mcp_server.session_manager.run():
+        transport = httpx.ASGITransport(app=real_app, client=("127.0.0.1", 5555))
+        async with httpx.AsyncClient(
+            transport=transport, base_url="http://127.0.0.1:5555"
+        ) as client:
+            yield client
+
+
+MCP_HEADERS = {
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/event-stream",
+}
+
+
+@pytest.mark.asyncio
+async def test_mounted_mcp_surface(monkeypatch):
+    """
+    End to end over the real app's routes, in one session-manager run.
+
+    The SDK allows run() once per manager instance, so these assertions share
+    a single client rather than splitting into separate tests:
+
+    1. /mcp and /mcp/ both answer directly. A Mount would 307 the bare path,
+       and MCP clients handle a redirected POST inconsistently.
+    2. No session is established, so a cold tools/call works with no prior
+       initialize. That is what lets several clients share one engine.
+    3. The tools target the port we are actually served on, not a guess of
+       8000 or 8010.
+    """
+    from app.mcp import server as mcp_module
+
+    monkeypatch.setattr(mcp_module, "_resolved_url", None)
+    init = {
+        "jsonrpc": "2.0", "id": 1, "method": "initialize",
+        "params": {"protocolVersion": "2024-11-05", "capabilities": {},
+                   "clientInfo": {"name": "test", "version": "1"}},
+    }
+
+    async with mounted_mcp_client() as client:
+        for path in ("/mcp", "/mcp/"):
+            resp = await client.post(path, headers=MCP_HEADERS, json=init)
+            assert resp.status_code == 200, f"{path} did not answer directly"
+            payload = list(_mcp_payloads(resp.text))[0]
+            assert payload["result"]["serverInfo"]["name"] == "omnidev"
+
+        # Cold call: no initialize on this request, no session header.
+        cold = await client.post(
+            "/mcp",
+            headers=MCP_HEADERS,
+            json={"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+        )
+
+    assert cold.status_code == 200
+    assert "mcp-session-id" not in {k.lower() for k in cold.headers}
+    names = {t["name"] for t in list(_mcp_payloads(cold.text))[0]["result"]["tools"]}
+    assert {"search_knowledge", "ask_file", "local_llm"} <= names
+    assert mcp_module._resolved_url == "http://127.0.0.1:5555"
+
+
+def test_set_backend_url_respects_an_explicit_override(monkeypatch):
+    """An operator's OMNIDEV_BACKEND_URL outranks self-detection."""
+    from app.mcp import server as mcp_module
+
+    monkeypatch.setattr(mcp_module, "_ENV_URL", "http://example.invalid")
+    monkeypatch.setattr(mcp_module, "_resolved_url", "http://example.invalid")
+    mcp_module.set_backend_url("http://127.0.0.1:9999")
+    assert mcp_module._resolved_url == "http://example.invalid"

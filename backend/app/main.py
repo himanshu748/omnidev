@@ -15,6 +15,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright, Playwright, Browser
 
 from app.config import settings
+from mcp.server.fastmcp.server import StreamableHTTPASGIApp
+from starlette.routing import Route
+
+from app.mcp import server as mcp_module
+from app.mcp.server import mcp as mcp_server
 from app.routers import (
     agent,
     chat,
@@ -64,7 +69,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         )
     app.state.playwright = pw
     app.state.browser = browser
-    yield
+
+    # The mounted MCP surface needs its session manager running. It is
+    # stateless, so this creates no per-client state; it just wires the
+    # ASGI plumbing for the lifetime of the process.
+    async with mcp_server.session_manager.run():
+        yield
     # During dev shutdown, transports can already be closed; ignore cleanup races.
     if browser is not None:
         try:
@@ -137,6 +147,45 @@ app.include_router(chat.router, prefix="/api/chat", tags=["Chat"])
 app.include_router(git.router, prefix="/api/git", tags=["Git Landing"])
 app.include_router(mcp.router, prefix="/api/mcp", tags=["MCP Marketplace"])
 app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge"])
+
+# ── MCP over stateless streamable HTTP ──────────────────────
+# The same tools the standalone stdio server exposes, served by the engine
+# that is already running. An MCP client points at http://127.0.0.1:<port>/mcp
+# and needs no process of its own, no Python on PATH and no session handling.
+# The loopback-only middleware above still applies, so this is not reachable
+# from another machine.
+# Exact routes rather than app.mount(): a Mount only matches paths BELOW its
+# prefix, so /mcp would 307 to /mcp/, and a redirected POST is exactly the
+# kind of thing MCP clients handle inconsistently. Registering the raw ASGI
+# handler on both spellings means the documented URL just works.
+mcp_server.streamable_http_app()  # creates the session manager
+
+
+class _SelfHostedMCP:
+    """
+    Point the MCP tools at this very server.
+
+    Mounted here, the MCP layer would otherwise probe 127.0.0.1:8000 then
+    :8010 looking for "the backend", which is wrong the moment the engine
+    runs on any other port. The ASGI scope already knows the port we are
+    being served on, so use it.
+    """
+
+    def __init__(self, inner):
+        self._inner = inner
+
+    async def __call__(self, scope, receive, send):
+        server = scope.get("server")
+        if server and server[1]:
+            mcp_module.set_backend_url(f"http://127.0.0.1:{server[1]}")
+        await self._inner(scope, receive, send)
+
+
+_mcp_asgi = _SelfHostedMCP(StreamableHTTPASGIApp(mcp_server.session_manager))
+for _path in ("/mcp", "/mcp/"):
+    app.router.routes.append(
+        Route(_path, endpoint=_mcp_asgi, methods=["GET", "POST", "DELETE"])
+    )
 app.include_router(agent.router, prefix="/api/agent", tags=["Agent"])
 
 
