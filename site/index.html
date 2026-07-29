@@ -128,6 +128,7 @@
   /* ---- session transcript ---- */
   .session{margin-top:40px}
   .tx{padding:20px 16px;font-family:var(--mono);font-size:13.5px;line-height:1.75;overflow-x:auto}
+  .tx.wrap .line{white-space:pre-wrap;overflow-wrap:anywhere}
   .tx .line{display:block;white-space:pre}
   .tx .ask{color:var(--ink)}
   .tx .caret{color:var(--signal)}
@@ -179,7 +180,7 @@
     border:1px solid var(--rule);border-radius:14px;overflow:hidden;
     background:var(--panel-2);will-change:transform;
   }
-  .frame img{width:100%;height:auto;display:block}
+  .frame img, .frame video.shot{width:100%;height:auto;display:block}
   figure figcaption{margin-top:28px}
   /* The recordings break the text measure: the page's one width change.
      Gated so the breakout always keeps at least 80px outside it. */
@@ -202,6 +203,15 @@
   .readout .v{color:var(--dim);flex:none;text-align:right;font-variant-numeric:tabular-nums}
   .readout .v.no{color:var(--refuse)}
   .readout .v.yes{color:var(--allow)}
+
+  /* The dotted leader needs a row wide enough to hold both ends. On a phone
+     it is not, so the value drops to its own line and the leader goes rather
+     than the row clipping something the reader cannot scroll to. */
+  @media (max-width: 560px){
+    .readout li{flex-wrap:wrap;gap:2px 10px}
+    .readout .fill{display:none}
+    .readout .v{width:100%;text-align:left}
+  }
 
   /* ---- refusal chips ---- */
   .refuse-body{padding:4px 0}
@@ -365,7 +375,11 @@ image and was read on device by macOS Vision.
     </p>
     <figure>
       <div class="frame" data-parallax>
-        <img src="demo.gif" width="1078" height="765" loading="lazy" decoding="async" alt="OmniDev answering a question whose answer exists only inside a screenshot, with no network connection" />
+        <video class="shot" width="820" height="582" poster="demo-poster.jpg"
+               autoplay muted loop playsinline preload="none"
+               aria-label="OmniDev answering a question whose answer exists only inside a screenshot, with no network connection">
+          <source src="demo.mp4" type="video/mp4" />
+        </video>
       </div>
       <figcaption class="caption">
         A real screen recording. The payment reference existed only inside a PNG, read by on device
@@ -388,7 +402,7 @@ image and was read on device by macOS Vision.
         <span>register with claude code</span>
         <span class="val">stateless http</span>
       </div>
-      <div class="tx">
+      <div class="tx wrap">
         <span class="line muted"># after running the app once</span>
         <span class="line ask">claude mcp add --scope user --transport http omnidev http://127.0.0.1:8010/mcp</span>
         <span class="line muted">  or ./scripts/install-mcp.sh, which registers and then verifies</span>
@@ -413,7 +427,11 @@ image and was read on device by macOS Vision.
     </p>
     <figure>
       <div class="frame" data-parallax>
-        <img src="demo-agent.gif" width="1078" height="765" loading="lazy" decoding="async" alt="OmniDev's agent reading files, fixing an inverted operator, then asking permission before running pytest" />
+        <video class="shot" width="820" height="582" poster="demo-agent-poster.jpg"
+               autoplay muted loop playsinline preload="none"
+               aria-label="OmniDev's agent reading files, fixing an inverted operator, then asking permission before running pytest">
+          <source src="demo-agent.mp4" type="video/mp4" />
+        </video>
       </div>
       <figcaption class="caption">
         Also a real recording. The agent read the files, found the inverted operator, fixed it, then
@@ -516,7 +534,7 @@ image and was read on device by macOS Vision.
         <li><span class="k">Retrieval</span><span class="fill"></span><span class="v">BM25 + dense, fused by RRF</span></li>
         <li><span class="k">Agent step ceiling</span><span class="fill"></span><span class="v"><span class="num" data-count="15">15</span></span></li>
         <li><span class="k">Index file mode</span><span class="fill"></span><span class="v">0600</span></li>
-        <li><span class="k">Backend test suite</span><span class="fill"></span><span class="v"><span class="num" data-count="322">322</span> passing</span></li>
+        <li><span class="k">Backend test suite</span><span class="fill"></span><span class="v"><span class="num" data-count="324">324</span> passing</span></li>
         <li><span class="k">Recommended memory</span><span class="fill"></span><span class="v">16 GB, lighter model at 8 GB</span></li>
         <li><span class="k">Account required</span><span class="fill"></span><span class="v no">none</span></li>
         <li><span class="k">Price</span><span class="fill"></span><span class="v yes">0, MIT licensed</span></li>
@@ -553,6 +571,19 @@ image and was read on device by macOS Vision.
 <script>
 /* Motion is applied only by JS, so every element ships visible.
    A failed script or reduced-motion preference leaves a complete, readable page. */
+/* Looping demos are motion. Anyone asking for less gets a still frame and a
+   control instead of a video that plays at them. Runs before the GSAP guard so
+   it still applies when GSAP fails to load. */
+(function () {
+  if (!window.matchMedia || !matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.querySelectorAll('video.shot').forEach(function (v) {
+    v.autoplay = false;
+    v.loop = false;
+    v.controls = true;
+    v.pause();
+  });
+})();
+
 (function () {
   if (!window.gsap || !window.ScrollTrigger) return;
   gsap.registerPlugin(ScrollTrigger);
