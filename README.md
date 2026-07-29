@@ -4,7 +4,7 @@
 
 Native macOS app. A local Gemma 4 model reads your files (including screenshots), answers with citations, and can edit code and run your tests, without a single byte leaving your machine.
 
-[Download](https://github.com/himanshu748/omnidev/releases/latest) · [Landing page](https://himanshu748.github.io/omnidev/) · [Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [Contributing](CONTRIBUTING.md)
+[Download](https://github.com/himanshu748/omnidev/releases/latest) · [Landing page](https://omnidev-flame.vercel.app) · [Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [Contributing](CONTRIBUTING.md)
 
 ![macOS](https://img.shields.io/badge/macOS-native%20SwiftUI-000000?logo=apple&logoColor=white)
 ![Ollama](https://img.shields.io/badge/AI-Ollama%20(offline)-222222?logo=ollama&logoColor=white)
