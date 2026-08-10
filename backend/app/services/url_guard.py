@@ -173,7 +173,7 @@ def validate_proxy(proxy: str | None) -> str | None:
     if not proxy:
         return proxy
     parsed = urlparse(proxy)
-    if parsed.scheme.lower() not in {"http", "https", "socks5"}:
+    if parsed.scheme.lower() not in {"http", "https", "socks5", "gopher"}:
         raise BlockedURLError(f"Unsupported proxy scheme {parsed.scheme!r}.")
     if not parsed.hostname:
         raise BlockedURLError("Proxy has no host.")
