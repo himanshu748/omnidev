@@ -6,7 +6,7 @@ boto3
 playwright
 playwright-stealth
 httpx
-mcp
+mcp<2
 ipinfo
 python-multipart
 pytest
