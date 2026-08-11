@@ -6,7 +6,8 @@ boto3
 playwright
 playwright-stealth
 httpx
-mcp
+# OmniDev imports mcp.server.fastmcp, which is unavailable in mcp 2.x.
+mcp==1.29.0
 ipinfo
 python-multipart
 pytest
