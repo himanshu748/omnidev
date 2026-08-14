@@ -19,7 +19,7 @@ MAX_IMAGE_BYTES = 10 * 1024 * 1024  # 10 MB
 async def vision_analyze(
     image: UploadFile = File(...),
     mode: VisionMode = Form(VisionMode.analyze),
-    prompt: str = Form(""),
+    prompt: str = Form("", max_length=4000),
 ):
     """
     Upload an image for AI analysis.
@@ -36,14 +36,19 @@ async def vision_analyze(
             f"Allowed: {', '.join(ALLOWED_TYPES)}",
         )
 
-    image_bytes = await image.read()
+    chunks: list[bytes] = []
+    total = 0
+    while chunk := await image.read(1024 * 1024):
+        total += len(chunk)
+        if total > MAX_IMAGE_BYTES:
+            raise HTTPException(
+                status_code=413,
+                detail=f"Image exceeds the {MAX_IMAGE_BYTES // (1024 * 1024)} MB limit.",
+            )
+        chunks.append(chunk)
+    image_bytes = b"".join(chunks)
     if not image_bytes:
         raise HTTPException(status_code=400, detail="Empty image file")
-    if len(image_bytes) > MAX_IMAGE_BYTES:
-        raise HTTPException(
-            status_code=413,
-            detail=f"Image exceeds the {MAX_IMAGE_BYTES // (1024 * 1024)} MB limit.",
-        )
 
     try:
         result = await analyze_image(

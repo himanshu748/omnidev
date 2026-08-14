@@ -22,21 +22,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from app.services.data_paths import private_subdir
+
 MAX_BACKUPS = 200
 MAX_AGE_DAYS = 14
 MAX_BACKUP_BYTES = 8_000_000
 
 
 def _root() -> Path:
-    from app.config import settings
-
-    root = Path(settings.data_dir).expanduser() / "agent-backups"
-    root.mkdir(parents=True, exist_ok=True)
-    try:
-        os.chmod(root, 0o700)
-    except OSError:
-        pass
-    return root
+    return private_subdir("agent-backups")
 
 
 def _manifest_path() -> Path:

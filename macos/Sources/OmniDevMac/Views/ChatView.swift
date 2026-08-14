@@ -425,7 +425,7 @@ private struct ApprovalSheet: View {
                     .keyboardShortcut(.cancelAction)
                 Spacer()
                 Button("Always Allow") { onDecision("allow_always") }
-                    .help("Allow this kind of action for the rest of this task")
+                    .help("Allow only this exact action and arguments if repeated during this task")
                 Button("Allow Once") { onDecision("allow_once") }
                     .keyboardShortcut(.defaultAction)
             }

@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from app.config import settings
+from app.services.data_paths import private_data_root, protect_file
 
 # Bound how much history is replayed into the model context.
 CONTEXT_MESSAGE_LIMIT = 20
@@ -23,13 +24,12 @@ TITLE_MAX_CHARS = 64
 
 
 def _db_path() -> Path:
-    root = Path(settings.data_dir).expanduser()
-    root.mkdir(parents=True, exist_ok=True)
-    return root / "omnidev.db"
+    return private_data_root() / "omnidev.db"
 
 
 def _connect() -> sqlite3.Connection:
-    conn = sqlite3.connect(_db_path())
+    path = _db_path()
+    conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute(
@@ -54,6 +54,8 @@ def _connect() -> sqlite3.Connection:
         """
     )
     conn.execute("CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id, id)")
+    for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm")):
+        protect_file(candidate)
     return conn
 
 

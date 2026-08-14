@@ -289,7 +289,7 @@ async def test_agent_denied_approval_blocks_write(workspace, tmp_path, monkeypat
 
 
 @pytest.mark.asyncio
-async def test_agent_allow_always_skips_second_prompt(workspace, tmp_path, monkeypatch):
+async def test_agent_allow_always_does_not_authorize_different_file(workspace, tmp_path, monkeypatch):
     a, b = tmp_path / "out" / "a.txt", tmp_path / "out" / "b.txt"
     fake = _scripted([
         {
@@ -314,8 +314,40 @@ async def test_agent_allow_always_skips_second_prompt(workspace, tmp_path, monke
             prompts += 1
             agent_service.resolve_approval(event["approval_required"]["id"], "allow_always")
 
-    assert prompts == 1  # same tool, same parent directory
+    assert prompts == 2  # a different path/content is a different action
     assert a.read_text() == "1" and b.read_text() == "2"
+
+
+@pytest.mark.asyncio
+async def test_agent_allow_always_reuses_only_exact_action(workspace, tmp_path, monkeypatch):
+    target = tmp_path / "out" / "same.txt"
+    action = {"name": "write_file", "arguments": {"path": str(target), "content": "1"}}
+    fake = _scripted([
+        {"content": "", "tool_calls": [action]},
+        {"content": "", "tool_calls": [action]},
+        {"content": "Done.", "tool_calls": []},
+    ])
+    monkeypatch.setattr(agent_service, "chat_round_with_tools", fake)
+
+    prompts = 0
+    async for event in agent_service.run_agent("repeat one exact write", use_mcp=False):
+        if "approval_required" in event:
+            prompts += 1
+            agent_service.resolve_approval(event["approval_required"]["id"], "allow_always")
+
+    assert prompts == 1
+    assert target.read_text() == "1"
+
+
+def test_allow_always_key_includes_all_command_and_mcp_arguments(workspace):
+    first = {"command": "python3", "args": ["-c", "print('safe')"], "cwd": str(workspace)}
+    changed = {"command": "python3", "args": ["-c", "print('different')"], "cwd": str(workspace)}
+    assert agent_service._always_key("run_command", first) != agent_service._always_key(
+        "run_command", changed
+    )
+    assert agent_service._always_key("filesystem__write_file", {"path": "a"}) != (
+        agent_service._always_key("filesystem__write_file", {"path": "b"})
+    )
 
 
 @pytest.mark.asyncio

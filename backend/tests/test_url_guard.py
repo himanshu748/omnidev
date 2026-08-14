@@ -144,8 +144,22 @@ async def test_resolve_safe_url_allows_public_chain(monkeypatch):
 
 def test_proxy_validation():
     assert validate_proxy(None) is None
-    assert validate_proxy("http://proxy.example.com:8080") == "http://proxy.example.com:8080"
+    assert validate_proxy("http://1.1.1.1:8080") == "http://1.1.1.1:8080"
     with pytest.raises(BlockedURLError):
         validate_proxy("gopher://proxy/")
     with pytest.raises(BlockedURLError):
         validate_proxy("http://")
+
+
+@pytest.mark.parametrize(
+    "proxy",
+    [
+        "http://127.0.0.1:8080",
+        "socks5://localhost:9050",
+        "http://169.254.169.254:80",
+        "http://10.0.0.5:3128",
+    ],
+)
+def test_validate_proxy_blocks_private_and_metadata_hosts(proxy):
+    with pytest.raises(BlockedURLError, match="private/reserved"):
+        validate_proxy(proxy)

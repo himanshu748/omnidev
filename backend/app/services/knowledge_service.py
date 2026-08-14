@@ -40,6 +40,7 @@ from typing import Any
 import numpy as np
 
 from app.config import settings
+from app.services.data_paths import private_data_root, protect_file
 from app.services import ai_service, extractors, file_guards
 from app.services.file_guards import SkipReason, SkipTally
 
@@ -59,9 +60,7 @@ class KnowledgeError(ValueError):
 
 # ── Schema ──────────────────────────────────────────────────
 def _db_path() -> Path:
-    root = Path(settings.data_dir).expanduser()
-    root.mkdir(parents=True, exist_ok=True)
-    return root / "omnidev.db"
+    return private_data_root() / "omnidev.db"
 
 
 _protected_paths: set[str] = set()
@@ -121,6 +120,8 @@ def _connect() -> sqlite3.Connection:
     if key not in _protected_paths:
         file_guards.protect_index_file(path)
         _protected_paths.add(key)
+    for candidate in (path, Path(f"{path}-wal"), Path(f"{path}-shm")):
+        protect_file(candidate)
     return conn
 
 
@@ -742,15 +743,14 @@ def _fetch_chunks_sync(chunk_ids: list[int]) -> dict[int, dict]:
     if not chunk_ids:
         return {}
     placeholders = ",".join("?" * len(chunk_ids))
+    query = (
+        "SELECT c.id, c.source_id, c.file_path, c.text, c.chunk_kind, c.mtime, s.kind "  # nosec B608
+        "FROM knowledge_chunks c JOIN knowledge_sources s ON s.id = c.source_id "
+        # Only '?' tokens are interpolated; every chunk id remains a bound value.
+        f"WHERE c.id IN ({placeholders})"
+    )
     with _connect() as conn:
-        rows = conn.execute(
-            f"""
-            SELECT c.id, c.source_id, c.file_path, c.text, c.chunk_kind, c.mtime, s.kind
-            FROM knowledge_chunks c JOIN knowledge_sources s ON s.id = c.source_id
-            WHERE c.id IN ({placeholders})
-            """,
-            chunk_ids,
-        ).fetchall()
+        rows = conn.execute(query, chunk_ids).fetchall()
     return {int(row["id"]): dict(row) for row in rows}
 
 
