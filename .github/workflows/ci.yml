@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: himanshu748/graft-webmcp
-          ref: 670110f353e7c859f6c506d834d83e3e6118e227
+          ref: ac481387bbc523872770c827186fc2d712211a6b
           path: .graft-source
           persist-credentials: false
 

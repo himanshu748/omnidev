@@ -9,9 +9,9 @@ const adapter = await readFile(resolve(root, "site/graft-adapter.js"), "utf8");
 const adapterDigest = await readFile(resolve(root, "site/graft-adapter.js.sha256"), "utf8");
 const bootstrap = await readFile(resolve(root, "site/omnidev-webmcp.js"), "utf8");
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
-const EXPECTED_GRAFT_REVISION = "670110f353e7c859f6c506d834d83e3e6118e227";
+const EXPECTED_GRAFT_REVISION = "ac481387bbc523872770c827186fc2d712211a6b";
 const EXPECTED_GENERATOR_SOURCES_SHA256 =
-  "51ab7414139f376bb7bcbb39ce13d77c91d71ee4bef13e76d809e747f8af3193";
+  "85938093f229027a79c13d2f9a15c533f30e942f541fc3c2182fbb436eeccc1f";
 const assert = (condition, message) => {
   if (!condition) throw new Error(message);
 };
