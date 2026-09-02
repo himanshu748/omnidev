@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Agent Review Room | OmniDev</title>
+  <meta
+    name="description"
+    content="A deterministic local code review room where an agent can inspect files and propose one bounded change behind a visible, single-use in-page consent step."
+  />
+  <meta name="theme-color" content="#0b0d11" />
+  <link rel="icon" type="image/png" href="../brand/favicon.png" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#review-bench">Skip to review bench</a>
+
+  <header class="topbar" data-graft-ignore>
+    <a class="brand" href="../" aria-label="OmniDev home">
+      <img src="../brand/omnidev-logo.png" width="26" height="26" alt="" />
+      <span>omnidev</span>
+      <span class="brand-divider" aria-hidden="true">/</span>
+      <strong>agent review room</strong>
+    </a>
+    <div class="topbar-state" aria-label="Review room state">
+      <span class="connection-dot" aria-hidden="true"></span>
+      <span>local fixture</span>
+      <span class="topbar-separator" aria-hidden="true"></span>
+      <span id="webmcp-state">checking WebMCP</span>
+    </div>
+  </header>
+
+  <main id="review-bench" class="app-shell">
+    <section class="case-strip" aria-labelledby="case-title">
+      <div class="case-title-block">
+        <p class="eyebrow">Review AR-042</p>
+        <h1 id="case-title">A tiny bug. A visible approval boundary.</h1>
+        <p>
+          The agent may read every artifact in this room and propose a repair. Applying one exact
+          replacement always waits for a visible in-page decision.
+        </p>
+      </div>
+      <dl class="case-facts">
+        <div>
+          <dt>fixture</dt>
+          <dd>python / memory only</dd>
+        </div>
+        <div>
+          <dt>failing</dt>
+          <dd id="case-failing">2 of 3</dd>
+        </div>
+        <div>
+          <dt>write policy</dt>
+          <dd class="policy-value">visible consent</dd>
+        </div>
+      </dl>
+    </section>
+
+    <div class="instrument-line" aria-hidden="true">
+      <span>01</span><i></i><span>inspect</span><i></i><span>review</span><i></i><span>verify</span>
+    </div>
+
+    <div class="review-grid">
+      <section class="files-panel instrument-panel" aria-labelledby="files-title">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-index">01 / workspace</p>
+            <h2 id="files-title">Files</h2>
+          </div>
+          <span class="count-badge">3</span>
+        </div>
+
+        <ol id="file-list" class="file-list" aria-label="Fixture files">
+          <li class="file-row is-selected" data-file-id="calc.py">
+            <a href="#code-title" data-open-file="calc.py" aria-current="true">
+              <span class="file-glyph" aria-hidden="true">PY</span>
+              <span class="file-copy">
+                <span class="file-name">calc.py</span>
+                <span class="file-detail" data-field="status">modified target</span>
+                <span id="calc-row-content" class="file-content" data-field="content">def add(a, b): return a - b</span>
+              </span>
+              <span class="file-lines" data-field="size">2 lines</span>
+            </a>
+          </li>
+          <li class="file-row" data-file-id="test_calc.py">
+            <a href="#code-title" data-open-file="test_calc.py">
+              <span class="file-glyph" aria-hidden="true">PY</span>
+              <span class="file-copy">
+                <span class="file-name">test_calc.py</span>
+                <span class="file-detail" data-field="status">test contract</span>
+                <span class="file-content" data-field="content">from calc import add
+
+def test_adds_positive_operands():
+    assert add(2, 3) == 5
+
+def test_adds_mixed_sign_operands():
+    assert add(-4, 9) == 5</span>
+                <span class="graft-field-only" data-field="content_continued" aria-hidden="true">
+def test_zero_is_identity():
+    assert add(0, 0) == 0</span>
+              </span>
+              <span class="file-lines" data-field="size">10 lines</span>
+            </a>
+          </li>
+          <li class="file-row" data-file-id="README.md">
+            <a href="#code-title" data-open-file="README.md">
+              <span class="file-glyph" aria-hidden="true">MD</span>
+              <span class="file-copy">
+                <span class="file-name">README.md</span>
+                <span class="file-detail" data-field="status">intent evidence</span>
+                <span class="file-content" data-field="content"># Calculator fixture
+
+`add(a, b)` returns the arithmetic sum of two numbers.
+The implementation must preserve signed values and zero identity.</span>
+              </span>
+              <span class="file-lines" data-field="size">4 lines</span>
+            </a>
+          </li>
+        </ol>
+
+        <div class="scope-note">
+          <span class="scope-icon" aria-hidden="true">⌁</span>
+          <p><strong>No filesystem access.</strong> Every file shown here lives in page memory.</p>
+        </div>
+      </section>
+
+      <section class="code-panel instrument-panel" aria-labelledby="code-title">
+        <div class="code-toolbar">
+          <div>
+            <p class="panel-index">02 / source</p>
+            <h2 id="code-title">calc.py</h2>
+          </div>
+          <div class="toolbar-actions" data-graft-ignore>
+            <button id="restore-button" class="quiet-button" type="button" disabled>
+              Restore snapshot
+            </button>
+            <button id="run-button" class="quiet-button" type="button">Run checks</button>
+          </div>
+        </div>
+        <div class="code-surface" aria-label="Selected file contents">
+          <div class="code-ruler" aria-hidden="true"><span>utf-8</span><span>lf</span></div>
+          <pre><code id="code-view">def add(a, b):
+    return a - b</code></pre>
+        </div>
+        <footer class="source-footer">
+          <span id="source-revision">fixture r1</span>
+          <span id="source-state" class="source-state source-state-bad">tests failing</span>
+        </footer>
+      </section>
+
+      <aside class="audit-panel instrument-panel" aria-labelledby="audit-title">
+        <div class="panel-heading">
+          <div>
+            <p class="panel-index">03 / boundary</p>
+            <h2 id="audit-title">Decision log</h2>
+          </div>
+          <span class="live-label"><i aria-hidden="true"></i>live</span>
+        </div>
+        <ol id="audit-log" class="audit-log" aria-live="polite" data-graft-ignore>
+          <li>
+            <span class="audit-marker audit-marker-good" aria-hidden="true"></span>
+            <div><strong>Fixture opened</strong><small>3 local artifacts discovered</small></div>
+          </li>
+          <li>
+            <span class="audit-marker audit-marker-bad" aria-hidden="true"></span>
+            <div><strong>Contract failed</strong><small>add(2, 3) returned -1</small></div>
+          </li>
+          <li>
+            <span class="audit-marker" aria-hidden="true"></span>
+            <div><strong>Write held</strong><small>Waiting for a reviewed patch</small></div>
+          </li>
+        </ol>
+        <div id="receipt" class="receipt" aria-live="polite">
+          <span class="receipt-label">latest receipt</span>
+          <strong>No mutation recorded</strong>
+          <p>An agent cannot cross this demo boundary without a visible in-page decision.</p>
+        </div>
+      </aside>
+    </div>
+
+    <section class="patch-section" aria-labelledby="patches-title">
+      <div class="section-heading">
+        <div>
+          <p class="panel-index">04 / proposals</p>
+          <h2 id="patches-title">Patch candidates</h2>
+        </div>
+        <p>Three bounded replacements with explicit fixture scores, not model confidence. Inspect first, then choose whether one may run.</p>
+      </div>
+
+      <div id="patch-list" class="patch-list" role="list" aria-label="Patch candidates">
+        <article class="patch-row is-recommended" role="listitem" data-patch-id="PATCH-104">
+          <header>
+            <div class="patch-id-line">
+              <span class="rank">01</span>
+              <h3 id="patch-104-title">PATCH-104 · Correct the operator</h3>
+            </div>
+            <span class="confidence" data-field="review_score">fixture score 98 / 100</span>
+          </header>
+          <p data-field="summary">
+            <span>Replace the subtraction operator with addition. This is the smallest change that matches
+            the function name, README contract and every test case.</span>
+          </p>
+          <div class="mini-diff" aria-label="Patch preview">
+            <span class="minus" data-field="before">- return a - b</span>
+            <span class="plus" data-field="after">+ return a + b</span>
+          </div>
+          <div class="patch-actions">
+            <span class="evidence" data-field="status">expected 3 / 3 passing</span>
+            <button class="apply-button" type="button" data-apply-patch="PATCH-104" aria-describedby="patch-104-title">Apply patch</button>
+          </div>
+        </article>
+
+        <article class="patch-row" role="listitem" data-patch-id="PATCH-127">
+          <header>
+            <div class="patch-id-line">
+              <span class="rank">02</span>
+              <h3 id="patch-127-title">PATCH-127 · Use the sum primitive</h3>
+            </div>
+            <span class="confidence" data-field="review_score">fixture score 82 / 100</span>
+          </header>
+          <p data-field="summary">
+            <span>Replace the arithmetic expression with <code>sum((a, b))</code>. It satisfies the contract,
+            but adds indirection to a two-operand function.</span>
+          </p>
+          <div class="mini-diff" aria-label="Patch preview">
+            <span class="minus" data-field="before">- return a - b</span>
+            <span class="plus" data-field="after">+ return sum((a, b))</span>
+          </div>
+          <div class="patch-actions">
+            <span class="evidence" data-field="status">expected 3 / 3 passing</span>
+            <button class="apply-button" type="button" data-apply-patch="PATCH-127" aria-describedby="patch-127-title">Apply patch</button>
+          </div>
+        </article>
+
+        <article class="patch-row" role="listitem" data-patch-id="PATCH-133">
+          <header>
+            <div class="patch-id-line">
+              <span class="rank">03</span>
+              <h3 id="patch-133-title">PATCH-133 · Return absolute distance</h3>
+            </div>
+            <span class="confidence confidence-low" data-field="review_score">fixture score 31 / 100</span>
+          </header>
+          <p data-field="summary">
+            <span>Interpret the function as distance and return an absolute difference. It conflicts with the
+            stated addition contract and still fails two checks.</span>
+          </p>
+          <div class="mini-diff" aria-label="Patch preview">
+            <span class="minus" data-field="before">- return a - b</span>
+            <span class="plus" data-field="after">+ return abs(a - b)</span>
+          </div>
+          <div class="patch-actions">
+            <span class="evidence evidence-bad" data-field="status">expected 1 / 3 passing</span>
+            <button class="apply-button" type="button" data-apply-patch="PATCH-133" aria-describedby="patch-133-title">Apply patch</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="tests-section" aria-labelledby="tests-title">
+      <div class="section-heading section-heading-tests">
+        <div>
+          <p class="panel-index">05 / deterministic runner</p>
+          <h2 id="tests-title">Test results</h2>
+        </div>
+        <output id="suite-output" class="suite-output" aria-live="polite">1 pass · 2 fail</output>
+      </div>
+      <div class="table-shell">
+        <table id="test-results">
+          <caption>Test results</caption>
+          <thead>
+            <tr>
+              <th scope="col">Case</th>
+              <th scope="col">Assertion</th>
+              <th scope="col">Actual</th>
+              <th scope="col">Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-test-case="positive operands">
+              <th scope="row">positive operands</th>
+              <td><code>add(2, 3) == 5</code></td>
+              <td data-test-actual>-1</td>
+              <td><span class="test-state is-fail" data-test-state>fail</span></td>
+            </tr>
+            <tr data-test-case="mixed sign operands">
+              <th scope="row">mixed sign operands</th>
+              <td><code>add(-4, 9) == 5</code></td>
+              <td data-test-actual>-13</td>
+              <td><span class="test-state is-fail" data-test-state>fail</span></td>
+            </tr>
+            <tr data-test-case="zero identity">
+              <th scope="row">zero identity</th>
+              <td><code>add(0, 0) == 0</code></td>
+              <td data-test-actual>0</td>
+              <td><span class="test-state is-pass" data-test-state>pass</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="runner-note">
+        The runner uses three fixed inputs and known implementations. It does not evaluate source,
+        call a server or touch a file.
+      </p>
+    </section>
+  </main>
+
+  <dialog id="approval-dialog" class="approval-dialog" aria-labelledby="approval-title" data-graft-ignore>
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-signal" aria-hidden="true"><span></span><i></i><span></span></div>
+      <p class="eyebrow">In-page checkpoint</p>
+      <h2 id="approval-title">An agent is requesting a local change.</h2>
+      <p id="approval-copy" class="dialog-copy">
+        Review the exact replacement. Nothing changes until you choose Approve patch.
+      </p>
+      <dl class="approval-meta">
+        <div><dt>file</dt><dd>calc.py</dd></div>
+        <div><dt>scope</dt><dd>one exact replacement</dd></div>
+        <div><dt>rollback</dt><dd>snapshot ready</dd></div>
+      </dl>
+      <div class="approval-diff" aria-label="Exact replacement">
+        <span class="line-no">2</span><code id="approval-before">- return a - b</code>
+        <span class="line-no">2</span><code id="approval-after">+ return a + b</code>
+      </div>
+      <div class="dialog-actions">
+        <button id="reject-button" class="reject-button" value="reject" type="button">Reject</button>
+        <button id="approve-button" class="approve-button" value="approve" type="button">Approve patch</button>
+      </div>
+      <p class="keyboard-note">Escape rejects this request. No decision is made in the background.</p>
+    </form>
+  </dialog>
+
+  <script type="module" src="./owner-handlers.js"></script>
+</body>
+</html>

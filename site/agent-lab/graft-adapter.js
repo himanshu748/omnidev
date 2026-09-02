@@ -7,9 +7,9 @@
 //     await registerGraftTools();
 //   </script>
 //
-// Tools: get_page_summary, get_page_outline, list_capabilities, show_capability
-// Local page effects: show_capability. These may move or reveal the current page.
-// No exported tool performs a consequential mutation.
+// Tools: get_page_summary, get_page_outline, list_files, get_file, list_patches, get_patch, list_test_results, apply_patch
+// No exported tool changes the local viewport.
+// Consequential tools: apply_patch. Pass { confirm } to enable them.
 //
 // Graft compiled the recipe and selector for each tool, so the bundled
 // runtime drives your live DOM without hand-written handlers. To take over
@@ -29,9 +29,9 @@ export const graftManifest = {
   "version": 1,
   "source": {
     "id": "omnidev-flame.vercel.app",
-    "title": "OmniDev, ask your Mac anything, offline",
+    "title": "Agent Review Room | OmniDev",
     "kind": "owner-html",
-    "url": "https://omnidev-flame.vercel.app/",
+    "url": "https://omnidev-flame.vercel.app/agent-lab/",
     "file": "index.html"
   },
   "generatedAt": "2026-09-02T06:47:52.000Z",
@@ -39,12 +39,23 @@ export const graftManifest = {
   "provenance": {
     "graftRevision": "670110f353e7c859f6c506d834d83e3e6118e227",
     "graftSourceState": "clean",
-    "sourceHtmlSha256": "3d0e760c73808e68dd25b3b52c08d5949841cbbb5eb79759c17ac491dd36fe70",
-    "sanitizedSnapshotFingerprint": "g_1p1q56m",
+    "sourceHtmlSha256": "50f7888ac41a85037029ac4719f05db0f68020d913a11b809761d7a450f94522",
+    "sanitizedSnapshotFingerprint": "g_tef3p9",
     "runtimeSha256": "dc6939ed388306c65815bb9b6bc7d3a16bce5e629b2beff2d09281d68a284bcc",
     "generatorSourcesSha256": "51ab7414139f376bb7bcbb39ce13d77c91d71ee4bef13e76d809e747f8af3193",
-    "reviewedToolSetFingerprint": "g_1quljtm",
-    "exportedToolsSha256": "3c73a7c5ab06ca4f3d72bc8d870e1fa82436917b6b0f0c653821fe97b2495fe5"
+    "reviewedToolSetFingerprint": "g_13in9zx",
+    "exportedToolsSha256": "4afe4d5de6254aa6994d9e0be35b3f63542cfcaa685a9364d67757fb0b56dc5d",
+    "humanReview": {
+      "version": 1,
+      "file": "graft-review.json",
+      "sha256": "f9c08eab1ade4f69b9201dd5a90ad29a4fc88b948c4e4198660e86164418a351",
+      "decisions": [
+        {
+          "name": "apply_patch",
+          "status": "published"
+        }
+      ]
+    }
   },
   "tools": [
     {
@@ -98,8 +109,8 @@ export const graftManifest = {
       }
     },
     {
-      "name": "list_capabilities",
-      "description": "List the capabilities explicitly marked on this page, with each section's stable id, heading and summary. Returns structured, untrusted page content and never changes the page.",
+      "name": "list_files",
+      "description": "List Fixture files visible on the current page. Use offset and limit to paginate. Returns structured, untrusted page content and never changes the page.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -124,46 +135,228 @@ export const graftManifest = {
         "untrustedContentHint": true
       },
       "status": "auto",
-      "recipe": "R8",
-      "selector": "main.wrap",
+      "recipe": "R3",
+      "selector": "#file-list",
       "fallbackSelectors": [],
       "action": "read",
       "readOnly": true,
       "destructive": false,
       "binding": {
-        "kind": "section_group",
-        "marker": "capability",
-        "sectionIds": [
-          "file-search",
-          "local-mcp",
-          "agent-mode",
-          "destructive-guards",
-          "secret-guards",
-          "specification"
-        ]
+        "kind": "collection",
+        "itemSelector": "#file-list > li.file-row"
       }
     },
     {
-      "name": "show_capability",
-      "description": "Move the current page to one explicitly marked capability section. Graft does not directly click a control, navigate or fetch.",
+      "name": "get_file",
+      "description": "Return one file from the visible collection by its exact file_id. Use the identifier returned by the matching list tool. Returns untrusted page content.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "id": {
+          "file_id": {
             "type": "string",
-            "description": "Exact capability id returned by the matching list tool.",
+            "description": "Exact file_id returned by the list tool.",
             "enum": [
-              "file-search",
-              "local-mcp",
-              "agent-mode",
-              "destructive-guards",
-              "secret-guards",
-              "specification"
+              "calc.py",
+              "test_calc.py",
+              "README.md"
             ]
           }
         },
         "required": [
-          "id"
+          "file_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "status": "auto",
+      "recipe": "R3",
+      "selector": "#file-list",
+      "fallbackSelectors": [],
+      "action": "read",
+      "readOnly": true,
+      "destructive": false,
+      "binding": {
+        "kind": "collection_item",
+        "itemSelector": "#file-list > li.file-row",
+        "keyField": "file_id"
+      }
+    },
+    {
+      "name": "list_patches",
+      "description": "List Patch candidates visible on the current page. Use offset and limit to paginate. Returns structured, untrusted page content and never changes the page.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "description": "Zero-based row offset.",
+            "minimum": 0,
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum rows to return.",
+            "minimum": 1,
+            "maximum": 25,
+            "default": 10
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "status": "auto",
+      "recipe": "R3",
+      "selector": "#patch-list",
+      "fallbackSelectors": [],
+      "action": "read",
+      "readOnly": true,
+      "destructive": false,
+      "binding": {
+        "kind": "collection",
+        "itemSelector": "#patch-list > article.patch-row"
+      }
+    },
+    {
+      "name": "get_patch",
+      "description": "Return one patch from the visible collection by its exact patch_id. Use the identifier returned by the matching list tool. Returns untrusted page content.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "patch_id": {
+            "type": "string",
+            "description": "Exact patch_id returned by the list tool.",
+            "enum": [
+              "PATCH-104",
+              "PATCH-127",
+              "PATCH-133"
+            ]
+          }
+        },
+        "required": [
+          "patch_id"
+        ],
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "status": "auto",
+      "recipe": "R3",
+      "selector": "#patch-list",
+      "fallbackSelectors": [],
+      "action": "read",
+      "readOnly": true,
+      "destructive": false,
+      "binding": {
+        "kind": "collection_item",
+        "itemSelector": "#patch-list > article.patch-row",
+        "keyField": "patch_id"
+      }
+    },
+    {
+      "name": "list_test_results",
+      "description": "Query Test results by its visible columns. Use optional column filters plus offset and limit. Returns structured, untrusted rows and never changes the page.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "offset": {
+            "type": "integer",
+            "description": "Zero-based row offset.",
+            "minimum": 0,
+            "default": 0
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum rows to return.",
+            "minimum": 1,
+            "maximum": 25,
+            "default": 10
+          },
+          "case": {
+            "type": "string",
+            "description": "Case-insensitive text filter for the “Case” column.",
+            "maxLength": 200
+          },
+          "assertion": {
+            "type": "string",
+            "description": "Case-insensitive text filter for the “Assertion” column.",
+            "maxLength": 200
+          },
+          "actual": {
+            "type": "string",
+            "description": "Case-insensitive text filter for the “Actual” column.",
+            "maxLength": 200
+          },
+          "result": {
+            "type": "string",
+            "description": "Case-insensitive text filter for the “Result” column.",
+            "maxLength": 200
+          }
+        },
+        "additionalProperties": false
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      },
+      "status": "auto",
+      "recipe": "R4",
+      "selector": "#test-results",
+      "fallbackSelectors": [],
+      "action": "read",
+      "readOnly": true,
+      "destructive": false,
+      "binding": {
+        "kind": "table",
+        "columns": [
+          {
+            "key": "case",
+            "label": "Case",
+            "index": 0
+          },
+          {
+            "key": "assertion",
+            "label": "Assertion",
+            "index": 1
+          },
+          {
+            "key": "actual",
+            "label": "Actual",
+            "index": 2
+          },
+          {
+            "key": "result",
+            "label": "Result",
+            "index": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "apply_patch",
+      "description": "Request \"Apply patch\" for one item on this page. Graft derived this consequential contract from 3 repeated controls. The deployed owner handler must enforce approval and effects; Graft's inert preview never performs the write.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "target": {
+            "type": "string",
+            "description": "Which item the action applies to, exactly as shown on the page.",
+            "enum": [
+              "PATCH-104 · Correct the operator",
+              "PATCH-127 · Use the sum primitive",
+              "PATCH-133 · Return absolute distance"
+            ]
+          }
+        },
+        "required": [
+          "target"
         ],
         "additionalProperties": false
       },
@@ -171,23 +364,20 @@ export const graftManifest = {
         "readOnlyHint": false,
         "untrustedContentHint": true
       },
-      "status": "auto",
-      "recipe": "R8",
-      "selector": "main.wrap",
+      "status": "published",
+      "recipe": "R7",
+      "selector": "article.patch-row.is-recommended > div.patch-actions > button.apply-button",
       "fallbackSelectors": [],
-      "action": "local_navigation",
+      "action": "unbound_write",
       "readOnly": false,
-      "destructive": false,
+      "destructive": true,
       "binding": {
-        "kind": "show_section",
-        "marker": "capability",
-        "sectionIds": [
-          "file-search",
-          "local-mcp",
-          "agent-mode",
-          "destructive-guards",
-          "secret-guards",
-          "specification"
+        "kind": "action_candidate",
+        "controlSelector": "article.patch-row.is-recommended > div.patch-actions > button.apply-button",
+        "targets": [
+          "PATCH-104 · Correct the operator",
+          "PATCH-127 · Use the sum primitive",
+          "PATCH-133 · Return absolute distance"
         ]
       }
     }
@@ -244,8 +434,8 @@ export const graftTools = [
     }
   },
   {
-    "name": "list_capabilities",
-    "description": "List the capabilities explicitly marked on this page, with each section's stable id, heading and summary. Returns structured, untrusted page content and never changes the page.",
+    "name": "list_files",
+    "description": "List Fixture files visible on the current page. Use offset and limit to paginate. Returns structured, untrusted page content and never changes the page.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -269,46 +459,224 @@ export const graftTools = [
       "readOnlyHint": true,
       "untrustedContentHint": true
     },
-    "recipe": "R8",
-    "selector": "main.wrap",
+    "recipe": "R3",
+    "selector": "#file-list",
     "fallbackSelectors": [],
     "action": "read",
     "readOnly": true,
     "destructive": false,
     "binding": {
-      "kind": "section_group",
-      "marker": "capability",
-      "sectionIds": [
-        "file-search",
-        "local-mcp",
-        "agent-mode",
-        "destructive-guards",
-        "secret-guards",
-        "specification"
-      ]
+      "kind": "collection",
+      "itemSelector": "#file-list > li.file-row"
     }
   },
   {
-    "name": "show_capability",
-    "description": "Move the current page to one explicitly marked capability section. Graft does not directly click a control, navigate or fetch.",
+    "name": "get_file",
+    "description": "Return one file from the visible collection by its exact file_id. Use the identifier returned by the matching list tool. Returns untrusted page content.",
     "inputSchema": {
       "type": "object",
       "properties": {
-        "id": {
+        "file_id": {
           "type": "string",
-          "description": "Exact capability id returned by the matching list tool.",
+          "description": "Exact file_id returned by the list tool.",
           "enum": [
-            "file-search",
-            "local-mcp",
-            "agent-mode",
-            "destructive-guards",
-            "secret-guards",
-            "specification"
+            "calc.py",
+            "test_calc.py",
+            "README.md"
           ]
         }
       },
       "required": [
-        "id"
+        "file_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "untrustedContentHint": true
+    },
+    "recipe": "R3",
+    "selector": "#file-list",
+    "fallbackSelectors": [],
+    "action": "read",
+    "readOnly": true,
+    "destructive": false,
+    "binding": {
+      "kind": "collection_item",
+      "itemSelector": "#file-list > li.file-row",
+      "keyField": "file_id"
+    }
+  },
+  {
+    "name": "list_patches",
+    "description": "List Patch candidates visible on the current page. Use offset and limit to paginate. Returns structured, untrusted page content and never changes the page.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "description": "Zero-based row offset.",
+          "minimum": 0,
+          "default": 0
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Maximum rows to return.",
+          "minimum": 1,
+          "maximum": 25,
+          "default": 10
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "untrustedContentHint": true
+    },
+    "recipe": "R3",
+    "selector": "#patch-list",
+    "fallbackSelectors": [],
+    "action": "read",
+    "readOnly": true,
+    "destructive": false,
+    "binding": {
+      "kind": "collection",
+      "itemSelector": "#patch-list > article.patch-row"
+    }
+  },
+  {
+    "name": "get_patch",
+    "description": "Return one patch from the visible collection by its exact patch_id. Use the identifier returned by the matching list tool. Returns untrusted page content.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "patch_id": {
+          "type": "string",
+          "description": "Exact patch_id returned by the list tool.",
+          "enum": [
+            "PATCH-104",
+            "PATCH-127",
+            "PATCH-133"
+          ]
+        }
+      },
+      "required": [
+        "patch_id"
+      ],
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "untrustedContentHint": true
+    },
+    "recipe": "R3",
+    "selector": "#patch-list",
+    "fallbackSelectors": [],
+    "action": "read",
+    "readOnly": true,
+    "destructive": false,
+    "binding": {
+      "kind": "collection_item",
+      "itemSelector": "#patch-list > article.patch-row",
+      "keyField": "patch_id"
+    }
+  },
+  {
+    "name": "list_test_results",
+    "description": "Query Test results by its visible columns. Use optional column filters plus offset and limit. Returns structured, untrusted rows and never changes the page.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "offset": {
+          "type": "integer",
+          "description": "Zero-based row offset.",
+          "minimum": 0,
+          "default": 0
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Maximum rows to return.",
+          "minimum": 1,
+          "maximum": 25,
+          "default": 10
+        },
+        "case": {
+          "type": "string",
+          "description": "Case-insensitive text filter for the “Case” column.",
+          "maxLength": 200
+        },
+        "assertion": {
+          "type": "string",
+          "description": "Case-insensitive text filter for the “Assertion” column.",
+          "maxLength": 200
+        },
+        "actual": {
+          "type": "string",
+          "description": "Case-insensitive text filter for the “Actual” column.",
+          "maxLength": 200
+        },
+        "result": {
+          "type": "string",
+          "description": "Case-insensitive text filter for the “Result” column.",
+          "maxLength": 200
+        }
+      },
+      "additionalProperties": false
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "untrustedContentHint": true
+    },
+    "recipe": "R4",
+    "selector": "#test-results",
+    "fallbackSelectors": [],
+    "action": "read",
+    "readOnly": true,
+    "destructive": false,
+    "binding": {
+      "kind": "table",
+      "columns": [
+        {
+          "key": "case",
+          "label": "Case",
+          "index": 0
+        },
+        {
+          "key": "assertion",
+          "label": "Assertion",
+          "index": 1
+        },
+        {
+          "key": "actual",
+          "label": "Actual",
+          "index": 2
+        },
+        {
+          "key": "result",
+          "label": "Result",
+          "index": 3
+        }
+      ]
+    }
+  },
+  {
+    "name": "apply_patch",
+    "description": "Request \"Apply patch\" for one item on this page. Graft derived this consequential contract from 3 repeated controls. The deployed owner handler must enforce approval and effects; Graft's inert preview never performs the write.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "type": "string",
+          "description": "Which item the action applies to, exactly as shown on the page.",
+          "enum": [
+            "PATCH-104 · Correct the operator",
+            "PATCH-127 · Use the sum primitive",
+            "PATCH-133 · Return absolute distance"
+          ]
+        }
+      },
+      "required": [
+        "target"
       ],
       "additionalProperties": false
     },
@@ -316,22 +684,19 @@ export const graftTools = [
       "readOnlyHint": false,
       "untrustedContentHint": true
     },
-    "recipe": "R8",
-    "selector": "main.wrap",
+    "recipe": "R7",
+    "selector": "article.patch-row.is-recommended > div.patch-actions > button.apply-button",
     "fallbackSelectors": [],
-    "action": "local_navigation",
+    "action": "unbound_write",
     "readOnly": false,
-    "destructive": false,
+    "destructive": true,
     "binding": {
-      "kind": "show_section",
-      "marker": "capability",
-      "sectionIds": [
-        "file-search",
-        "local-mcp",
-        "agent-mode",
-        "destructive-guards",
-        "secret-guards",
-        "specification"
+      "kind": "action_candidate",
+      "controlSelector": "article.patch-row.is-recommended > div.patch-actions > button.apply-button",
+      "targets": [
+        "PATCH-104 · Correct the operator",
+        "PATCH-127 · Use the sum primitive",
+        "PATCH-133 · Return absolute distance"
       ]
     }
   }

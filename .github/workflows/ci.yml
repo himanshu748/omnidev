@@ -10,15 +10,56 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   webmcp:
     name: Website WebMCP contract
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+
+      - name: Check out the pinned Graft generator
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          repository: himanshu748/graft-webmcp
+          ref: 670110f353e7c859f6c506d834d83e3e6118e227
+          path: .graft-source
+          persist-credentials: false
+
+      - name: Use the reviewed Node runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "24.9.0"
+
+      - name: Rebuild adapters from the pinned Graft source
+        run: |
+          npm ci --prefix .graft-source
+          npm run build:runtime --prefix .graft-source
+          rebuild_root="${RUNNER_TEMP}/graft-rebuild"
+          cd .graft-source
+          ./node_modules/.bin/vite-node scripts/build-adapter-from-html.ts \
+            ../site/index.html \
+            https://omnidev-flame.vercel.app/ \
+            "${rebuild_root}/site/graft-adapter.js"
+          ./node_modules/.bin/vite-node scripts/build-adapter-from-html.ts \
+            ../site/agent-lab/index.html \
+            https://omnidev-flame.vercel.app/agent-lab/ \
+            "${rebuild_root}/site/agent-lab/graft-adapter.js" \
+            --review ../site/agent-lab/graft-review.json
+          cmp "${rebuild_root}/site/graft-adapter.js" ../site/graft-adapter.js
+          cmp "${rebuild_root}/site/graft-adapter.js.sha256" ../site/graft-adapter.js.sha256
+          cmp "${rebuild_root}/site/agent-lab/graft-adapter.js" ../site/agent-lab/graft-adapter.js
+          cmp "${rebuild_root}/site/agent-lab/graft-adapter.js.sha256" ../site/agent-lab/graft-adapter.js.sha256
 
       - name: Verify generated adapter and provenance
         run: node scripts/check-webmcp.mjs
+
+      - name: Verify Agent Review Room contract and approval boundary
+        run: node scripts/check-agent-lab-webmcp.mjs
 
   backend:
     name: Backend (pytest)
@@ -28,6 +69,8 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
@@ -54,6 +97,8 @@ jobs:
         working-directory: macos
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Build Swift package
         run: swift build -c release
