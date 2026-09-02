@@ -34,15 +34,15 @@ export const graftManifest = {
     "url": "https://omnidev-flame.vercel.app/",
     "file": "index.html"
   },
-  "generatedAt": "2026-09-02T07:08:42.000Z",
+  "generatedAt": "2026-09-02T09:11:09.000Z",
   "notice": "Generated from exact owner HTML. Review and test before shipping.",
   "provenance": {
-    "graftRevision": "ac481387bbc523872770c827186fc2d712211a6b",
+    "graftRevision": "4c5b77c5386a020c40d248db948db562d4d7ebcf",
     "graftSourceState": "clean",
     "sourceHtmlSha256": "3d0e760c73808e68dd25b3b52c08d5949841cbbb5eb79759c17ac491dd36fe70",
     "sanitizedSnapshotFingerprint": "g_1p1q56m",
     "runtimeSha256": "dc6939ed388306c65815bb9b6bc7d3a16bce5e629b2beff2d09281d68a284bcc",
-    "generatorSourcesSha256": "85938093f229027a79c13d2f9a15c533f30e942f541fc3c2182fbb436eeccc1f",
+    "generatorSourcesSha256": "254102341e0b0d0568c26a167158a80cf88ea6c436a115f905d7fa4ad97a881a",
     "reviewedToolSetFingerprint": "g_1quljtm",
     "exportedToolsSha256": "3c73a7c5ab06ca4f3d72bc8d870e1fa82436917b6b0f0c653821fe97b2495fe5"
   },

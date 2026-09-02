@@ -58,6 +58,7 @@ const state = {
   runNumber: 1,
   pendingApproval: null,
   approvedPatch: null,
+  approvalTrigger: null,
 };
 
 const byId = (id) => document.getElementById(id);
@@ -78,7 +79,86 @@ const approvalBefore = byId("approval-before");
 const approvalAfter = byId("approval-after");
 const approveButton = byId("approve-button");
 const rejectButton = byId("reject-button");
+const heroRunButton = byId("hero-run-button");
+const repairStage = byId("repair-stage");
+const stagePatchId = byId("stage-patch-id");
+const stageResultLabel = byId("stage-result-label");
+const stageAfterCode = byId("stage-after-code");
+const repairStageStatus = byId("repair-stage-status");
+const repairStageChecks = byId("repair-stage-checks");
+const repairStageReceipt = byId("repair-stage-receipt");
+const stageGateLabel = byId("stage-gate-label");
 const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
+
+function renderRepairStage(phase, { passed = 1, total = 3, patchId = "PATCH-104" } = {}) {
+  const patch = PATCHES[patchId] ?? PATCHES["PATCH-104"];
+  repairStage.dataset.phase = phase;
+  stagePatchId.textContent = patch.id;
+  caseFailing.textContent = "2 baseline checks need repair";
+  const after = patch.after.trim();
+  const returnPrefix = "return ";
+  if (after.startsWith(returnPrefix)) {
+    const mark = document.createElement("mark");
+    mark.textContent = after.slice(returnPrefix.length);
+    stageAfterCode.replaceChildren(document.createTextNode(returnPrefix), mark);
+  } else {
+    stageAfterCode.textContent = after;
+  }
+  stageResultLabel.textContent = phase === "verified"
+    ? "Verified result"
+    : phase === "incomplete"
+      ? "Applied result"
+      : phase === "running"
+        ? "Applying result"
+        : "Expected result";
+
+  if (phase === "approval") {
+    repairStageStatus.textContent = "approval requested";
+    repairStageChecks.textContent = `expected ${total} / ${total} verified`;
+    repairStageReceipt.textContent = "No mutation has run";
+    stageGateLabel.textContent = "waiting for your decision";
+    heroRunButton.disabled = true;
+    heroRunButton.querySelector("span:first-child").textContent = "Approval open";
+    return;
+  }
+
+  if (phase === "running") {
+    repairStageStatus.textContent = "approved once";
+    repairStageChecks.textContent = "running deterministic checks";
+    repairStageReceipt.textContent = `${patchId} is applying one exact replacement`;
+    stageGateLabel.textContent = "single-use approval consumed";
+    heroRunButton.disabled = true;
+    heroRunButton.querySelector("span:first-child").textContent = "Verifying repair";
+    return;
+  }
+
+  if (phase === "verified") {
+    repairStageStatus.textContent = "repair verified";
+    repairStageChecks.textContent = `${passed} / ${total} checks verified`;
+    repairStageReceipt.textContent = `${patchId} · one approval · one changed line`;
+    stageGateLabel.textContent = "approval consumed once";
+    heroRunButton.disabled = true;
+    heroRunButton.querySelector("span:first-child").textContent = "Repair verified";
+    return;
+  }
+
+  if (phase === "incomplete") {
+    repairStageStatus.textContent = "review required";
+    repairStageChecks.textContent = `${passed} / ${total} checks clear`;
+    repairStageReceipt.textContent = `${patchId} applied, but the contract is not satisfied`;
+    stageGateLabel.textContent = "approval consumed once";
+    heroRunButton.disabled = true;
+    heroRunButton.querySelector("span:first-child").textContent = "Review result";
+    return;
+  }
+
+  repairStageStatus.textContent = "repair staged";
+  repairStageChecks.textContent = `expected ${total} / ${total} verified`;
+  repairStageReceipt.textContent = "No mutation has run";
+  stageGateLabel.textContent = "waiting for your decision";
+  heroRunButton.disabled = false;
+  heroRunButton.querySelector("span:first-child").textContent = "Preview approval checkpoint";
+}
 
 function renderCode() {
   const source = state.files[state.selectedFile];
@@ -176,12 +256,23 @@ async function runTests({ quiet = false } = {}) {
 
   const passed = results.filter((result) => result.passed).length;
   const failed = results.length - passed;
-  suiteOutput.textContent = `${passed} pass · ${failed} fail`;
+  suiteOutput.textContent = failed === 0
+    ? `${passed} / ${results.length} verified`
+    : `${passed} / ${results.length} baseline checks clear`;
   suiteOutput.className = `suite-output${failed === 0 ? " is-passing" : ""}`;
-  caseFailing.textContent = `${failed} of ${results.length}`;
-  sourceState.textContent = failed === 0 ? "tests passing" : "tests failing";
-  sourceState.className = `source-state ${failed === 0 ? "source-state-good" : "source-state-bad"}`;
+  sourceState.textContent = failed === 0 ? "repair verified" : "repair staged";
+  sourceState.className = `source-state ${failed === 0 ? "source-state-good" : "source-state-ready"}`;
   runButton.disabled = false;
+
+  if (state.appliedPatch) {
+    renderRepairStage(failed === 0 ? "verified" : "incomplete", {
+      passed,
+      total: results.length,
+      patchId: state.appliedPatch,
+    });
+  } else if (!state.pendingApproval && !state.approvedPatch) {
+    renderRepairStage("ready", { passed, total: results.length });
+  }
 
   if (!quiet) addAudit("Checks completed", `${passed} passed, ${failed} failed`, failed === 0 ? "good" : "bad");
   return { passed, failed, total: results.length, results };
@@ -218,6 +309,7 @@ async function commitPatch(patch) {
     row.classList.toggle("is-active", row.dataset.patchId === patch.id);
   });
 
+  renderRepairStage("running", { passed: 1, total: TESTS.length, patchId: patch.id });
   const tests = await runTests({ quiet: true });
   addAudit("Approved change applied", `${patch.id} changed one line`, "good");
   addAudit("Verification finished", `${tests.passed} passed, ${tests.failed} failed`, tests.failed === 0 ? "good" : "bad");
@@ -236,6 +328,8 @@ function closePendingApproval(result) {
   pending.signal?.removeEventListener("abort", pending.abortHandler);
   if (dialog.open) dialog.close();
   pending.resolve(result);
+  if (state.approvalTrigger instanceof HTMLElement) state.approvalTrigger.focus();
+  state.approvalTrigger = null;
 }
 
 function rejectPendingApproval(reason = "The in-page patch request was rejected.") {
@@ -243,6 +337,7 @@ function rejectPendingApproval(reason = "The in-page patch request was rejected.
   if (patch) addAudit("Decision rejected", `${patch.id} left the fixture unchanged`, "bad");
   document.querySelectorAll("[data-patch-id]").forEach((row) => row.classList.remove("is-active"));
   setReceipt("rejected", "Change rejected", reason);
+  renderRepairStage("ready", { passed: 1, total: TESTS.length });
   closePendingApproval(false);
 }
 
@@ -254,6 +349,9 @@ export function requestPatchConfirmation({ patchId, target, source = "agent", si
   if (state.appliedPatch) return Promise.reject(new Error("Restore the previous snapshot before applying another patch."));
   if (signal?.aborted) return Promise.reject(signal.reason ?? new Error("Patch request aborted."));
 
+  state.approvalTrigger = document.activeElement instanceof HTMLElement && document.activeElement !== document.body
+    ? document.activeElement
+    : null;
   state.selectedFile = "calc.py";
   renderCode();
   document.querySelectorAll("[data-patch-id]").forEach((row) => {
@@ -273,6 +371,7 @@ export function requestPatchConfirmation({ patchId, target, source = "agent", si
   else dialog.setAttribute("open", "");
   addAudit("Approval requested", `${patch.id} is waiting for an in-page decision`, "neutral");
   setReceipt("", "Decision pending", `${patch.id} has not changed any state.`);
+  renderRepairStage("approval", { passed: 1, total: TESTS.length, patchId: patch.id });
 
   return new Promise((resolve, reject) => {
     const abortHandler = () => {
@@ -281,6 +380,9 @@ export function requestPatchConfirmation({ patchId, target, source = "agent", si
       document.querySelectorAll("[data-patch-id]").forEach((row) => row.classList.remove("is-active"));
       addAudit("Request cancelled", `${patch.id} was cancelled before approval`, "neutral");
       setReceipt("rejected", "Request cancelled", "No fixture state changed.");
+      renderRepairStage("ready", { passed: 1, total: TESTS.length });
+      if (state.approvalTrigger instanceof HTMLElement) state.approvalTrigger.focus();
+      state.approvalTrigger = null;
       reject(signal.reason ?? new Error("Patch request aborted."));
     };
     state.pendingApproval = { patch, resolve, reject, signal, abortHandler };
@@ -295,6 +397,8 @@ export async function applyApprovedPatch({ patchId, target, signal } = {}) {
   if (signal?.aborted) {
     approval?.signal?.removeEventListener("abort", approval.abortHandler);
     state.approvedPatch = null;
+    document.querySelectorAll("[data-patch-id]").forEach((row) => row.classList.remove("is-active"));
+    renderRepairStage("ready", { passed: 1, total: TESTS.length });
     throw signal.reason ?? new Error("Patch request aborted before the approved change was applied.");
   }
   if (approval?.patchId !== patch.id) {
@@ -345,6 +449,7 @@ approveButton.addEventListener("click", (event) => {
     document.querySelectorAll("[data-patch-id]").forEach((row) => row.classList.remove("is-active"));
     addAudit("Approval revoked", `${pending.patch.id} was cancelled before application`, "neutral");
     setReceipt("rejected", "Approval revoked", "No fixture state changed.");
+    renderRepairStage("ready", { passed: 1, total: TESTS.length });
   };
   state.approvedPatch = {
     patchId: pending.patch.id,
@@ -354,6 +459,7 @@ approveButton.addEventListener("click", (event) => {
   pending.signal?.addEventListener("abort", approvedAbortHandler, { once: true });
   addAudit("Approved in page", `${pending.patch.id} authorized once`, "good");
   setReceipt("", "Approval granted", `${pending.patch.id} is authorized for this request only.`);
+  renderRepairStage("running", { passed: 1, total: TESTS.length, patchId: pending.patch.id });
   closePendingApproval(true);
 });
 
@@ -380,6 +486,18 @@ document.querySelectorAll("[data-apply-patch]").forEach((button) => {
   });
 });
 
+heroRunButton.addEventListener("click", () => {
+  requestPatchApproval({ patchId: "PATCH-104", source: "human-ui" })
+    .then((result) => {
+      if (!result.approved) renderRepairStage("ready", { passed: 1, total: TESTS.length });
+    })
+    .catch((error) => {
+      const message = error instanceof Error ? error.message : String(error);
+      setReceipt("rejected", "Request could not open", message);
+      renderRepairStage("ready", { passed: 1, total: TESTS.length });
+    });
+});
+
 restoreButton.addEventListener("click", async () => {
   if (!state.priorSnapshot) return;
   state.approvedPatch?.signal?.removeEventListener("abort", state.approvedPatch.abortHandler);
@@ -395,10 +513,12 @@ restoreButton.addEventListener("click", async () => {
   sourceRevision.textContent = `fixture r${state.runNumber}`;
   document.querySelectorAll("[data-patch-id]").forEach((row) => row.classList.remove("is-active"));
   const tests = await runTests({ quiet: true });
-  addAudit("Snapshot restored", `Baseline returned with ${tests.failed} failing checks`, "neutral");
+  addAudit("Snapshot restored", `Baseline returned with ${tests.failed} checks needing repair`, "neutral");
   setReceipt("", "Previous version restored", "The applied replacement was reversed from the in-memory snapshot.");
+  renderRepairStage("ready", { passed: tests.passed, total: tests.total });
 });
 
 runButton.addEventListener("click", () => { void runTests(); });
 
 renderCode();
+renderRepairStage("ready", { passed: 1, total: TESTS.length });

@@ -34,15 +34,15 @@ export const graftManifest = {
     "url": "https://omnidev-flame.vercel.app/agent-lab/",
     "file": "index.html"
   },
-  "generatedAt": "2026-09-02T07:08:42.000Z",
+  "generatedAt": "2026-09-02T09:11:09.000Z",
   "notice": "Generated from exact owner HTML. Review and test before shipping.",
   "provenance": {
-    "graftRevision": "ac481387bbc523872770c827186fc2d712211a6b",
+    "graftRevision": "4c5b77c5386a020c40d248db948db562d4d7ebcf",
     "graftSourceState": "clean",
-    "sourceHtmlSha256": "50f7888ac41a85037029ac4719f05db0f68020d913a11b809761d7a450f94522",
-    "sanitizedSnapshotFingerprint": "g_tef3p9",
+    "sourceHtmlSha256": "36241a47858bde2121127591d9db95bd39b1a8c5c044ba6420d35cf277da9366",
+    "sanitizedSnapshotFingerprint": "g_7uzxl8",
     "runtimeSha256": "dc6939ed388306c65815bb9b6bc7d3a16bce5e629b2beff2d09281d68a284bcc",
-    "generatorSourcesSha256": "85938093f229027a79c13d2f9a15c533f30e942f541fc3c2182fbb436eeccc1f",
+    "generatorSourcesSha256": "254102341e0b0d0568c26a167158a80cf88ea6c436a115f905d7fa4ad97a881a",
     "reviewedToolSetFingerprint": "g_13in9zx",
     "exportedToolsSha256": "4afe4d5de6254aa6994d9e0be35b3f63542cfcaa685a9364d67757fb0b56dc5d",
     "humanReview": {

@@ -30,9 +30,9 @@ const [html, styles, adapter, adapterDigestSource, reviewSource, ownerHandlers, 
 
 const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 const isSha256 = (value) => typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
-const EXPECTED_GRAFT_REVISION = "ac481387bbc523872770c827186fc2d712211a6b";
+const EXPECTED_GRAFT_REVISION = "4c5b77c5386a020c40d248db948db562d4d7ebcf";
 const EXPECTED_GENERATOR_SOURCES_SHA256 =
-  "85938093f229027a79c13d2f9a15c533f30e942f541fc3c2182fbb436eeccc1f";
+  "254102341e0b0d0568c26a167158a80cf88ea6c436a115f905d7fa4ad97a881a";
 
 function exportedJson(name) {
   const prefix = `export const ${name} = `;
