@@ -4,27 +4,17 @@
 import { graftTools, registerGraftTools } from "./graft-adapter.js";
 
 const updateRegistryState = (state, detail) => {
-  const barStatus = document.getElementById("webmcp-status");
-  const surfaceStatus = document.getElementById("webmcp-registry-status");
-  for (const node of [barStatus, surfaceStatus]) {
-    if (!node) continue;
-    node.textContent = detail;
-    node.dataset.state = state;
-  }
-};
-
-const updateReceipt = (detail, state = "") => {
-  const output = document.getElementById("webmcp-receipt");
-  if (!output) return;
-  output.textContent = detail;
-  if (state) output.dataset.state = state;
+  const badge = document.getElementById("webmcp-status");
+  if (!badge) return;
+  badge.dataset.state = state;
+  badge.title = detail;
+  badge.setAttribute("aria-label", `WebMCP via Graft: ${detail}`);
 };
 
 const registerOmniDevTools = async () => {
   const modelContext = document.modelContext ?? navigator.modelContext;
   if (!modelContext) {
-    updateRegistryState("unavailable", "WebMCP unavailable here");
-    updateReceipt("open in a browser with WebMCP support");
+    updateRegistryState("unavailable", "Open in a browser with WebMCP support");
     return;
   }
 
@@ -39,16 +29,11 @@ const registerOmniDevTools = async () => {
       throw new Error("The generated Graft adapter did not register its full reviewed surface.");
     }
 
-    updateRegistryState("live", `${graftTools.length} WebMCP tools`);
-    updateReceipt(
-      `live from Graft: ${graftTools.map((tool) => tool.name).join(" · ")}`,
-      "called",
-    );
+    updateRegistryState("live", `${graftTools.length} generated tools live`);
     window.__omnidevWebMcpCleanup = report.cleanup;
   } catch (error) {
     await report?.cleanup?.();
-    updateRegistryState("error", "WebMCP registration failed");
-    updateReceipt("generated adapter failed closed");
+    updateRegistryState("error", "Generated adapter failed closed");
     console.error("OmniDev WebMCP registration failed", error);
   }
 };

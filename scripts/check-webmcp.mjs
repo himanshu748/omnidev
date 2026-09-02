@@ -112,6 +112,11 @@ for (const id of expectedSectionIds) {
   assert(tag?.includes('data-graft-section="capability"'), `Missing semantic marker for ${id}.`);
 }
 assert(html.includes('src="omnidev-webmcp.js"'), "The owner bootstrap is not loaded.");
+assert(html.includes('id="webmcp-status"'), "The quiet WebMCP trust marker is missing.");
+assert(html.includes("WebMCP via Graft"), "The public Graft provenance marker is missing.");
+assert(!html.includes('class="agent-surface"'), "The verbose public agent surface returned.");
+assert(!html.includes('id="webmcp-receipt"'), "The public tool receipt returned.");
+assert(!html.includes('id="webmcp-registry-status"'), "The duplicate registry status returned.");
 assert(!html.includes("owner-bound action"), "Stale owner-authored action copy remains.");
 assert(!/\.registerTool\s*\(/.test(bootstrap), "The owner bootstrap declares a tool directly.");
 assert(!/\bexecute\s*:/.test(bootstrap), "The owner bootstrap contains a custom tool handler.");
