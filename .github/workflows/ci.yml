@@ -11,6 +11,15 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  webmcp:
+    name: Website WebMCP contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Verify generated adapter and provenance
+        run: node scripts/check-webmcp.mjs
+
   backend:
     name: Backend (pytest)
     runs-on: ubuntu-latest
