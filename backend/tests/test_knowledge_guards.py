@@ -408,13 +408,17 @@ def test_requirements_keep_pyobjc_macos_only():
 def test_requirements_keep_mcp_on_compatible_major():
     """MCP 2 removed mcp.server.fastmcp, which OmniDev currently imports."""
     from pathlib import Path as P
+    from packaging.requirements import Requirement
 
     requirements = (P(__file__).resolve().parents[1] / "requirements.txt").read_text()
     line = next(
         (line.strip() for line in requirements.splitlines() if line.strip().startswith("mcp")),
         "",
     )
-    assert ">=1.28" in line and "<2" in line
+    specifier = Requirement(line).specifier
+    assert "1.29.0" in specifier
+    assert "1.27.0" not in specifier
+    assert "2.0.0" not in specifier
 
 
 def test_install_paths_use_hashed_dependency_lock():
