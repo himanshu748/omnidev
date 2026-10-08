@@ -24,6 +24,17 @@ async def test_vision_rejects_oversized_image(client):
 
 
 @pytest.mark.asyncio
+async def test_vision_rejects_oversized_prompt(client):
+    files = {"image": ("sample.png", b"pngdata", "image/png")}
+    resp = await client.post(
+        "/api/vision/analyze",
+        files=files,
+        data={"mode": "custom", "prompt": "x" * 4001},
+    )
+    assert resp.status_code == 422
+
+
+@pytest.mark.asyncio
 async def test_vision_success(client, monkeypatch, coverage_tracker):
     async def fake_analyze(
         image_bytes: bytes,

@@ -27,6 +27,7 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from app.config import settings
+from app.services.data_paths import private_data_root, private_subdir, write_private_text
 from app.services.ai_service import ollama_chat_round
 
 TOOL_TIMEOUT_SECONDS = 60
@@ -48,8 +49,11 @@ CATALOG: list[dict[str, Any]] = [
         "name": "Filesystem",
         "description": "Read and edit files inside ONE directory you choose. The model can create and modify files there.",
         "capabilities": "read + write (scoped to the chosen directory)",
+        "mutating": True,
         "runtime": "npx",
-        "argv": ["npx", "-y", "@modelcontextprotocol/server-filesystem", "{directory}"],
+        "argv": [
+            "npx", "-y", "@modelcontextprotocol/server-filesystem@2026.7.10", "{directory}"
+        ],
         "params": [
             {"name": "directory", "type": "path", "description": "The only directory the server may touch."}
         ],
@@ -59,8 +63,9 @@ CATALOG: list[dict[str, Any]] = [
         "name": "Fetch",
         "description": "Fetch a web page as markdown for the model to read.",
         "capabilities": "read-only (network)",
+        "mutating": False,
         "runtime": "uvx",
-        "argv": ["uvx", "mcp-server-fetch"],
+        "argv": ["uvx", "mcp-server-fetch==2026.7.10"],
         "params": [],
     },
     {
@@ -68,8 +73,9 @@ CATALOG: list[dict[str, Any]] = [
         "name": "Memory",
         "description": "A local knowledge-graph memory the model can read and write across chats.",
         "capabilities": "read + write (local file)",
+        "mutating": True,
         "runtime": "npx",
-        "argv": ["npx", "-y", "@modelcontextprotocol/server-memory"],
+        "argv": ["npx", "-y", "@modelcontextprotocol/server-memory@2026.7.4"],
         "params": [],
     },
     {
@@ -77,8 +83,9 @@ CATALOG: list[dict[str, Any]] = [
         "name": "Time",
         "description": "Current time and timezone conversions.",
         "capabilities": "read-only",
+        "mutating": False,
         "runtime": "uvx",
-        "argv": ["uvx", "mcp-server-time"],
+        "argv": ["uvx", "mcp-server-time==2026.7.10"],
         "params": [],
     },
     {
@@ -86,8 +93,9 @@ CATALOG: list[dict[str, Any]] = [
         "name": "Git",
         "description": "Inspect and stage changes in ONE local git repository you choose.",
         "capabilities": "read + write (scoped to the chosen repository)",
+        "mutating": True,
         "runtime": "uvx",
-        "argv": ["uvx", "mcp-server-git", "--repository", "{repository}"],
+        "argv": ["uvx", "mcp-server-git==2026.7.10", "--repository", "{repository}"],
         "params": [
             {"name": "repository", "type": "path", "description": "Path to the git repository."}
         ],
@@ -97,8 +105,11 @@ CATALOG: list[dict[str, Any]] = [
         "name": "Sequential Thinking",
         "description": "A scratchpad tool that helps the model reason step by step.",
         "capabilities": "read-only (no side effects)",
+        "mutating": False,
         "runtime": "npx",
-        "argv": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+        "argv": [
+            "npx", "-y", "@modelcontextprotocol/server-sequential-thinking@2026.7.4"
+        ],
         "params": [],
     },
 ]
@@ -116,9 +127,7 @@ def catalog() -> list[dict[str, Any]]:
 
 # ── Config store (JSON in DATA_DIR) ─────────────────────────
 def _config_path() -> Path:
-    root = Path(settings.data_dir).expanduser()
-    root.mkdir(parents=True, exist_ok=True)
-    return root / "mcp_servers.json"
+    return private_data_root() / "mcp_servers.json"
 
 
 def list_servers() -> list[dict[str, Any]]:
@@ -133,7 +142,7 @@ def list_servers() -> list[dict[str, Any]]:
 
 
 def _save_servers(servers: list[dict[str, Any]]) -> None:
-    _config_path().write_text(json.dumps(servers, indent=2))
+    write_private_text(_config_path(), json.dumps(servers, indent=2))
 
 
 def _validate_params(entry: dict[str, Any], params: dict[str, str]) -> dict[str, str]:
@@ -232,10 +241,14 @@ class MCPManager:
         if executable is None:
             raise MCPError(f"'{argv[0]}' is not installed.")
 
-        # Minimal environment: never leak backend secrets to MCP servers.
+        # Use an isolated HOME so package managers and third-party servers do
+        # not automatically discover ~/.aws, ~/.npmrc, ~/.gitconfig, etc. This
+        # is defense in depth, not an OS sandbox: writable servers are still
+        # exposed only in agent mode, where every call requires approval.
+        runtime_home = private_subdir("mcp-runtime", name)
         env = {
             "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
-            "HOME": os.environ.get("HOME", str(Path.home())),
+            "HOME": str(runtime_home),
         }
         params = StdioServerParameters(command=executable, args=argv[1:], env=env)
         read, write = await self._stack.enter_async_context(stdio_client(params))
@@ -306,13 +319,23 @@ def _namespaced(server: str, tool: str) -> str:
     return f"{server}__{tool}"
 
 
-async def gather_ollama_tools() -> tuple[list[dict[str, Any]], dict[str, tuple[dict, str]]]:
-    """Tools from all enabled servers in Ollama format, plus a dispatch map."""
+async def gather_ollama_tools(
+    *, read_only: bool = False
+) -> tuple[list[dict[str, Any]], dict[str, tuple[dict, str]]]:
+    """Tools from enabled servers in Ollama format, plus a dispatch map.
+
+    Normal chat has no per-call approval UI, so it receives only servers that
+    are read-only by construction. Agent mode may include writable servers
+    because it pauses for approval before every third-party call.
+    """
     manager = get_manager()
     ollama_tools: list[dict[str, Any]] = []
     dispatch: dict[str, tuple[dict, str]] = {}
     for record in list_servers():
         if not record.get("enabled", True):
+            continue
+        entry = _CATALOG_BY_ID.get(record.get("catalog_id")) or {}
+        if read_only and entry.get("mutating", False):
             continue
         try:
             tools = await manager.list_tools(record)
@@ -346,7 +369,7 @@ async def run_tool_chat(
     Bounded at MAX_TOOL_ROUNDS tool rounds; the final answer arrives as one
     delta (tool rounds are non-streaming on the Ollama API).
     """
-    tools, dispatch = await gather_ollama_tools()
+    tools, dispatch = await gather_ollama_tools(read_only=True)
     if not tools:
         raise MCPError("No MCP tools available. Add and enable a server in the MCP marketplace.")
 

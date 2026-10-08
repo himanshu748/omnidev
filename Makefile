@@ -5,6 +5,7 @@ BACKEND := backend
 VENV := $(BACKEND)/.venv
 PY := $(VENV)/bin/python
 PIP := $(VENV)/bin/pip
+REQUIREMENTS := $(BACKEND)/requirements.lock
 
 .DEFAULT_GOAL := help
 
@@ -17,7 +18,7 @@ help: ## Show this help
 setup: ## Full first-run setup (backend venv + deps + .env)
 	python3 -m venv $(VENV)
 	$(PIP) install --upgrade pip
-	$(PIP) install -r $(BACKEND)/requirements.txt
+	$(PIP) install --require-hashes -r $(REQUIREMENTS)
 	$(PY) -m playwright install chromium
 	@test -f $(BACKEND)/.env || cp $(BACKEND)/.env.example $(BACKEND)/.env
 

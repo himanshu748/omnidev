@@ -18,6 +18,7 @@ Safety model:
 from __future__ import annotations
 
 import asyncio
+import json
 import subprocess
 import shutil
 import time
@@ -111,15 +112,16 @@ def pending_approvals() -> list[dict[str, Any]]:
 
 # ── Helpers ─────────────────────────────────────────────────
 def _always_key(tool: str, arguments: dict[str, Any]) -> str:
-    """Scope for an 'always allow' decision within a single run."""
-    if tool == "run_command":
-        args = arguments.get("args") or []
-        first = str(args[0]) if args else ""
-        return f"run_command:{arguments.get('command', '')} {first}".strip()
-    path = agent_tools.target_path(tool, arguments)
-    if path is not None:
-        return f"{tool}:{path.parent}"
-    return tool
+    """Scope an "always allow" decision to one exact invocation.
+
+    A broader key (for example, command + first argument or a file's parent
+    directory) lets a harmless approval silently authorize different code,
+    paths, or MCP arguments later in the run. Exact canonical arguments keep
+    the convenience for genuine retries without turning approval into a
+    privilege-escalation primitive.
+    """
+    canonical = json.dumps(arguments or {}, sort_keys=True, separators=(",", ":"), default=str)
+    return f"{tool}:{canonical}"
 
 
 def _git_head(path: Path) -> dict[str, Any] | None:

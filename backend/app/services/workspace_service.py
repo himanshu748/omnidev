@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from app.config import settings
+from app.services.data_paths import private_data_root, write_private_text
 
 
 class WorkspaceError(ValueError):
@@ -25,9 +26,7 @@ class WorkspaceError(ValueError):
 
 
 def _config_path() -> Path:
-    root = Path(settings.data_dir).expanduser()
-    root.mkdir(parents=True, exist_ok=True)
-    return root / "workspaces.json"
+    return private_data_root() / "workspaces.json"
 
 
 def _load() -> list[dict[str, Any]]:
@@ -42,7 +41,7 @@ def _load() -> list[dict[str, Any]]:
 
 
 def _save(records: list[dict[str, Any]]) -> None:
-    _config_path().write_text(json.dumps(records, indent=2))
+    write_private_text(_config_path(), json.dumps(records, indent=2))
 
 
 def _implicit_roots() -> list[Path]:

@@ -256,7 +256,12 @@ def describe(tool: str, arguments: dict[str, Any]) -> tuple[str, str]:
     """(summary, detail) shown in the approval sheet."""
     if tool == "run_command":
         argv = " ".join([str(arguments.get("command", ""))] + list(arguments.get("args") or []))
-        return f"Run: {argv}", f"Working directory:\n{arguments.get('cwd', '')}"
+        return f"Run: {argv}", (
+            f"Working directory:\n{arguments.get('cwd', '')}\n\n"
+            "This runs local or project code with your macOS account's permissions. "
+            "Review the complete command: code executed by tests, scripts, package "
+            "managers, or interpreters can modify files."
+        )
     if tool == "write_file":
         content = str(arguments.get("content", ""))
         preview = content[:1500] + ("\n…(truncated)" if len(content) > 1500 else "")

@@ -154,7 +154,8 @@ omnidev/
 │   │   │   ├── ai_service.py    # provider layer: Ollama (local) / Gemini (cloud)
 │   │   │   └── ...              # boto3, Playwright, codegen, vision logic
 │   │   └── schemas/             # Pydantic request/response models
-│   ├── requirements.txt
+│   ├── requirements.txt         # direct dependency constraints (lock input)
+│   ├── requirements.lock        # hashed, reproducible install set
 │   └── .env.example
 ├── scripts/macos/               # launch/stop/package sidecar scripts
 ├── docs/
@@ -171,7 +172,7 @@ omnidev/
 
 ### Option A: Download the app (recommended)
 
-Grab `OmniDev-vX.Y.Z.dmg` from [GitHub Releases](https://github.com/himanshu748/omnidev/releases), open it, and drag `OmniDev.app` to Applications (a zip of the same app is also attached). The build is unsigned, so on first launch right-click → Open (or `xattr -d com.apple.quarantine /Applications/OmniDev.app`).
+Grab `OmniDev-vX.Y.Z.dmg` and `SHA256SUMS.txt` from [GitHub Releases](https://github.com/himanshu748/omnidev/releases), verify the download, then drag `OmniDev.app` to Applications (a zip of the same app is also attached). The checksum detects a corrupted download but does not authenticate this unsigned build. On first launch, use Finder's right-click → Open flow and review the warning carefully. For a fully inspectable path, build from source instead.
 
 The engine self-installs into `~/Library/Application Support/OmniDev` on first run (needs Python 3.11+ on the machine) and starts automatically every time the app opens. In-app **Check for Updates…** points at new releases.
 
@@ -189,7 +190,7 @@ This builds the SwiftUI app, starts the FastAPI engine sidecar from the checkout
 cd backend
 python3.13 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install --require-hashes -r requirements.lock
 playwright install chromium
 cp .env.example .env
 uvicorn app.main:app --reload

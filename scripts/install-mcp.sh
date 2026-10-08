@@ -126,7 +126,7 @@ ok "engine: ${ENGINE/#$HOME/~}"
 
 PYTHON="$(find_python "$ENGINE")" || die "No Python could import the 'mcp' package.
        Install the app once and let it bootstrap its environment, or run:
-       python3 -m pip install -r '$ENGINE/backend/requirements.txt'"
+       python3 -m pip install --require-hashes -r '$ENGINE/backend/requirements.lock'"
 ok "python: ${PYTHON/#$HOME/~}"
 
 SERVER="$ENGINE/backend/mcp_server.py"

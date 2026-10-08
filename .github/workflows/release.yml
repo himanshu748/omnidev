@@ -11,7 +11,7 @@ jobs:
   release:
     runs-on: macos-14
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Build OmniDev.app
         run: bash scripts/macos/build-app.sh
@@ -22,14 +22,22 @@ jobs:
       - name: Collect DMG
         run: mv dist/mac/OmniDev-*.dmg "dist/OmniDev-${{ github.ref_name }}.dmg"
 
+      - name: Hash release assets
+        run: |
+          shasum -a 256 \
+            "dist/OmniDev-${{ github.ref_name }}.dmg" \
+            "dist/OmniDev-${{ github.ref_name }}.zip" \
+            > dist/SHA256SUMS.txt
+
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2
         with:
           files: |
             dist/OmniDev-${{ github.ref_name }}.dmg
             dist/OmniDev-${{ github.ref_name }}.zip
+            dist/SHA256SUMS.txt
           generate_release_notes: true
           body: |
-            **Install:** open the DMG and drag `OmniDev.app` to Applications (the zip carries the same app). The build is unsigned, so on first launch right-click → Open (or run `xattr -d com.apple.quarantine /Applications/OmniDev.app`).
+            **Install:** compare the download with `SHA256SUMS.txt`, then open the DMG and drag `OmniDev.app` to Applications (the zip carries the same app). The build is unsigned, so on first launch use Finder's right-click → Open flow and review the warning carefully.
 
             **Requirements:** Python 3.11+ on PATH (`brew install python`). [Ollama](https://ollama.com) for fully-offline AI, or a `GEMINI_API_KEY` for cloud AI. The engine self-installs into `~/Library/Application Support/OmniDev` on first run.

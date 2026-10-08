@@ -25,7 +25,7 @@ backend works out of the box with **no API key and no cloud**.
 cd backend
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+pip install --require-hashes -r requirements.lock
 playwright install chromium
 
 cp .env.example .env      # optional — sensible offline defaults work as-is

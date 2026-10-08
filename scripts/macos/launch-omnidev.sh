@@ -125,7 +125,7 @@ ensure_venv() {
   {
     "$sys_py" -m venv "$ROOT_DIR/backend/.venv"
     "$ROOT_DIR/backend/.venv/bin/pip" install --upgrade pip
-    "$ROOT_DIR/backend/.venv/bin/pip" install -r "$ROOT_DIR/backend/requirements.txt"
+    "$ROOT_DIR/backend/.venv/bin/pip" install --require-hashes -r "$ROOT_DIR/backend/requirements.lock"
   } >> "$STATE_DIR/bootstrap.log" 2>&1
   if ! "$ROOT_DIR/backend/.venv/bin/python" -m playwright install chromium >> "$STATE_DIR/bootstrap.log" 2>&1; then
     log "Playwright Chromium install failed; the scraper will return 503 until it succeeds"

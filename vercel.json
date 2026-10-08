@@ -6,6 +6,13 @@
   "outputDirectory": "site",
   "headers": [
     {
+      "source": "/agent-lab/(.*)",
+      "headers": [
+        { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" },
+        { "key": "X-Frame-Options", "value": "DENY" }
+      ]
+    },
+    {
       "source": "/(.*).gif",
       "headers": [
         { "key": "Cache-Control", "value": "public, max-age=604800, immutable" }

@@ -169,7 +169,12 @@ async def resolve_safe_url(url: str, *, max_redirects: int = 10) -> str:
 
 
 def validate_proxy(proxy: str | None) -> str | None:
-    """Validate a user-supplied proxy URL. Returns it unchanged, or raises."""
+    """Validate a user-supplied public proxy URL. Returns it unchanged, or raises.
+
+    A proxy is itself an outbound connection target. Allowing localhost,
+    private-LAN, or metadata addresses here would bypass the destination SSRF
+    checks before Chromium even sends the requested public URL.
+    """
     if not proxy:
         return proxy
     parsed = urlparse(proxy)
@@ -177,4 +182,8 @@ def validate_proxy(proxy: str | None) -> str | None:
         raise BlockedURLError(f"Unsupported proxy scheme {parsed.scheme!r}.")
     if not parsed.hostname:
         raise BlockedURLError("Proxy has no host.")
+    if is_blocked_host(parsed.hostname):
+        raise BlockedURLError(
+            f"Refusing a proxy on a private/reserved host: {parsed.hostname}"
+        )
     return proxy

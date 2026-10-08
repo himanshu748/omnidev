@@ -1,0 +1,9 @@
+# Trust anchors for the generated WebMCP surfaces.
+/.github/workflows/ci.yml @himanshu748
+/scripts/check-webmcp.mjs @himanshu748
+/scripts/check-agent-lab-webmcp.mjs @himanshu748
+/site/graft-adapter.js @himanshu748
+/site/graft-adapter.js.sha256 @himanshu748
+/site/agent-lab/graft-review.json @himanshu748
+/site/agent-lab/graft-adapter.js @himanshu748
+/site/agent-lab/graft-adapter.js.sha256 @himanshu748

@@ -25,6 +25,8 @@ def test_catalog_is_curated_only():
     assert {e["id"] for e in entries} >= {"filesystem", "fetch", "memory", "time"}
     for entry in entries:
         assert entry["argv"][0] in {"npx", "uvx"}, "catalog runtimes are npx/uvx only"
+        package = next((part for part in entry["argv"][1:] if "server-" in part), "")
+        assert "@2026." in package or "==2026." in package, "runtime packages must be pinned"
 
 
 def test_add_server_rejects_unknown_catalog_id():
@@ -102,6 +104,23 @@ async def test_child_env_has_no_secrets(monkeypatch):
     record = {"name": "fake", "catalog_id": "fake", "params": {}, "enabled": True}
     await mcp.get_manager().list_tools(record)
     assert set(captured["env"].keys()) <= {"PATH", "HOME"}
+    assert pathlib.Path(captured["env"]["HOME"]) != pathlib.Path.home()
+    assert pathlib.Path(captured["env"]["HOME"]).is_relative_to(
+        pathlib.Path(mcp.settings.data_dir)
+    )
+
+
+@pytest.mark.asyncio
+async def test_normal_chat_excludes_writable_servers(monkeypatch):
+    _install_fake_catalog(monkeypatch)
+    mcp._CATALOG_BY_ID["fake"]["mutating"] = True
+    monkeypatch.setattr(
+        mcp, "list_servers",
+        lambda: [{"name": "fake", "catalog_id": "fake", "params": {}, "enabled": True}],
+    )
+
+    tools, dispatch = await mcp.gather_ollama_tools(read_only=True)
+    assert tools == [] and dispatch == {}
 
 
 # ── tool-calling chat loop ──────────────────────────────────
