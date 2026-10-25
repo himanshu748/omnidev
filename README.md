@@ -284,7 +284,7 @@ Allowlisting a program does not make it safe: `python3`, `node`, `make` and ever
 - **The network is off by default**, including localhost, so code cannot drive OmniDev's own API to approve itself. If you turn network on, OmniDev's API ports and container-engine sockets stay blocked on macOS.
 - **Fails closed.** If no sandbox is available, commands are refused rather than run unsandboxed. Turning the sandbox off is an explicit, confirmed choice in **Settings → Sandbox**, and every approval sheet states whether the command is sandboxed.
 
-Optionally, sandboxed commands inside a workspace can run without a prompt (**Settings → Sandbox**). Commands outside a workspace always ask. The Code Gen HTML preview is isolated too: it has no file access, stores nothing, cannot navigate away, and blocks requests to loopback and private-network addresses.
+Optionally, sandboxed commands inside a workspace can run without a prompt (**Settings → Sandbox**). Commands outside a workspace always ask. The Code Gen HTML preview is isolated too: it has no file access, stores nothing, and cannot navigate away. Every network load is blocked except HTTPS to a few public CDNs, so it cannot reach this Mac or your local network, even through a hostname that resolves to a local address.
 
 - Generated code is returned as files for review, download, or isolated preview; OmniDev does not run generated projects on the backend.
 - Code Gen blocks unsafe paths, duplicate case-insensitive paths, secret-like outputs, risky npm lifecycle hooks, and suspicious script bodies.

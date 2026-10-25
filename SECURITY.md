@@ -42,8 +42,10 @@ OmniDev already defends the areas most relevant to a local AI cockpit:
   read-only, credentials and keychains unreadable, network off by default. With
   no sandbox available, commands are refused rather than run unsandboxed.
 - **Code Gen preview** — the HTML preview has no origin, no file access and no
-  persistent storage, cannot navigate away, and cannot reach loopback or
-  private-network addresses.
+  persistent storage, and cannot navigate away. All network loads are blocked
+  except HTTPS to a short allowlist of public CDNs, so DNS rebinding cannot
+  point it at loopback or the local network. A real-WKWebView check in CI
+  enforces this.
 - **Secrets** — API error boundaries scrub secret-like values from responses.
 
 Out of scope: issues requiring a compromised local machine or physical access,

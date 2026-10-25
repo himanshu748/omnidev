@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### 🔒 Security
 - **Agent commands now run inside an OS sandbox** (macOS Seatbelt, Linux bubblewrap). Before this, allowlisted programs such as `python3`, `node`, `make` and test runners executed project code with your full permissions. Now they can write only inside the workspace they run in. `.git/hooks` and `.git/config` stay read-only, credentials, keychains and browser data are unreadable, and the network is off by default, including OmniDev's own loopback API. If no sandbox is available, commands are refused instead of running unsandboxed.
-- **Code Gen preview cannot reach this Mac or the local network.** The preview blocks loopback, private and link-local addresses, and the page cannot navigate away from itself. If the filter cannot load, the preview does not run.
+- **Code Gen preview cannot reach this Mac or the local network.** All network loads are blocked except HTTPS to a short allowlist of public CDNs (jsDelivr, unpkg, cdnjs, Tailwind, esm.sh, Google Fonts). Matching host spellings could not stop a hostname that resolves to loopback, but an allowlist can. The page cannot navigate away from itself, and if the filter cannot load the preview does not run. CI checks this against a real WKWebView, using a hostname that resolves to loopback.
 
 ### ✨ Added
 - **Settings → Sandbox**: see whether commands are sandboxed, turn network access on, auto-approve sandboxed commands inside a workspace, or turn the sandbox off (with confirmation).

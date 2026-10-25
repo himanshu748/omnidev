@@ -268,13 +268,21 @@ def bubblewrap_git_mounts(root: Path | None, entries: list[Path]) -> list[str]:
     for path in sorted(pinned, key=lambda p: len(p.parts)):
         args += ["--bind", str(path), str(path)]
     for entry in entries:
-        if entry.is_dir():
-            args += ["--bind", str(entry), str(entry)]
-            for name in ("hooks", "config"):
-                if (entry / name).exists():
-                    args += ["--ro-bind", str(entry / name), str(entry / name)]
+        if not entry.is_dir():
+            args += ["--ro-bind", str(entry), str(entry)]  # worktree pointer file
+            continue
+        args += ["--bind", str(entry), str(entry)]
+        hooks, config = entry / "hooks", entry / "config"
+        # A missing hooks dir or config is mounted read-only too, so it cannot
+        # be created fresh; mount points also refuse rename-over (EBUSY).
+        if hooks.is_dir():
+            args += ["--ro-bind", str(hooks), str(hooks)]
         else:
-            args += ["--ro-bind", str(entry), str(entry)]
+            args += ["--tmpfs", str(hooks), "--remount-ro", str(hooks)]
+        args += ["--ro-bind", str(config) if config.is_file() else "/dev/null", str(config)]
+        worktree_config = entry / "config.worktree"
+        if worktree_config.is_file():
+            args += ["--ro-bind", str(worktree_config), str(worktree_config)]
     return args
 
 
@@ -399,6 +407,7 @@ def seatbelt_profile(plan: SandboxPlan, scratch: Path) -> tuple[str, dict[str, s
         '    (regex #"^.*/\\.git/hooks$")',
         '    (regex #"^.*/\\.git/hooks/.*$")',
         '    (regex #"^.*/\\.git/config$")',
+        '    (regex #"^.*/\\.git/config\\.worktree$")',
         ")",
     ]
     lines.append("(deny file-read* file-write*")

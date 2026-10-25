@@ -137,6 +137,7 @@ def test_bubblewrap_args(workspace, fake_backend, tmp_path, monkeypatch):
     monkeypatch.setattr(command_sandbox, "secret_paths", lambda: [secret_dir, secret_file])
     app = workspace / "group" / "app"
     (app / ".git" / "hooks").mkdir(parents=True)
+    (app / ".git" / "config").write_text("[core]\n")
     plan = command_sandbox.plan_for(workspace)
     args = command_sandbox.bubblewrap_args(plan, tmp_path, workspace)
     joined = " ".join(args)
@@ -154,9 +155,19 @@ def test_bubblewrap_args(workspace, fake_backend, tmp_path, monkeypatch):
     ]
     positions = [joined.index(item) for item in order]
     assert positions == sorted(positions)
+    assert f"--ro-bind {app / '.git' / 'config'} {app / '.git' / 'config'}" in joined
     assert f"--tmpfs {secret_dir}" in joined
     assert f"--ro-bind /dev/null {secret_file}" in joined
     assert args[-1] == "--" and args[-2] == str(workspace)
+
+
+def test_bubblewrap_mounts_missing_git_metadata_read_only(tmp_path):
+    root = tmp_path / "ws"
+    git = root / ".git"
+    git.mkdir(parents=True)
+    joined = " ".join(command_sandbox.bubblewrap_git_mounts(root, [git]))
+    assert f"--tmpfs {git / 'hooks'} --remount-ro {git / 'hooks'}" in joined
+    assert f"--ro-bind /dev/null {git / 'config'}" in joined
 
 
 def test_swift_skips_its_nested_sandbox_only_under_seatbelt(workspace, fake_backend):
@@ -436,6 +447,38 @@ async def test_real_sandbox_protects_other_repos_and_blocks_planting(workspace):
     )
     assert "WROTE" not in result and "PLANTED" not in result, result
     assert not (other / ".git" / "hooks" / "post-checkout").exists()
+
+
+@needs_sandbox
+@pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
+@pytest.mark.asyncio
+async def test_real_sandbox_git_metadata_cannot_be_recreated_or_replaced(workspace):
+    _init_repo(workspace)
+    shutil.rmtree(workspace / ".git" / "hooks", ignore_errors=True)
+    config_before = (workspace / ".git" / "config").read_text()
+    result = await _py(
+        workspace,
+        "import os, shutil\n"
+        "def attempt(label, fn):\n"
+        "    try:\n"
+        "        fn(); print('DID', label)\n"
+        "    except OSError:\n"
+        "        print('BLOCKED', label)\n"
+        "def plant():\n"
+        "    os.makedirs('.git/hooks', exist_ok=True)\n"
+        "    open('.git/hooks/post-checkout', 'w').write('evil')\n"
+        "def replace_config():\n"
+        "    open('cfg.tmp', 'w').write('[core]\\n\\thooksPath = /tmp\\n')\n"
+        "    os.replace('cfg.tmp', '.git/config')\n"
+        "attempt('plant-missing-hook', plant)\n"
+        "attempt('replace-config', replace_config)\n"
+        "attempt('remove-hooks', lambda: shutil.rmtree('.git/hooks'))\n"
+        "attempt('remove-config', lambda: os.remove('.git/config'))\n"
+        "attempt('rename-git', lambda: os.rename('.git', '.git-old'))\n",
+    )
+    assert "DID" not in result, result
+    assert not (workspace / ".git" / "hooks" / "post-checkout").exists()
+    assert (workspace / ".git" / "config").read_text() == config_before
 
 
 @needs_sandbox

@@ -110,6 +110,10 @@ jobs:
       - name: Build Swift package
         run: swift build -c release
 
+      - name: Code Gen preview network isolation (real WKWebView)
+        working-directory: .
+        run: scripts/macos/check-preview-isolation.sh
+
   agent-sandbox-macos:
     name: Agent sandbox (macOS Seatbelt)
     runs-on: macos-14
