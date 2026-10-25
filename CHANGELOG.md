@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### 🔒 Security
+- **Agent commands now run inside an OS sandbox** (macOS Seatbelt, Linux bubblewrap). Before this, allowlisted programs such as `python3`, `node`, `make` and test runners executed project code with your full permissions. Now they can write only inside the workspace they run in. `.git/hooks` and `.git/config` stay read-only, credentials, keychains and browser data are unreadable, and the network is off by default, including OmniDev's own loopback API. If no sandbox is available, commands are refused instead of running unsandboxed.
+- **Code Gen preview cannot reach this Mac or the local network.** The preview blocks loopback, private and link-local addresses, and the page cannot navigate away from itself. If the filter cannot load, the preview does not run.
+
+### ✨ Added
+- **Settings → Sandbox**: see whether commands are sandboxed, turn network access on, auto-approve sandboxed commands inside a workspace, or turn the sandbox off (with confirmation).
+- The approval sheet states how each command is confined, and Chat shows a sandbox badge in agent mode.
+- `GET`/`POST /api/agent/sandbox`, and a `sandbox` field on the agent `agent` and `approval_required` events.
+- Commands that would be refused are rejected before any approval prompt.
+- CI runs the real sandbox on macOS (including an offline `swift build`) and on Linux.
+
 ## [0.7.1] - 2026-07-25
 
 ### 🔒 Security

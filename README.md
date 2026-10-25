@@ -274,7 +274,19 @@ The agent also records your git HEAD before its first change and never commits o
 
 Approvals are per action, with allow once, always (for that run only) and deny. An unanswered prompt is a denial, never an approval, so a closed window cannot authorise anything.
 
-- Generated code is returned as files for review, download, or isolated browser preview; OmniDev does not run generated projects on the backend.
+### Command sandbox
+
+Allowlisting a program does not make it safe: `python3`, `node`, `make` and every test runner execute project code. So every agent command runs inside an OS sandbox (macOS Seatbelt, or bubblewrap on Linux):
+
+- **Writes** are limited to the workspace the command runs in, plus a throwaway temp dir and build caches. A command outside every workspace cannot write project files at all.
+- **Git cannot be turned into a backdoor.** `.git/hooks` and `.git/config` stay read-only, and `.git` cannot be renamed, so sandboxed code cannot plant a hook that runs later outside the sandbox.
+- **Secrets are invisible.** SSH and GPG keys, cloud and registry credentials, keychains, browser and password-manager data, and OmniDev's own data dir can be neither read nor written.
+- **The network is off by default**, including localhost, so code cannot drive OmniDev's own API to approve itself. If you turn network on, OmniDev's API ports and container-engine sockets stay blocked on macOS.
+- **Fails closed.** If no sandbox is available, commands are refused rather than run unsandboxed. Turning the sandbox off is an explicit, confirmed choice in **Settings → Sandbox**, and every approval sheet states whether the command is sandboxed.
+
+Optionally, sandboxed commands inside a workspace can run without a prompt (**Settings → Sandbox**). Commands outside a workspace always ask. The Code Gen HTML preview is isolated too: it has no file access, stores nothing, cannot navigate away, and blocks requests to loopback and private-network addresses.
+
+- Generated code is returned as files for review, download, or isolated preview; OmniDev does not run generated projects on the backend.
 - Code Gen blocks unsafe paths, duplicate case-insensitive paths, secret-like outputs, risky npm lifecycle hooks, and suspicious script bodies.
 - DevOps operations are mapped to explicit boto3 actions before execution.
 - Destructive DevOps actions require a confirmation flag.

@@ -139,6 +139,7 @@ Add an entry under `## [Unreleased]` in [CHANGELOG.md](CHANGELOG.md) for any use
 OmniDev runs AI-driven actions on a real machine. PRs that weaken any of the following will not be merged without an explicit design discussion in an issue first:
 
 - **Agent:** no delete tool. Changed files are snapshotted before every write. Replacing existing file contents, or acting outside trusted folders, requires approval. Destructive shell commands stay blocked.
+- **Agent sandbox:** `run_command` runs only inside the OS sandbox (`services/command_sandbox.py`) unless the user explicitly turns it off. It never falls back to running unsandboxed. Secrets stay unreadable, `.git` hooks and config stay read-only, and network stays off by default.
 - **Knowledge:** sensitive paths and files (credentials, keychains, browser profiles, `.env*`, private keys, password vaults) are never indexed, even under an added parent folder. The index stays at `0600`.
 - **Code Gen:** generation only. The backend validates returned files, blocks secret-like output and risky npm scripts, and **never executes** generated code.
 - **Scraper:** every URL passes the SSRF guard (`services/url_guard.py`), which refuses loopback, private, link-local, and metadata addresses.

@@ -239,8 +239,10 @@ struct CodeGenView: View {
 }
 
 /// Isolated preview of a generated HTML entry file: loaded from a string
-/// with no base URL, so it has no origin and no access to local files —
-/// the native equivalent of the web cockpit's sandboxed iframe.
+/// with no base URL, so it has no origin and no access to local files.
+/// Public CDNs still load, but requests to this Mac (where OmniDev's engine
+/// listens) or the local network are blocked, and the page cannot navigate
+/// away from itself.
 private struct HTMLPreviewSheet: View {
     let result: BackendClient.CodeGenResult
     @Environment(\.dismiss) private var dismiss
@@ -248,7 +250,7 @@ private struct HTMLPreviewSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Label("Sandboxed preview — generated code runs isolated, not against your backend.",
+                Label("Isolated preview: no file access, nothing saved, and no requests to this Mac or your local network.",
                       systemImage: "lock.shield")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -268,13 +270,70 @@ private struct HTMLPreviewSheet: View {
 private struct IsolatedWebView: NSViewRepresentable {
     let html: String
 
+    /// Content-blocker rules for loopback, private, link-local and mDNS hosts,
+    /// plus URLs carrying credentials and file URLs.
+    static let localNetworkRules = #"""
+    [
+      {"trigger": {"url-filter": "^[a-z]+://localhost[:/]"}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://.*\\.localhost[:/]"}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://.*\\.local[:/]"}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://[a-z0-9._%:]*@"}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://\\["}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://127\\."}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://0\\."}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://10\\."}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://192\\.168\\."}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://169\\.254\\."}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://172\\.1[6-9]\\."}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://172\\.2[0-9]\\."}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^[a-z]+://172\\.3[01]\\."}, "action": {"type": "block"}},
+      {"trigger": {"url-filter": "^file:"}, "action": {"type": "block"}}
+    ]
+    """#
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = .nonPersistent()
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.loadHTMLString(html, baseURL: nil)
+        webView.navigationDelegate = context.coordinator
+        let html = html
+        WKContentRuleListStore.default().compileContentRuleList(
+            forIdentifier: "omnidev-preview-local-network",
+            encodedContentRuleList: Self.localNetworkRules
+        ) { rules, _ in
+            guard let rules else {
+                // Fail closed: without the filter, generated code does not run.
+                webView.loadHTMLString(
+                    "<p style=\"font-family:-apple-system;padding:16px\">Preview unavailable: "
+                        + "the network filter could not be loaded.</p>",
+                    baseURL: nil
+                )
+                return
+            }
+            webView.configuration.userContentController.add(rules)
+            webView.loadHTMLString(html, baseURL: nil)
+        }
         return webView
     }
 
     func updateNSView(_ webView: WKWebView, context: Context) {}
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+        /// The preview is the one generated page: the main frame never
+        /// navigates elsewhere (links, redirects, form posts, new windows).
+        func webView(
+            _ webView: WKWebView,
+            decidePolicyFor navigationAction: WKNavigationAction,
+            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+        ) {
+            let isMainFrame = navigationAction.targetFrame?.isMainFrame ?? true
+            if isMainFrame && navigationAction.request.url?.absoluteString != "about:blank" {
+                decisionHandler(.cancel)
+            } else {
+                decisionHandler(.allow)
+            }
+        }
+    }
 }

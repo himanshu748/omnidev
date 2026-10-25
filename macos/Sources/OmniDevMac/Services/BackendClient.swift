@@ -155,7 +155,7 @@ struct BackendClient {
     // MARK: - Agent mode
 
     enum AgentEvent {
-        case started(model: String, workspaces: [String], tools: [String])
+        case started(model: String, workspaces: [String], tools: [String], sandbox: AgentSandboxInfo?)
         case step(number: Int, thought: String)
         case toolCall(tool: String, arguments: String)
         case toolResult(tool: String, result: String, ok: Bool)
@@ -165,11 +165,29 @@ struct BackendClient {
         case delta(String)
     }
 
+    /// How a command is (or is not) confined, as reported by the backend.
+    struct AgentSandboxInfo: Equatable {
+        let active: Bool
+        let network: Bool
+        let writableRoot: String?
+        let summary: String
+
+        init?(_ value: Any?) {
+            guard let object = value as? [String: Any] else { return nil }
+            active = object["active"] as? Bool ?? false
+            network = object["network"] as? Bool ?? false
+            writableRoot = object["writable_root"] as? String
+            summary = object["summary"] as? String ?? ""
+        }
+    }
+
     struct AgentApproval: Identifiable, Equatable {
         let id: String
         let tool: String
         let summary: String
         let detail: String
+        /// Present for shell commands.
+        let sandbox: AgentSandboxInfo?
     }
 
     struct ApprovalAck: Decodable {
@@ -197,7 +215,8 @@ struct BackendClient {
                 return .started(
                     model: started["model"] as? String ?? "",
                     workspaces: started["workspaces"] as? [String] ?? [],
-                    tools: started["tools"] as? [String] ?? []
+                    tools: started["tools"] as? [String] ?? [],
+                    sandbox: AgentSandboxInfo(started["sandbox"])
                 )
             }
             if let step = object["step"] as? [String: Any] {
@@ -212,7 +231,8 @@ struct BackendClient {
                         id: approval["id"] as? String ?? "",
                         tool: approval["tool"] as? String ?? "",
                         summary: approval["summary"] as? String ?? "",
-                        detail: approval["detail"] as? String ?? ""
+                        detail: approval["detail"] as? String ?? "",
+                        sandbox: AgentSandboxInfo(approval["sandbox"])
                     )
                 )
             }

@@ -545,3 +545,39 @@ extension BackendClient {
         let _: RemoveAck = try await send("DELETE", "api/agent/workspaces", query: ["path": path])
     }
 }
+
+// MARK: - Agent sandbox
+
+extension BackendClient {
+    struct AgentSandboxStatus: Decodable, Equatable {
+        let mode: String
+        let network: Bool
+        let autoApprove: Bool
+        let backend: String?
+        let backendLabel: String
+        let available: Bool
+        let active: Bool
+        let reason: String
+        let summary: String
+        let protectedPaths: [String]
+        let writableCaches: [String]
+
+        var enforced: Bool { mode == "enforce" }
+    }
+
+    func agentSandbox(refresh: Bool = false) async throws -> AgentSandboxStatus {
+        try await get("api/agent/sandbox", query: refresh ? ["refresh": "true"] : [:])
+    }
+
+    func updateAgentSandbox(
+        mode: String? = nil,
+        network: Bool? = nil,
+        autoApprove: Bool? = nil
+    ) async throws -> AgentSandboxStatus {
+        var body: [String: Any] = [:]
+        if let mode { body["mode"] = mode }
+        if let network { body["network"] = network }
+        if let autoApprove { body["auto_approve"] = autoApprove }
+        return try await post("api/agent/sandbox", body: body, timeout: 30)
+    }
+}

@@ -37,6 +37,13 @@ OmniDev already defends the areas most relevant to a local AI cockpit:
   requires explicit confirmation; `DEVOPS_READ_ONLY=1` refuses all mutations.
 - **Code generation** — generated files are path/secret/npm-script validated and
   are **never executed** on the backend.
+- **Agent commands** — run inside an OS sandbox (macOS Seatbelt / Linux
+  bubblewrap): writes only in the command's workspace, `.git` hooks and config
+  read-only, credentials and keychains unreadable, network off by default. With
+  no sandbox available, commands are refused rather than run unsandboxed.
+- **Code Gen preview** — the HTML preview has no origin, no file access and no
+  persistent storage, cannot navigate away, and cannot reach loopback or
+  private-network addresses.
 - **Secrets** — API error boundaries scrub secret-like values from responses.
 
 Out of scope: issues requiring a compromised local machine or physical access,

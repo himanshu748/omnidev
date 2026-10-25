@@ -292,7 +292,32 @@ Content-Type: application/json
 { "path": "/Users/you/code/app" }
 ```
 
-Inside a workspace the agent edits without asking; everywhere else each action needs approval, and shell commands always do. Workspaces must be inside your home folder and cannot be `$HOME`, `~/Library` or OmniDev's data directory. `GET /api/agent/workspaces` lists them (the landing root appears as `implicit`) and `DELETE /api/agent/workspaces?path=...` removes one.
+Inside a workspace the agent edits without asking; everywhere else each action needs approval. Shell commands ask too, unless sandbox auto-approval is on and the command runs inside a workspace. Workspaces must be inside your home folder and cannot be `$HOME`, `~/Library` or OmniDev's data directory. `GET /api/agent/workspaces` lists them (the landing root appears as `implicit`) and `DELETE /api/agent/workspaces?path=...` removes one.
+
+### Command Sandbox
+
+```http
+GET  /api/agent/sandbox[?refresh=true]
+POST /api/agent/sandbox
+Content-Type: application/json
+
+{ "mode": "enforce", "network": false, "auto_approve": false }
+```
+
+Every `run_command` runs inside an OS sandbox (macOS Seatbelt or Linux bubblewrap). It can write only inside the workspace that contains its `cwd`, a per-command temp dir and build caches. `.git/hooks` and `.git/config` stay read-only, secrets are unreadable, and the network is off unless `network` is true. `mode` is `enforce` (default: commands are refused when no sandbox is available) or `off` (commands run with full user permissions). `auto_approve` skips the approval prompt for sandboxed commands inside a workspace. All fields of the POST body are optional; both endpoints return the status:
+
+```json
+{
+  "mode": "enforce", "network": false, "auto_approve": false,
+  "backend": "seatbelt", "backend_label": "macOS Seatbelt",
+  "available": true, "active": true, "reason": "",
+  "summary": "Commands run inside macOS Seatbelt: writes only in the command's workspace, network off, secrets hidden.",
+  "protected_paths": ["~/.ssh", "~/.aws", "..."],
+  "writable_caches": ["~/.cache", "~/.npm", "..."]
+}
+```
+
+The `agent` start event carries this status as `sandbox`, and `approval_required` events for commands carry the per-command plan (`active`, `network`, `writable_root`, `summary`). A command that would be refused, because it is not allowlisted or because the sandbox is unavailable, comes back as a failed `tool_result` without ever prompting.
 
 ### Backups and Restore
 
