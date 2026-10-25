@@ -53,7 +53,7 @@ Thanks for helping build OmniDev, the local-first AI cockpit for macOS. Bug repo
 ### Prerequisites
 
 - **Python 3.11+.** CI runs 3.13.
-- **macOS 14+ with Xcode command-line tools** for the native app. The backend alone runs on any OS.
+- **macOS 13+ with Xcode command-line tools** for the native app (CI builds on macOS 14). The backend alone runs on any OS.
 - **[Ollama](https://ollama.com)** for local AI, or a `GEMINI_API_KEY`. The test suite needs neither.
 - Git and `make`.
 
