@@ -61,6 +61,15 @@ class Settings(BaseSettings):
     # Codegen "Land in repo" writes ONLY under this root.
     land_root: str = "~/OmniDev/projects"
 
+    # ── Agent command sandbox ───────────────────────────────
+    # Defaults only: the app's Settings persist overrides in DATA_DIR.
+    # enforce = commands run only inside the OS sandbox (refused if none is
+    # available); off = commands run with the user's full permissions.
+    agent_sandbox: str = "enforce"
+    agent_sandbox_network: bool = False
+    # Skip the approval prompt for sandboxed commands inside a workspace.
+    agent_sandbox_auto_approve: bool = False
+
     # ── Cloud Storage ───────────────────────────────────────
     # Max S3 upload size (MB). The body is read into memory, so this bounds
     # per-request memory use and blocks a trivial DoS.

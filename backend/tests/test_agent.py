@@ -7,7 +7,7 @@ import json
 
 import pytest
 
-from app.services import agent_service, agent_tools, workspace_service
+from app.services import agent_service, agent_tools, command_sandbox, workspace_service
 from app.services.agent_tools import ToolError
 
 
@@ -216,6 +216,8 @@ async def test_run_command_allowlist(workspace):
 
 @pytest.mark.asyncio
 async def test_run_command_executes_allowed(workspace):
+    # The unsandboxed path; sandboxed execution is covered in test_command_sandbox.py.
+    command_sandbox.update_settings(mode="off")
     result = await agent_tools.call_tool(
         "run_command",
         {"command": "python3", "args": ["-c", "print('agent ok')"], "cwd": str(workspace)},

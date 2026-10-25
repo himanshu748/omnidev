@@ -1,7 +1,7 @@
 import SwiftUI
 
-/// Native tabbed Settings — General (engine + port), Model, and AWS — so no
-/// section ever scrolls off screen.
+/// Native tabbed Settings — General (engine + port), Model, Agent, Sandbox,
+/// and AWS — so no section ever scrolls off screen.
 struct SettingsView: View {
     @ObservedObject var manager: LocalStackManager
     @AppStorage(AppSettings.aiProviderKey) private var aiProvider = AppSettings.defaultAIProvider
@@ -32,6 +32,8 @@ struct SettingsView: View {
                 .tabItem { Label("Model", systemImage: "cpu") }
             WorkspacesTab(manager: manager)
                 .tabItem { Label("Agent", systemImage: "wand.and.rays") }
+            SandboxTab(manager: manager)
+                .tabItem { Label("Sandbox", systemImage: "lock.shield") }
             awsTab
                 .tabItem { Label("AWS", systemImage: "cloud") }
         }
@@ -331,6 +333,141 @@ private struct WorkspacesTab: View {
             do {
                 try await client.removeAgentWorkspace(path: workspace.path)
                 load()
+            } catch {
+                errorText = error.localizedDescription
+            }
+        }
+    }
+}
+
+/// How the agent's shell commands are confined. Changes apply to the next
+/// command; turning the sandbox off needs an explicit confirmation.
+private struct SandboxTab: View {
+    @ObservedObject var manager: LocalStackManager
+    @State private var status: BackendClient.AgentSandboxStatus?
+    @State private var errorText = ""
+    @State private var confirmingOff = false
+
+    var body: some View {
+        Form {
+            Section {
+                header
+            }
+
+            if let status {
+                Section {
+                    Toggle("Sandbox agent commands", isOn: Binding(
+                        get: { status.enforced },
+                        set: { enabled in
+                            if enabled {
+                                update(mode: "enforce")
+                            } else {
+                                confirmingOff = true
+                            }
+                        }
+                    ))
+                    Toggle("Allow network access", isOn: Binding(
+                        get: { status.network },
+                        set: { update(network: $0) }
+                    ))
+                    .disabled(!status.enforced)
+                    Toggle("Run sandboxed commands in workspaces without asking", isOn: Binding(
+                        get: { status.autoApprove },
+                        set: { update(autoApprove: $0) }
+                    ))
+                    .disabled(!status.active)
+                } footer: {
+                    Text("Commands can write only inside the workspace they run in. With network on, "
+                         + "OmniDev's own engine and container sockets stay blocked. Commands outside "
+                         + "a workspace always ask.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Section("Always hidden from commands") {
+                    Text(status.protectedPaths.joined(separator: "   "))
+                        .font(.caption.monospaced())
+                        .foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            if !errorText.isEmpty {
+                Section {
+                    Text(errorText)
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .onAppear { load(refresh: false) }
+        .confirmationDialog("Turn off the agent sandbox?", isPresented: $confirmingOff) {
+            Button("Turn Off Sandbox", role: .destructive) { update(mode: "off") }
+            Button("Keep Sandbox", role: .cancel) {}
+        } message: {
+            Text("Agent commands would run with your full account permissions, so tests and "
+                 + "scripts could read your keys or change any file. Every command still asks first.")
+        }
+    }
+
+    private var header: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: status?.active == true ? "lock.shield.fill" : "exclamationmark.shield.fill")
+                .font(.title)
+                .foregroundStyle(status == nil ? Color.secondary : (status?.active == true ? Color.green : Color.orange))
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.headline)
+                Text(status?.summary ?? "Checking the sandbox…")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer()
+            Button {
+                load(refresh: true)
+            } label: {
+                Image(systemName: "arrow.clockwise")
+            }
+            .buttonStyle(.borderless)
+            .help("Check the sandbox again")
+            .accessibilityLabel("Check the sandbox again")
+        }
+        .accessibilityElement(children: .contain)
+    }
+
+    private var title: String {
+        guard let status else { return "Agent sandbox" }
+        if status.active { return "Commands run in \(status.backendLabel)" }
+        if status.enforced { return "Sandbox unavailable: commands are refused" }
+        return "Sandbox off"
+    }
+
+    private func load(refresh: Bool) {
+        let client = manager.backendClient
+        Task {
+            do {
+                status = try await client.agentSandbox(refresh: refresh)
+                errorText = ""
+            } catch {
+                errorText = error.localizedDescription
+            }
+        }
+    }
+
+    private func update(mode: String? = nil, network: Bool? = nil, autoApprove: Bool? = nil) {
+        let client = manager.backendClient
+        Task {
+            do {
+                status = try await client.updateAgentSandbox(
+                    mode: mode, network: network, autoApprove: autoApprove
+                )
+                errorText = ""
             } catch {
                 errorText = error.localizedDescription
             }

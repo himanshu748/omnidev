@@ -26,7 +26,7 @@ import uuid
 from pathlib import Path
 from typing import Any, AsyncIterator
 
-from app.services import agent_tools, workspace_service
+from app.services import agent_tools, command_sandbox, workspace_service
 from app.services.agent_tools import ToolError
 from app.services.ai_service import (
     AIConfigurationError,
@@ -59,6 +59,7 @@ Rules:
 - Paths must be absolute.
 - If a tool returns an error, read it carefully and correct your next call.
   Errors tell you exactly what went wrong.
+{sandbox_rule}
 - Some actions ask the user for approval. If one is denied, do not retry it;
   adapt or explain what you need.
 - Never invent file contents. If you have not read a file, read it first.
@@ -66,6 +67,18 @@ Rules:
 Your workspaces (you may edit freely here):
 {workspaces}
 """
+
+
+def _sandbox_rule(sandbox: dict[str, Any]) -> str:
+    if not sandbox.get("active"):
+        return "- run_command is not sandboxed right now, so be especially careful."
+    network = "on" if sandbox.get("network") else "off"
+    return (
+        "- run_command runs in a sandbox: it can write only inside the workspace\n"
+        "  that contains its working directory, secrets are hidden, and the network\n"
+        f"  is {network}. If a command fails because something is blocked, explain\n"
+        "  what was blocked instead of trying to work around it."
+    )
 
 
 class AgentError(ValueError):
@@ -203,6 +216,7 @@ async def run_agent(
     {"checkpoint": {...}} · {"error": str} · {"done": true}
     """
     workspaces = [str(root) for root in workspace_service.roots()]
+    sandbox = command_sandbox.status()
     specs, mcp_dispatch = await _gather_tools(use_mcp)
 
     yield {
@@ -213,11 +227,13 @@ async def run_agent(
             "workspaces": workspaces,
             "tools": [spec["name"] for spec in specs],
             "max_steps": max_steps,
+            "sandbox": sandbox,
         }
     }
 
     system = SYSTEM_PROMPT.format(
-        workspaces="\n".join(f"- {w}" for w in workspaces) or "- (none configured yet)"
+        workspaces="\n".join(f"- {w}" for w in workspaces) or "- (none configured yet)",
+        sandbox_rule=_sandbox_rule(sandbox),
     )
     messages: list[dict[str, Any]] = [{"role": "user", "content": task}]
     always_allowed: set[str] = set()
@@ -260,6 +276,13 @@ async def run_agent(
                         yield {"checkpoint": info}
                 checkpointed = True
 
+            # Refusals known up front never reach the approval sheet.
+            refusal = agent_tools.precheck(tool, arguments) if is_builtin else None
+            if refusal:
+                yield {"tool_result": {"tool": tool, "result": refusal, "ok": False}}
+                messages.append({"role": "tool", "tool_name": tool, "content": refusal})
+                continue
+
             # Approval gate.
             requires = (
                 agent_tools.needs_approval(tool, arguments) if is_builtin else True
@@ -282,6 +305,7 @@ async def run_agent(
                         "summary": summary,
                         "detail": detail,
                         "timeout_seconds": APPROVAL_TIMEOUT_SECONDS,
+                        "sandbox": agent_tools.sandbox_event(tool, arguments),
                     }
                 }
                 try:

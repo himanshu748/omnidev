@@ -21,6 +21,8 @@ final class ChatStore: ObservableObject {
     @Published var toolsEnabled = false
     @Published var knowledgeEnabled = false
     @Published var agentEnabled = false
+    /// Fetched when agent mode is on, so the input bar can show how commands run.
+    @Published var sandboxStatus: BackendClient.AgentSandboxStatus?
 
     var sessionId: String?
     var activeStream: Task<Void, Never>?
@@ -90,6 +92,10 @@ struct ChatView: View {
         }
         .onAppear {
             inputFocused = true
+            if store.agentEnabled { refreshSandbox() }
+        }
+        .onChange(of: store.agentEnabled) { enabled in
+            if enabled { refreshSandbox() }
         }
         .sheet(item: $store.pendingApproval) { approval in
             ApprovalSheet(approval: approval) { decision in
@@ -147,12 +153,14 @@ struct ChatView: View {
             }
             .toggleStyle(.button)
             .help("Let the model call tools from enabled MCP servers")
+            .accessibilityLabel("Tools")
 
             Toggle(isOn: $store.knowledgeEnabled) {
                 Image(systemName: "books.vertical")
             }
             .toggleStyle(.button)
             .help("Ground answers in your local knowledge index (cites files)")
+            .accessibilityLabel("Knowledge")
 
             Toggle(isOn: $store.agentEnabled) {
                 Image(systemName: "wand.and.rays")
@@ -160,6 +168,11 @@ struct ChatView: View {
             .toggleStyle(.button)
             .disabled(store.isStreaming)
             .help("Agent mode: let the model read, edit and verify files step by step")
+            .accessibilityLabel("Agent mode")
+
+            if store.agentEnabled, let sandbox = store.sandboxStatus {
+                SandboxIndicator(status: sandbox)
+            }
 
             TextField(store.agentEnabled ? "Give the agent a task…" : "Message the local model…",
                       text: $store.draft, axis: .vertical)
@@ -190,6 +203,13 @@ struct ChatView: View {
 
     private func newChat() {
         store.reset()
+    }
+
+    private func refreshSandbox() {
+        let client = manager.backendClient
+        Task {
+            store.sandboxStatus = try? await client.agentSandbox()
+        }
     }
 
     private func send() {
@@ -265,15 +285,18 @@ struct ChatView: View {
             do {
                 for try await event in client.agentStream(task: task, useMCP: useMCP) {
                     switch event {
-                    case .started(let model, let workspaces, let tools):
+                    case .started(let model, let workspaces, let tools, let sandbox):
                         let where_ = workspaces.isEmpty
                             ? "no workspaces yet"
                             : "\(workspaces.count) workspace\(workspaces.count == 1 ? "" : "s")"
-                        store.insertBeforeAnswer(ChatMessage(
-                            role: .tool,
-                            text: "🤖 agent on \(model.isEmpty ? "local model" : model) · "
-                                + "\(where_) · \(tools.count) tools"
-                        ))
+                        var line = "🤖 agent on \(model.isEmpty ? "local model" : model) · "
+                            + "\(where_) · \(tools.count) tools"
+                        if let sandbox {
+                            line += sandbox.active
+                                ? "\n🛡 commands sandboxed · network \(sandbox.network ? "on" : "off")"
+                                : "\n⚠︎ \(sandbox.summary)"
+                        }
+                        store.insertBeforeAnswer(ChatMessage(role: .tool, text: line))
                     case .step(let number, let thought):
                         let trimmed = thought.trimmingCharacters(in: .whitespacesAndNewlines)
                         guard !trimmed.isEmpty else { break }
@@ -393,6 +416,7 @@ private struct ApprovalSheet: View {
                 Image(systemName: "hand.raised.fill")
                     .font(.title2)
                     .foregroundStyle(Color.omniAccent)
+                    .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("The agent wants permission")
                         .font(.headline)
@@ -406,6 +430,10 @@ private struct ApprovalSheet: View {
                 .font(.body.weight(.medium))
                 .textSelection(.enabled)
                 .fixedSize(horizontal: false, vertical: true)
+
+            if let sandbox = approval.sandbox {
+                SandboxBanner(sandbox: sandbox)
+            }
 
             if !approval.detail.isEmpty {
                 ScrollView {
@@ -432,5 +460,48 @@ private struct ApprovalSheet: View {
         }
         .padding(20)
         .frame(width: 520)
+    }
+}
+
+/// Input-bar badge for agent mode: whether shell commands run sandboxed.
+private struct SandboxIndicator: View {
+    let status: BackendClient.AgentSandboxStatus
+
+    var body: some View {
+        Image(systemName: status.active ? "lock.shield.fill" : "exclamationmark.shield.fill")
+            .foregroundStyle(status.active ? Color.green : Color.orange)
+            .help(status.summary)
+            .accessibilityLabel(status.active
+                                ? "Agent commands are sandboxed"
+                                : "Agent commands are not sandboxed")
+            .accessibilityHint(status.summary)
+    }
+}
+
+/// States plainly, before the user decides, how far a command can reach.
+private struct SandboxBanner: View {
+    let sandbox: BackendClient.AgentSandboxInfo
+
+    private var tint: Color { sandbox.active ? .green : .orange }
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Image(systemName: sandbox.active ? "lock.shield.fill" : "exclamationmark.shield.fill")
+                .foregroundStyle(tint)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(sandbox.active ? "Runs in the sandbox" : "Not sandboxed")
+                    .font(.callout.weight(.semibold))
+                Text(sandbox.summary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .accessibilityElement(children: .combine)
     }
 }

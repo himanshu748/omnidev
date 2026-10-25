@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 
 from fastapi import APIRouter
@@ -13,11 +14,13 @@ from app.schemas.agent import (
     ApprovalDecisionRequest,
     PendingApproval,
     PendingApprovalsResponse,
+    SandboxStatus,
+    SandboxUpdateRequest,
     WorkspaceCreateRequest,
     WorkspaceInfo,
     WorkspaceListResponse,
 )
-from app.services import agent_backups, agent_service, workspace_service
+from app.services import agent_backups, agent_service, command_sandbox, workspace_service
 from app.services.ai_service import AIConfigurationError, ensure_ai_configured
 
 router = APIRouter()
@@ -109,3 +112,21 @@ async def remove_workspace(path: str):
     if not await workspace_service.remove_workspace_async(path):
         raise not_found("That folder is not a workspace.")
     return {"removed": path}
+
+
+@router.get("/sandbox", response_model=SandboxStatus)
+async def sandbox_status(refresh: bool = False):
+    """How agent commands are confined, and whether the OS sandbox is available."""
+    return SandboxStatus(**await asyncio.to_thread(command_sandbox.status, refresh=refresh))
+
+
+@router.post("/sandbox", response_model=SandboxStatus)
+async def update_sandbox(body: SandboxUpdateRequest):
+    """Change the sandbox mode, network access, or auto-approval."""
+    await asyncio.to_thread(
+        command_sandbox.update_settings,
+        mode=body.mode,
+        network=body.network,
+        auto_approve=body.auto_approve,
+    )
+    return SandboxStatus(**await asyncio.to_thread(command_sandbox.status))
