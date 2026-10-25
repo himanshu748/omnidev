@@ -24,7 +24,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from app.services import agent_backups, knowledge_service, workspace_service
+from app.services import agent_backups, command_sandbox, knowledge_service, workspace_service
 
 MAX_READ_CHARS = 60_000
 MAX_WRITE_CHARS = 400_000
@@ -235,12 +235,13 @@ def target_path(tool: str, arguments: dict[str, Any]) -> Path | None:
 
 def needs_approval(tool: str, arguments: dict[str, Any]) -> bool:
     """
-    run_command always asks. Other tools ask only outside a workspace.
+    run_command asks unless the user opted to auto-approve sandboxed
+    commands inside a workspace. Other tools ask only outside a workspace.
     Reads outside a workspace still ask, because reading a stranger's
     private file is exactly what a user would want to be told about.
     """
     if tool == "run_command":
-        return True
+        return not command_sandbox.auto_approves(target_path(tool, arguments))
     if tool == "search_knowledge":
         return False
     # Overwriting existing content always asks, workspace or not.
@@ -256,11 +257,22 @@ def describe(tool: str, arguments: dict[str, Any]) -> tuple[str, str]:
     """(summary, detail) shown in the approval sheet."""
     if tool == "run_command":
         argv = " ".join([str(arguments.get("command", ""))] + list(arguments.get("args") or []))
+        cwd = target_path(tool, arguments)
+        plan = command_sandbox.plan_for(cwd) if cwd is not None else None
+        if plan is not None and plan.active:
+            risk = plan.summary() + (
+                "\n\nReview the complete command: tests, scripts, package managers and "
+                "interpreters run project code, which can still change files in the "
+                "writable workspace."
+            )
+        else:
+            risk = (
+                "NOT SANDBOXED. This runs local or project code with your account's full "
+                "permissions. Review the complete command: code executed by tests, scripts, "
+                "package managers, or interpreters can read and modify any of your files."
+            )
         return f"Run: {argv}", (
-            f"Working directory:\n{arguments.get('cwd', '')}\n\n"
-            "This runs local or project code with your macOS account's permissions. "
-            "Review the complete command: code executed by tests, scripts, package "
-            "managers, or interpreters can modify files."
+            f"Working directory:\n{arguments.get('cwd', '')}\n\n{risk}"
         )
     if tool == "write_file":
         content = str(arguments.get("content", ""))
@@ -456,38 +468,77 @@ def _run_command(command: str, args: list[str], cwd_raw: str) -> str:
     cwd = resolve_path(cwd_raw)
     if not cwd.is_dir():
         raise ToolError(f"Working directory does not exist: {cwd}")
+    plan = command_sandbox.plan_for(cwd)
+    if plan.refusal:
+        raise ToolError(plan.refusal)
     executable = shutil.which(command)
     if executable is None:
         raise ToolError(f"{command} is not installed on this machine.")
+    args = command_sandbox.adjust_args(command, args, plan)
 
-    env = {
-        "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin",
-        "HOME": str(Path.home()),
-        "LANG": "en_US.UTF-8",
-        "GIT_TERMINAL_PROMPT": "0",
-        "GIT_CONFIG_NOSYSTEM": "1",
-    }
-    try:
-        proc = subprocess.run(
-            [executable, *args],
-            cwd=cwd,
-            env=env,
-            capture_output=True,
-            text=True,
-            timeout=COMMAND_TIMEOUT_SECONDS,
-        )
-    except subprocess.TimeoutExpired:
-        raise ToolError(
-            f"{command} timed out after {COMMAND_TIMEOUT_SECONDS}s."
-        ) from None
-    except OSError as exc:
-        raise ToolError(f"Could not run {command}: {exc}") from exc
+    with command_sandbox.scratch_dir() as scratch:
+        env = {
+            "PATH": "/usr/bin:/bin:/usr/sbin:/sbin:/opt/homebrew/bin:/usr/local/bin",
+            "HOME": str(Path.home()),
+            "LANG": "en_US.UTF-8",
+            "TMPDIR": str(scratch),
+            "GIT_TERMINAL_PROMPT": "0",
+            "GIT_CONFIG_NOSYSTEM": "1",
+        }
+        argv = command_sandbox.wrap(plan, [executable, *args], cwd, scratch)
+        try:
+            proc = subprocess.run(
+                argv,
+                cwd=cwd,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=COMMAND_TIMEOUT_SECONDS,
+            )
+        except subprocess.TimeoutExpired:
+            raise ToolError(
+                f"{command} timed out after {COMMAND_TIMEOUT_SECONDS}s."
+            ) from None
+        except OSError as exc:
+            raise ToolError(f"Could not run {command}: {exc}") from exc
 
     output = (proc.stdout or "") + (("\n" + proc.stderr) if proc.stderr else "")
     output = output.strip() or "(no output)"
     if len(output) > COMMAND_OUTPUT_MAX_CHARS:
         output = output[:COMMAND_OUTPUT_MAX_CHARS] + "\n…(truncated)"
-    return f"exit code {proc.returncode}\n{output}"
+    tag = " (sandboxed)" if plan.active else " (not sandboxed)"
+    return (
+        f"exit code {proc.returncode}{tag}\n{output}"
+        + command_sandbox.denial_hint(plan, proc.returncode, output)
+    )
+
+
+def precheck(tool: str, arguments: dict[str, Any]) -> str | None:
+    """
+    A refusal known before asking the user, so nobody is prompted to approve
+    a command that would be refused anyway.
+    """
+    if tool != "run_command":
+        return None
+    try:
+        _check_command(
+            str(arguments.get("command", "")),
+            [str(a) for a in (arguments.get("args") or [])],
+        )
+    except ToolError as exc:
+        return str(exc)
+    cwd = target_path(tool, arguments)
+    if cwd is None:
+        return "cwd is required and must be an absolute path."
+    return command_sandbox.plan_for(cwd).refusal
+
+
+def sandbox_event(tool: str, arguments: dict[str, Any]) -> dict[str, Any] | None:
+    """The sandbox a command would run in, for approval and result events."""
+    if tool != "run_command":
+        return None
+    cwd = target_path(tool, arguments)
+    return command_sandbox.plan_for(cwd).as_event() if cwd is not None else None
 
 
 async def _search_knowledge(query: str, top_k: int = 5) -> str:

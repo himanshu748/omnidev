@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -40,3 +42,23 @@ class WorkspaceInfo(BaseModel):
 
 class WorkspaceListResponse(BaseModel):
     workspaces: list[WorkspaceInfo]
+
+
+class SandboxStatus(BaseModel):
+    mode: Literal["enforce", "off"]
+    network: bool
+    auto_approve: bool
+    backend: str | None = None
+    backend_label: str = ""
+    available: bool
+    active: bool
+    reason: str = ""
+    summary: str = ""
+    protected_paths: list[str] = []
+    writable_caches: list[str] = []
+
+
+class SandboxUpdateRequest(BaseModel):
+    mode: Literal["enforce", "off"] | None = None
+    network: bool | None = None
+    auto_approve: bool | None = None

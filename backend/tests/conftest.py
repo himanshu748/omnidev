@@ -61,6 +61,8 @@ EXPECTED_ENDPOINTS = [
     "POST /api/agent/workspaces",
     "DELETE /api/agent/workspaces",
     "POST /api/agent/approvals",
+    "GET /api/agent/sandbox",
+    "POST /api/agent/sandbox",
 ]
 
 
