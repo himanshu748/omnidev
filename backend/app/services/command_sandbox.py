@@ -12,9 +12,10 @@ Policy, identical on every backend:
   per-command scratch dir, the per-user temp/cache dirs, and build-tool caches.
   A command whose working directory is outside every workspace gets no project
   write access at all.
-- Inside the writable workspace, .git/hooks and .git/config stay read-only, and
-  the .git entry itself cannot be renamed, so sandboxed code cannot plant
-  something that git would run later outside the sandbox.
+- Every repository's .git/hooks and .git/config stay read-only, and no .git
+  can be renamed or created, so sandboxed code cannot plant a hook or config
+  that git would run later outside the sandbox. Seatbelt matches these by
+  path pattern; bubblewrap mount-pins every repository found in the workspace.
 - Secrets (SSH/GPG keys, cloud and registry credentials, keychains, browser and
   password-manager data, OmniDev's own data dir) can be neither read nor
   written.
@@ -224,23 +225,57 @@ def writable_root_for(cwd: Path) -> Path | None:
     return best
 
 
-def protected_git_paths(cwd: Path, root: Path | None) -> tuple[list[Path], list[Path]]:
-    """(subtrees, exact entries) that stay read-only inside the writable root."""
+# Generated trees that never hold the user's own repositories.
+_GIT_SCAN_SKIP = {
+    "node_modules", ".build", ".venv", "venv", "__pycache__", "dist", "build",
+    "target", ".next", ".nuxt", "Pods", "DerivedData", ".tox", ".cache",
+}
+GIT_SCAN_MAX_DIRS = 20_000
+
+
+def git_entries_under(root: Path | None) -> list[Path]:
+    """Every .git (directory or worktree file) inside the writable root."""
     if root is None:
-        return [], []
-    subtrees: list[Path] = []
-    entries: list[Path] = []
-    current = _real(cwd)
-    while True:
-        git = current / ".git"
-        if git.exists():
-            entries.append(git)
-            if git.is_dir():
-                subtrees += [git / "hooks", git / "config"]
-        if current == root or root not in current.parents:
+        return []
+    found: list[Path] = []
+    for seen, (dirpath, dirnames, filenames) in enumerate(os.walk(root)):
+        if seen >= GIT_SCAN_MAX_DIRS:
             break
-        current = current.parent
-    return subtrees, entries
+        if ".git" in dirnames or ".git" in filenames:
+            found.append(Path(dirpath) / ".git")
+        dirnames[:] = [d for d in dirnames if d != ".git" and d not in _GIT_SCAN_SKIP]
+    return found
+
+
+def bubblewrap_git_mounts(root: Path | None, entries: list[Path]) -> list[str]:
+    """
+    Bind mounts cannot be renamed (EBUSY), so pin each .git, its repository
+    directory and every directory up to the root: nothing can be moved aside to
+    make room for a planted repository. Hooks and config are then remounted
+    read-only on top.
+    """
+    if root is None:
+        return []
+    pinned: list[Path] = []
+    for entry in entries:
+        current = entry.parent
+        while current != root and root in current.parents:
+            if current not in pinned:
+                pinned.append(current)
+            current = current.parent
+    # Parents before children, so child mounts land on top.
+    args: list[str] = []
+    for path in sorted(pinned, key=lambda p: len(p.parts)):
+        args += ["--bind", str(path), str(path)]
+    for entry in entries:
+        if entry.is_dir():
+            args += ["--bind", str(entry), str(entry)]
+            for name in ("hooks", "config"):
+                if (entry / name).exists():
+                    args += ["--ro-bind", str(entry / name), str(entry / name)]
+        else:
+            args += ["--ro-bind", str(entry), str(entry)]
+    return args
 
 
 @dataclass
@@ -251,8 +286,8 @@ class SandboxPlan:
     writable_root: Path | None
     reason: str = ""
     extra_writable: list[Path] = field(default_factory=list)
-    protected: list[Path] = field(default_factory=list)
-    protected_entries: list[Path] = field(default_factory=list)
+    # bubblewrap only; Seatbelt protects .git by path pattern instead.
+    git_entries: list[Path] = field(default_factory=list)
 
     @property
     def active(self) -> bool:
@@ -313,7 +348,8 @@ def plan_for(cwd: Path) -> SandboxPlan:
         if backend == SEATBELT:
             extra += _darwin_user_dirs()
         plan.extra_writable = extra
-        plan.protected, plan.protected_entries = protected_git_paths(cwd, root)
+        if backend == BUBBLEWRAP:
+            plan.git_entries = git_entries_under(root)
     return plan
 
 
@@ -354,11 +390,17 @@ def seatbelt_profile(plan: SandboxPlan, scratch: Path) -> tuple[str, dict[str, s
     ]
     lines += [f"    (subpath {param('WRITE', p)})" for p in writable]
     lines.append(")")
-    if plan.protected or plan.protected_entries:
-        lines.append("(deny file-write*")
-        lines += [f"    (subpath {param('PROTECT', p)})" for p in plan.protected]
-        lines += [f"    (literal {param('ENTRY', p)})" for p in plan.protected_entries]
-        lines.append(")")
+    # Any .git anywhere: hooks and config read-only, and no .git may be
+    # created, renamed or replaced. Patterns, not paths, so moving a repository
+    # aside cannot shed the protection.
+    lines += [
+        "(deny file-write*",
+        '    (regex #"^.*/\\.git$")',
+        '    (regex #"^.*/\\.git/hooks$")',
+        '    (regex #"^.*/\\.git/hooks/.*$")',
+        '    (regex #"^.*/\\.git/config$")',
+        ")",
+    ]
     lines.append("(deny file-read* file-write*")
     lines += [f"    (subpath {param('SECRET', p)})" for p in secret_paths()]
     lines.append(")")
@@ -391,9 +433,7 @@ def bubblewrap_args(plan: SandboxPlan, scratch: Path, cwd: Path) -> list[str]:
         if path.exists():
             args += ["--bind", str(path), str(path)]
     # Later mounts win, so protections go after the writable binds.
-    for path in plan.protected:
-        if path.exists():
-            args += ["--ro-bind", str(path), str(path)]
+    args += bubblewrap_git_mounts(plan.writable_root, plan.git_entries)
     for path in secret_paths():
         if path.is_dir():
             args += ["--tmpfs", str(path)]

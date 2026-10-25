@@ -88,21 +88,22 @@ def test_only_the_containing_workspace_is_writable(tmp_path, monkeypatch):
     assert command_sandbox.writable_root_for(tmp_path) is None
 
 
-def test_git_metadata_inside_workspace_is_protected(workspace, fake_backend):
-    fake_backend(command_sandbox.SEATBELT)
-    (workspace / ".git" / "hooks").mkdir(parents=True)
-    sub = workspace / "pkg"
-    sub.mkdir()
-    plan = command_sandbox.plan_for(sub)
-    assert workspace / ".git" / "hooks" in plan.protected
-    assert workspace / ".git" / "config" in plan.protected
-    assert workspace / ".git" in plan.protected_entries
+def test_bubblewrap_finds_every_repository_in_the_workspace(workspace, fake_backend):
+    fake_backend(command_sandbox.BUBBLEWRAP)
+    (workspace / ".git").mkdir()
+    (workspace / "apps" / "web" / ".git").mkdir(parents=True)
+    (workspace / "node_modules" / "dep" / ".git").mkdir(parents=True)
+    (workspace / "wt").mkdir()
+    (workspace / "wt" / ".git").write_text("gitdir: elsewhere\n")
+    plan = command_sandbox.plan_for(workspace / "apps")
+    assert set(plan.git_entries) == {
+        workspace / ".git", workspace / "apps" / "web" / ".git", workspace / "wt" / ".git",
+    }
 
 
 # ── Profile generation ──────────────────────────────────────
 def test_seatbelt_profile_network_off(workspace, fake_backend, tmp_path):
     fake_backend(command_sandbox.SEATBELT)
-    (workspace / ".git").mkdir()
     plan = command_sandbox.plan_for(workspace)
     profile, params = command_sandbox.seatbelt_profile(plan, tmp_path / "scratch")
     assert "(deny network*)" in profile
@@ -110,7 +111,7 @@ def test_seatbelt_profile_network_off(workspace, fake_backend, tmp_path):
     assert str(workspace) not in profile
     assert str(workspace) in params.values()
     # Last match wins: protections must come after the writable allow-list.
-    assert profile.index("(allow file-write*") < profile.index('(param "PROTECT_0")')
+    assert profile.index("(allow file-write*") < profile.index('(regex #"^.*/\\.git/hooks$")')
     assert profile.index("(allow file-write*") < profile.index("(deny file-read* file-write*")
     secrets = [v for k, v in params.items() if k.startswith("SECRET_")]
     assert str(Path(os.path.realpath(Path.home())) / ".ssh") in secrets
@@ -134,14 +135,25 @@ def test_bubblewrap_args(workspace, fake_backend, tmp_path, monkeypatch):
     secret_file = tmp_path / "token"
     secret_file.write_text("x")
     monkeypatch.setattr(command_sandbox, "secret_paths", lambda: [secret_dir, secret_file])
-    (workspace / ".git" / "hooks").mkdir(parents=True)
+    app = workspace / "group" / "app"
+    (app / ".git" / "hooks").mkdir(parents=True)
     plan = command_sandbox.plan_for(workspace)
     args = command_sandbox.bubblewrap_args(plan, tmp_path, workspace)
     joined = " ".join(args)
     assert "--unshare-net" in args
     assert f"--bind {workspace} {workspace}" in joined
-    hooks = workspace / ".git" / "hooks"
-    assert joined.index(f"--bind {workspace} ") < joined.index(f"--ro-bind {hooks} {hooks}")
+    hooks = app / ".git" / "hooks"
+    # Every directory between the root and the repository is pinned, then
+    # .git, then hooks read-only on top.
+    order = [
+        f"--bind {workspace} {workspace}",
+        f"--bind {workspace / 'group'} {workspace / 'group'}",
+        f"--bind {app} {app}",
+        f"--bind {app / '.git'} {app / '.git'}",
+        f"--ro-bind {hooks} {hooks}",
+    ]
+    positions = [joined.index(item) for item in order]
+    assert positions == sorted(positions)
     assert f"--tmpfs {secret_dir}" in joined
     assert f"--ro-bind /dev/null {secret_file}" in joined
     assert args[-1] == "--" and args[-2] == str(workspace)
@@ -362,6 +374,84 @@ async def test_real_sandbox_protects_git_hooks_and_config(workspace):
     assert "WROTE" not in result and "MOVED" not in result, result
     assert not (hooks / "pre-commit").exists()
     assert (workspace / ".git" / "config").read_text() == "[core]\n"
+
+
+def _git(repo: Path, *args: str) -> None:
+    import subprocess
+
+    subprocess.run(["git", *args], cwd=repo, check=True, capture_output=True)
+
+
+def _init_repo(repo: Path) -> None:
+    repo.mkdir(parents=True, exist_ok=True)
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "OmniDev Test")
+    _git(repo, "config", "user.email", "test@example.com")
+
+
+@needs_sandbox
+@pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
+@pytest.mark.asyncio
+async def test_real_sandbox_git_add_and_commit_still_work(workspace):
+    _init_repo(workspace)
+    (workspace / "a.txt").write_text("a\n")
+    for args in (["add", "a.txt"], ["commit", "-q", "-m", "sandboxed commit"]):
+        result = await agent_tools.call_tool(
+            "run_command", {"command": "git", "args": args, "cwd": str(workspace)}
+        )
+        assert "exit code 0 (sandboxed)" in result, result
+    log = await agent_tools.call_tool(
+        "run_command", {"command": "git", "args": ["log", "--oneline"], "cwd": str(workspace)}
+    )
+    assert "sandboxed commit" in log
+
+
+@needs_sandbox
+@pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
+@pytest.mark.asyncio
+async def test_real_sandbox_protects_other_repos_and_blocks_planting(workspace):
+    app, other = workspace / "app", workspace / "other"
+    _init_repo(app)
+    _init_repo(other)
+    result = await _py(
+        app,
+        "import os\n"
+        f"other = {str(other)!r}\n"
+        f"app = {str(app)!r}\n"
+        "for p in ('.git/hooks/post-checkout', '.git/config'):\n"
+        "    try:\n"
+        "        open(os.path.join(other, p), 'a').write('evil'); print('WROTE', p)\n"
+        "    except OSError:\n"
+        "        print('BLOCKED', p)\n"
+        "try:\n"
+        "    os.rename(app, app + '-old')\n"
+        "except OSError:\n"
+        "    pass\n"
+        "try:\n"
+        "    os.makedirs(os.path.join(app, '.git', 'hooks'), exist_ok=True)\n"
+        "    open(os.path.join(app, '.git', 'hooks', 'post-checkout'), 'w').write('evil')\n"
+        "    print('PLANTED')\n"
+        "except OSError:\n"
+        "    print('BLOCKED plant')\n",
+    )
+    assert "WROTE" not in result and "PLANTED" not in result, result
+    assert not (other / ".git" / "hooks" / "post-checkout").exists()
+
+
+@needs_sandbox
+@pytest.mark.skipif(sys.platform != "darwin", reason="creating new .git is pattern-blocked by Seatbelt only")
+@pytest.mark.asyncio
+async def test_real_sandbox_blocks_creating_a_repository(workspace):
+    result = await _py(
+        workspace,
+        "import os\n"
+        "try:\n"
+        "    os.makedirs('.git/hooks'); print('CREATED')\n"
+        "except OSError:\n"
+        "    print('BLOCKED')\n",
+    )
+    assert "CREATED" not in result, result
+    assert not (workspace / ".git").exists()
 
 
 @needs_sandbox
