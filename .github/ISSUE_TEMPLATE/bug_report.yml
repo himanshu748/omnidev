@@ -1,0 +1,87 @@
+name: Bug report
+description: Something in OmniDev isn't working as expected
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please search [existing issues](https://github.com/himanshu748/omnidev/issues) first.
+        **Security vulnerabilities must not be filed here.** See [SECURITY.md](https://github.com/himanshu748/omnidev/blob/main/SECURITY.md).
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open the Knowledge module
+        2. Add folder ~/Projects/demo
+        3. Search for "..."
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: dropdown
+    id: module
+    attributes:
+      label: Affected area
+      options:
+        - Agent
+        - Knowledge
+        - Chat
+        - DevOps Agent
+        - Code Gen
+        - Web Scraper
+        - Vision Lab
+        - Cloud Storage
+        - Models / Ollama
+        - MCP server
+        - macOS app shell (onboarding, settings, menu bar)
+        - Install / build
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: How are you running OmniDev?
+      options:
+        - Downloaded app (DMG / zip)
+        - Built from source (make mac)
+        - Backend only (make backend)
+        - MCP server (make mcp)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: OmniDev version or commit
+      placeholder: "v0.7.1 or abc1234"
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: macOS version and chip
+      placeholder: "macOS 15.1, Apple M2, 16 GB"
+  - type: input
+    id: provider
+    attributes:
+      label: AI provider and model
+      placeholder: "ollama gemma4:12b, or gemini"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and screenshots
+      description: Launcher log (`.omnidev-macos/launcher.log` for source builds), backend output, or screenshots. **Remove API keys, file paths, or anything private.**
+      render: shell

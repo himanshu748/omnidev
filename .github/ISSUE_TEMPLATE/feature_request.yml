@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest an idea or improvement for OmniDev
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do, and what gets in the way today?
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: What should OmniDev do? Name the module or endpoint if you know it.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: checkboxes
+    id: local-first
+    attributes:
+      label: Local-first fit
+      options:
+        - label: This works fully offline with Ollama, or any cloud use is an explicit opt-in.
+        - label: This doesn't weaken an existing safety guard (agent approvals, index exclusions, SSRF guard, Code Gen no-execute).
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to implement this myself.
