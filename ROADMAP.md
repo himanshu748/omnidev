@@ -38,4 +38,4 @@ landing real artifacts on disk.
 - [ ] Optional sandboxed code execution (Docker/nsjail, network-off, resource-limited)
 - [ ] MCP server surface so other agents can drive OmniDev
 
-Have an idea? Open a [feature request](.github/ISSUE_TEMPLATE/feature_request.md).
+Have an idea? Open a [feature request](https://github.com/himanshu748/omnidev/issues/new?template=feature_request.yml), or see [CONTRIBUTING.md](CONTRIBUTING.md) to pick up an open issue.
