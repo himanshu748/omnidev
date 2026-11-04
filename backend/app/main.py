@@ -110,18 +110,39 @@ app = FastAPI(
 _LOOPBACK_HOSTS = {"127.0.0.1", "::1", "::ffff:127.0.0.1"}
 
 
+# A loopback client address alone is not enough: with DNS rebinding a web page
+# reaches 127.0.0.1 under an attacker's hostname. Browsers always send that
+# hostname, so the Host header must name loopback too.
+_LOOPBACK_NAMES = {"localhost", "127.0.0.1", "::1"}
+
+
+def _host_name(host_header: str) -> str:
+    host = host_header.strip().lower()
+    if host.startswith("["):  # [::1]:8000
+        return host[1 : host.find("]")] if "]" in host else host
+    return host.rsplit(":", 1)[0] if host.count(":") == 1 else host
+
+
 @app.middleware("http")
 async def _loopback_only(request, call_next):
     if not settings.allow_remote_clients:
+        from fastapi.responses import JSONResponse
+
         client = request.client.host if request.client else None
         if client not in _LOOPBACK_HOSTS:
-            from fastapi.responses import JSONResponse
-
             return JSONResponse(
                 status_code=403,
                 content={
                     "detail": "OmniDev's API is loopback-only. Set ALLOW_REMOTE_CLIENTS=1 "
                     "to allow remote access (not recommended — the API has no authentication)."
+                },
+            )
+        if _host_name(request.headers.get("host", "")) not in _LOOPBACK_NAMES:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": "OmniDev's API only answers to localhost, 127.0.0.1 or [::1] "
+                    "in the Host header (DNS rebinding protection)."
                 },
             )
     return await call_next(request)

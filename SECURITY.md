@@ -30,6 +30,9 @@ notes unless you prefer to remain anonymous.
 
 OmniDev already defends the areas most relevant to a local AI cockpit:
 
+- **DNS rebinding** — the loopback-only API also requires a loopback name
+  (`localhost`, `127.0.0.1`, `[::1]`) in the `Host` header, so a web page cannot
+  reach it through a hostname that resolves to `127.0.0.1`.
 - **SSRF** — the Web Scraper and Site Preview validate every target URL and
   refuse loopback, private, link-local, reserved, and cloud-metadata addresses
   (`169.254.169.254`, `localhost`, `10/8`, `192.168/16`, etc.).
