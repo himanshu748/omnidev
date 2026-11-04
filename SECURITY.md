@@ -8,8 +8,8 @@ on your machine, and no data leaves it unless you connect a cloud provider
 
 | Version | Supported |
 |---------|-----------|
-| 0.3.x   | ✅        |
-| < 0.3   | ❌        |
+| 0.7.x   | ✅        |
+| < 0.7   | ❌        |
 
 ## Reporting a vulnerability
 

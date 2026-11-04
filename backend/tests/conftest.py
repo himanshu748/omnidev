@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 
+from app import __version__
 from app.config import settings
 from app.routers import (
     agent,
@@ -70,7 +71,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="OmniDev",
         description="Local-first AI developer cockpit",
-        version="0.3.0",
+        version=__version__,
     )
     app.add_middleware(
         CORSMiddleware,
@@ -105,6 +106,7 @@ def create_app() -> FastAPI:
         return {
             "status": "ok",
             "service": "omnidev",
+            "version": __version__,
             "ai_provider": ai_provider,
             "ai_model": ai_model,
         }

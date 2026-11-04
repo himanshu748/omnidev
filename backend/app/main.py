@@ -14,6 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright, Playwright, Browser
 
+from app import __version__
 from app.config import settings
 from mcp.server.fastmcp.server import StreamableHTTPASGIApp
 from starlette.routing import Route
@@ -99,8 +100,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 # ── App ─────────────────────────────────────────────────────
 app = FastAPI(
     title="OmniDev",
-    description="All-in-One AI Developer Platform",
-    version="0.3.0",
+    description="Local-first AI developer cockpit",
+    version=__version__,
     lifespan=lifespan,
 )
 
@@ -224,6 +225,7 @@ async def health():
     return {
         "status": "ok",
         "service": "omnidev",
+        "version": __version__,
         "ai_provider": ai_provider,
         "ai_model": ai_model,
     }
