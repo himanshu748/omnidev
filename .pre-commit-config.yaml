@@ -1,0 +1,28 @@
+# Optional local checks: `uvx pre-commit install` (or `pipx run pre-commit install`).
+# CI runs the same Ruff version from backend/requirements.lock.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: ^site/vendor/
+      - id: check-added-large-files
+        args: ["--maxkb=1024"]
+        exclude: ^(docs/.*\.gif|site/.*\.mp4)$
+      - id: check-merge-conflict
+      - id: detect-private-key
+        # Fixtures and detectors that contain key headers on purpose.
+        exclude: ^(backend/tests/test_codegen\.py|backend/app/services/codegen_service\.py|docs/probes/live_v7\.py)$
+      - id: end-of-file-fixer
+        exclude: ^(site/vendor/|site/.*graft-adapter\.js(\.sha256)?$)
+      - id: trailing-whitespace
+        exclude: ^(site/vendor/|site/.*graft-adapter\.js(\.sha256)?$|.*\.md$)
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.3
+    hooks:
+      - id: ruff-check
+        args: ["--config", "backend/ruff.toml"]
+        files: ^backend/

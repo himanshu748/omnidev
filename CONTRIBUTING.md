@@ -84,6 +84,14 @@ make help         # every target
 
 When you run from source, the app's launcher log is written to `.omnidev-macos/launcher.log` in the repository root.
 
+### Editor and pre-commit (optional)
+
+`.editorconfig` sets indentation and line endings for every editor. To run the same quick checks before each commit (whitespace, YAML/TOML/JSON, private keys, Ruff):
+
+```bash
+uvx pre-commit install        # or: pipx run pre-commit install
+```
+
 ## Project map
 
 ```text

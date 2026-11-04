@@ -13,7 +13,7 @@ ignore = [
 
 [lint.per-file-ignores]
 # Tests import after monkeypatching or path setup on purpose.
-"tests/**" = ["E402"]
+"**/tests/**" = ["E402"]
 
 [lint.isort]
-known-first-party = ["app"]
+known-first-party = ["app", "tests"]
