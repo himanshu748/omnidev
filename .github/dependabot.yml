@@ -1,0 +1,15 @@
+# Weekly update PRs for the SHA-pinned GitHub Actions. Python dependencies are
+# a uv-compiled hashed lock (backend/requirements.lock), which Dependabot's pip
+# updater does not regenerate; refresh it with the command in CONTRIBUTING.md.
+# Dependabot security alerts still cover the lock through the dependency graph.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: ci
