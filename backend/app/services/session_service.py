@@ -100,12 +100,30 @@ def _context_messages_sync(session_id: str) -> list[dict[str, str]]:
     budget = CONTEXT_CHAR_BUDGET
     kept: list[dict[str, str]] = []
     for row in rows:  # newest → oldest
-        budget -= len(row["content"])
-        if budget < 0 and kept:
+        content = row["content"]
+        if len(content) > budget:
+            # Only the newest message is ever cut, keeping its tail (the most
+            # recent text); older ones that do not fit end the replay.
+            if not kept:
+                kept.append({"role": row["role"], "content": _truncate_head(content, budget)})
             break
-        kept.append({"role": row["role"], "content": row["content"]})
+        budget -= len(content)
+        kept.append({"role": row["role"], "content": content})
     kept.reverse()
     return kept
+
+
+TRUNCATION_MARKER = "[…earlier part of this message omitted to fit the context budget]\n"
+
+
+def _truncate_head(content: str, limit: int) -> str:
+    """Keep the end of `content` so the result, marker included, fits `limit`."""
+    if len(content) <= limit:
+        return content
+    room = limit - len(TRUNCATION_MARKER)
+    if room <= 0:
+        return content[-limit:] if limit > 0 else ""
+    return TRUNCATION_MARKER + content[-room:]
 
 
 def _list_sessions_sync(limit: int) -> list[dict]:

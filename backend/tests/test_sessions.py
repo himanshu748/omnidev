@@ -119,3 +119,28 @@ async def test_session_endpoints(client, monkeypatch, coverage_tracker):
     deleted = await client.delete(f"/api/chat/sessions/{session_id}")
     assert deleted.status_code == 200
     assert (await client.get(f"/api/chat/sessions/{session_id}")).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_oversized_newest_message_is_truncated_to_the_budget():
+    """Regression for #22: replay never exceeds the budget, stored history stays whole."""
+    session_id = await session_service.create_session("budget test")
+    await session_service.append_message(session_id, "user", "short question")
+    await session_service.append_message(session_id, "assistant", "head-" + "x" * 50_000 + "-tail")
+    context = await session_service.context_messages(session_id)
+    assert len(context) == 1 and context[0]["role"] == "assistant"
+    replayed = context[0]["content"]
+    assert len(replayed) <= session_service.CONTEXT_CHAR_BUDGET
+    assert replayed.startswith(session_service.TRUNCATION_MARKER) and replayed.endswith("-tail")
+    stored = await session_service.list_messages(session_id)
+    assert len(stored[-1]["content"]) == 50_010
+
+
+@pytest.mark.asyncio
+async def test_recent_messages_keep_order_within_budget():
+    session_id = await session_service.create_session("order")
+    for i in range(4):
+        await session_service.append_message(session_id, "user", f"m{i}")
+    context = await session_service.context_messages(session_id)
+    assert [m["content"] for m in context] == ["m0", "m1", "m2", "m3"]
+    assert sum(len(m["content"]) for m in context) <= session_service.CONTEXT_CHAR_BUDGET
