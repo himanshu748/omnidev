@@ -57,6 +57,10 @@ Thanks for helping build OmniDev, the local-first AI cockpit for macOS. Bug repo
 - **[Ollama](https://ollama.com)** for local AI, or a `GEMINI_API_KEY`. The test suite needs neither.
 - Git and `make`.
 
+### Zero-setup option: Dev Container
+
+For backend work on any OS, open the repo in GitHub Codespaces or VS Code Dev Containers. `.devcontainer/` runs `make setup` with Playwright's system libraries and bubblewrap, so `make test` and `make lint` work right away. The native macOS app still needs a Mac.
+
 ### Fork, clone, and install
 
 ```bash

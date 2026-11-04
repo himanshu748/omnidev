@@ -7,7 +7,7 @@ repos:
       - id: check-yaml
       - id: check-toml
       - id: check-json
-        exclude: ^site/vendor/
+        exclude: ^(site/vendor/|\.devcontainer/devcontainer\.json$)  # JSONC
       - id: check-added-large-files
         args: ["--maxkb=1024"]
         exclude: ^(docs/.*\.gif|site/.*\.mp4)$
