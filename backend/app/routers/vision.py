@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
+from app.routers.errors import internal_error, service_unavailable
 from app.schemas.vision import VisionMode, VisionResponse
 from app.services.ai_service import AIConfigurationError
 from app.services.vision_service import analyze_image
-from app.routers.errors import internal_error, service_unavailable
 
 router = APIRouter()
 

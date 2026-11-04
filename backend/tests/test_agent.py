@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import json
 
 import pytest
@@ -437,11 +436,33 @@ async def test_agent_unknown_tool_is_reported(workspace, monkeypatch):
 # ── Router ──────────────────────────────────────────────────
 @pytest.mark.asyncio
 async def test_approval_endpoint_validates(client, coverage_tracker):
-    coverage_tracker("POST /api/agent/approvals")
+    coverage_tracker("POST /api/agent/approvals/{approval_id}")
     resp = await client.post("/api/agent/approvals/missing", json={"decision": "allow_once"})
     assert resp.status_code == 404
     resp = await client.post("/api/agent/approvals/missing", json={"decision": "nonsense"})
     assert resp.status_code == 422
+    coverage_tracker("GET /api/agent/approvals")
+    resp = await client.get("/api/agent/approvals")
+    assert resp.status_code == 200 and resp.json() == {"approvals": []}
+
+
+@pytest.mark.asyncio
+async def test_backup_endpoints_restore_over_http(client, workspace, coverage_tracker):
+    target = workspace / "main.py"
+    original = target.read_text()
+    await agent_tools.call_tool("write_file", {"path": str(target), "content": "replaced"})
+
+    coverage_tracker("GET /api/agent/backups")
+    listed = await client.get("/api/agent/backups")
+    assert listed.status_code == 200
+    backup = listed.json()["backups"][0]
+    assert backup["path"] == str(target)
+
+    coverage_tracker("POST /api/agent/backups/{backup_id}/restore")
+    restored = await client.post(f"/api/agent/backups/{backup['id']}/restore")
+    assert restored.status_code == 200
+    assert target.read_text() == original
+    assert (await client.post("/api/agent/backups/nope/restore")).status_code == 404
 
 
 @pytest.mark.asyncio

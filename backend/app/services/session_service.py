@@ -11,10 +11,9 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-from app.config import settings
 from app.services.data_paths import private_data_root, protect_file
 
 # Bound how much history is replayed into the model context.
@@ -60,7 +59,7 @@ def _connect() -> sqlite3.Connection:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _create_session_sync(first_message: str) -> str:

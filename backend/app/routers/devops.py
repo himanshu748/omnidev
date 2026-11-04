@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
+from app.routers.errors import internal_error, service_unavailable
 from app.schemas.devops import (
     DevOpsCommandRequest,
     DevOpsCommandResponse,
@@ -12,7 +13,6 @@ from app.schemas.devops import (
 )
 from app.services.ai_service import AIConfigurationError, ensure_ai_configured
 from app.services.devops_agent import plan_command, run_command
-from app.routers.errors import internal_error, service_unavailable
 
 router = APIRouter()
 

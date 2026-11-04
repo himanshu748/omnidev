@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
+from app.routers.errors import internal_error
 from app.schemas.git import GitLandRequest, GitLandResponse, GitStatusResponse
 from app.services.git_service import GitLandError, land_project, project_status
-from app.routers.errors import internal_error
 
 router = APIRouter()
 

@@ -19,12 +19,13 @@ from __future__ import annotations
 
 import asyncio
 import json
-import subprocess
 import shutil
+import subprocess
 import time
 import uuid
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from app.services import agent_tools, command_sandbox, workspace_service
 from app.services.agent_tools import ToolError
@@ -311,7 +312,7 @@ async def run_agent(
                 try:
                     await asyncio.wait_for(event.wait(), timeout=APPROVAL_TIMEOUT_SECONDS)
                     decision = _pending[approval_id]["decision"] or "deny"
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     decision = "deny"
                 except asyncio.CancelledError:
                     _pending.pop(approval_id, None)

@@ -112,7 +112,7 @@ Start with [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/API.md](docs/A
 1. **Schema:** add request and response models in `backend/app/schemas/<module>.py`.
 2. **Service:** put the logic in `backend/app/services/<module>_service.py`. Route AI calls through `ai_service` (`generate_text`, `generate_structured`, `analyze_image_bytes`); never call Ollama or Gemini directly.
 3. **Router:** add a thin `async def` handler in `backend/app/routers/<module>.py` and register new routers in `main.py`.
-4. **Tests:** cover the happy path and the refusal path in `backend/tests/test_<module>.py`. Add any new endpoint to `EXPECTED_ENDPOINTS` in `tests/conftest.py` so the endpoint coverage report stays accurate.
+4. **Tests:** cover the happy path and the refusal path in `backend/tests/test_<module>.py`. Add any new endpoint to `EXPECTED_ENDPOINTS` in `tests/conftest.py` (exact OpenAPI path, for example `GET /api/mcp/servers/{name}/tools`) and call `coverage_tracker(...)` in a test that hits it. A full `make test` run fails if any listed endpoint goes untested, and `test_endpoint_inventory.py` fails if a route is missing from the list.
 5. **Docs:** update `docs/API.md`, and keep its examples consistent with the Pydantic schemas.
 6. **App and MCP (optional):** expose the endpoint in `BackendModules.swift` and a view, or as a tool in `app/mcp/server.py`.
 
@@ -152,6 +152,8 @@ When you touch one of these areas, add or extend a test that proves the guard st
 
 ```bash
 make test                          # backend suite (same as CI)
+make lint                          # Ruff lint (same as CI)
+make coverage                      # tests plus a line-coverage report (CI requires 70%+)
 cd backend && .venv/bin/pytest tests/test_scraper.py -q -k ssrf   # one focused test
 cd macos && swift build            # native app must compile (CI builds -c release)
 ```
@@ -210,7 +212,7 @@ docs(contributing): document lockfile regeneration
 ## Pull request process
 
 1. Rebase on the latest `upstream/main`.
-2. Run `make test` and `cd macos && swift build` locally.
+2. Run `make test`, `make lint` and `cd macos && swift build` locally.
 3. Fill in the PR template: what changed, why, how you tested it, and screenshots for UI changes. Link the issue with `Closes #123`.
 4. CI must pass: the WebMCP contract check, backend pytest, and the macOS build.
 5. A maintainer reviews, usually within a few days. Push follow-up commits rather than force-pushing during review, so the review history stays readable.

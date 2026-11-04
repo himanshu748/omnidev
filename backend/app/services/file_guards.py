@@ -30,8 +30,9 @@ import shutil
 import stat
 import subprocess
 from collections import Counter
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 # macOS: the file exists in the listing but its data lives in iCloud.
 SF_DATALESS = 0x40000000
@@ -101,7 +102,7 @@ class SkipTally:
         if reason not in self._examples and path:
             self._examples[reason] = str(path)
 
-    def merge(self, other: "SkipTally") -> None:
+    def merge(self, other: SkipTally) -> None:
         self._counts.update(other._counts)
         for reason, example in other._examples.items():
             self._examples.setdefault(reason, example)

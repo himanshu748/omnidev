@@ -53,7 +53,7 @@ def _write_docs(root):
 async def test_add_list_delete_source(client, tmp_path, coverage_tracker):
     coverage_tracker("POST /api/knowledge/sources")
     coverage_tracker("GET /api/knowledge/sources")
-    coverage_tracker("DELETE /api/knowledge/sources")
+    coverage_tracker("DELETE /api/knowledge/sources/{source_id}")
     folder = tmp_path / "notes"
     _write_docs(folder)
 
@@ -239,7 +239,8 @@ async def test_chat_stream_use_knowledge(client, tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_reindex_endpoint(client, tmp_path):
+async def test_reindex_endpoint(client, tmp_path, coverage_tracker):
+    coverage_tracker("POST /api/knowledge/sources/{source_id}/reindex")
     folder = tmp_path / "notes"
     _write_docs(folder)
     source = await knowledge_service.add_source(str(folder), "docs")

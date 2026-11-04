@@ -6,19 +6,18 @@ FastAPI entry point with lifespan-managed Playwright browser.
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
 import logging
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from playwright.async_api import async_playwright, Playwright, Browser
+from mcp.server.fastmcp.server import StreamableHTTPASGIApp
+from playwright.async_api import Browser, Playwright, async_playwright
+from starlette.routing import Route
 
 from app import __version__
 from app.config import settings
-from mcp.server.fastmcp.server import StreamableHTTPASGIApp
-from starlette.routing import Route
-
 from app.mcp import server as mcp_module
 from app.mcp.server import mcp as mcp_server
 from app.routers import (

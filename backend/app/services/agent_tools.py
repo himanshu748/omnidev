@@ -62,7 +62,7 @@ ALLOWED_COMMANDS: dict[str, set[str] | None] = {
 BLOCKED_ARGS = {
     "push", "remote", "clean", "reset", "config", "rebase",
     "filter-branch", "gc", "prune", "--hard", "stash",
-    "ci", "prune", "uninstall", "purge",
+    "ci", "uninstall", "purge",
 }
 
 # Programs that exist only to delete. Refused by name so a model that reaches

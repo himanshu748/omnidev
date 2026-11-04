@@ -2,11 +2,11 @@ import json
 import pathlib
 import time
 
+import httpx
 import pytest
 import pytest_asyncio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import httpx
 
 from app import __version__
 from app.config import settings
@@ -54,16 +54,28 @@ EXPECTED_ENDPOINTS = [
     "POST /api/mcp/servers",
     "POST /api/knowledge/sources",
     "GET /api/knowledge/sources",
-    "DELETE /api/knowledge/sources",
+    "DELETE /api/knowledge/sources/{source_id}",
     "POST /api/knowledge/search",
     "GET /api/knowledge/status",
     "POST /api/agent/stream",
     "GET /api/agent/workspaces",
     "POST /api/agent/workspaces",
     "DELETE /api/agent/workspaces",
-    "POST /api/agent/approvals",
+    "POST /api/agent/approvals/{approval_id}",
     "GET /api/agent/sandbox",
     "POST /api/agent/sandbox",
+    "GET /api/chat/sessions/{session_id}",
+    "DELETE /api/chat/sessions/{session_id}",
+    "DELETE /api/knowledge/index",
+    "GET /api/knowledge/stats",
+    "POST /api/knowledge/ask-file",
+    "POST /api/knowledge/sources/{source_id}/reindex",
+    "PATCH /api/mcp/servers/{name}",
+    "DELETE /api/mcp/servers/{name}",
+    "GET /api/mcp/servers/{name}/tools",
+    "GET /api/agent/approvals",
+    "GET /api/agent/backups",
+    "POST /api/agent/backups/{backup_id}/restore",
 ]
 
 
@@ -177,3 +189,19 @@ def pytest_sessionfinish(session, exitstatus):
         "defects": FAILURES,
     }
     report_path.write_text(json.dumps(payload, indent=2))
+
+    # Only a full, unfiltered run can judge coverage; a single file or -k
+    # selection legitimately skips endpoints.
+    options = session.config.option
+    full_run = not getattr(options, "keyword", "") and not getattr(options, "markexpr", "")
+    full_run = full_run and all(
+        pathlib.Path(arg).resolve() == pathlib.Path("tests").resolve()
+        for arg in session.config.args
+    )
+    if full_run and missing and exitstatus == 0:
+        reporter = session.config.pluginmanager.get_plugin("terminalreporter")
+        if reporter is not None:
+            reporter.write_line(
+                f"Endpoint coverage incomplete; untested endpoints: {missing}", red=True
+            )
+        session.exitstatus = 1

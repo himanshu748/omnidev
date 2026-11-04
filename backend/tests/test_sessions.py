@@ -71,7 +71,7 @@ async def test_chat_second_turn_includes_history(client, monkeypatch):
 
     first = await client.post("/api/chat/stream", json={"message": "Build a todo app"})
     assert first.status_code == 200
-    events = [json.loads(l) for l in first.text.splitlines() if l.strip()]
+    events = [json.loads(line) for line in first.text.splitlines() if line.strip()]
     session_id = events[0]["session_id"]
 
     second = await client.post(
@@ -111,6 +111,8 @@ async def test_session_endpoints(client, monkeypatch, coverage_tracker):
     assert any(s["id"] == session_id for s in listed.json()["sessions"])
     coverage_tracker("GET /api/chat/sessions")
 
+    coverage_tracker("GET /api/chat/sessions/{session_id}")
+    coverage_tracker("DELETE /api/chat/sessions/{session_id}")
     messages = await client.get(f"/api/chat/sessions/{session_id}")
     assert messages.status_code == 200
     roles = [m["role"] for m in messages.json()["messages"]]

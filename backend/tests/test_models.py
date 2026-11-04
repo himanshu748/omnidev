@@ -6,7 +6,6 @@ import httpx
 import pytest
 
 from app.config import settings
-from app.routers import models as models_router
 from app.services import ai_service, models_service
 from app.services.ai_service import AIConfigurationError
 
@@ -201,7 +200,7 @@ async def test_pull_endpoint_streams_progress(client, monkeypatch, coverage_trac
     _install_mock_ollama(monkeypatch, handler)
     resp = await client.post("/api/models/pull", json={"name": "gemma4:e4b"})
     assert resp.status_code == 200
-    lines = [json.loads(l) for l in resp.text.splitlines() if l.strip()]
+    lines = [json.loads(line) for line in resp.text.splitlines() if line.strip()]
     assert lines[0]["status"] == "pulling manifest"
     assert lines[-1]["status"] == "success"
     coverage_tracker("POST /api/models/pull")

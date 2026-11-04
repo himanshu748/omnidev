@@ -5,8 +5,8 @@ import pytest
 from moto import mock_aws
 
 from app.config import settings
-from app.schemas.devops import ParsedIntent
 from app.routers import devops as devops_router
+from app.schemas.devops import ParsedIntent
 from app.services import devops_agent
 from app.services.ai_service import AIConfigurationError
 

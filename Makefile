@@ -42,6 +42,14 @@ claude-local: ## Run Claude Code on the local Gemma model (no cloud, no API key)
 test: ## Run backend tests
 	cd $(BACKEND) && .venv/bin/pytest -q
 
+.PHONY: lint
+lint: ## Lint the backend with Ruff (same check as CI)
+	cd $(BACKEND) && .venv/bin/ruff check .
+
+.PHONY: coverage
+coverage: ## Run backend tests with a line-coverage report
+	cd $(BACKEND) && .venv/bin/pytest -q --cov=app --cov-report=term-missing:skip-covered
+
 .PHONY: mac
 mac: ## Build and run the native macOS app
 	cd macos && swift run OmniDev

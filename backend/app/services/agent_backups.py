@@ -18,7 +18,7 @@ import os
 import shutil
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -66,7 +66,7 @@ def snapshot(path: Path, *, reason: str = "") -> dict[str, Any] | None:
             "backup_path": str(destination),
             "bytes": size,
             "reason": reason,
-            "created_at": datetime.now(timezone.utc).isoformat(),
+            "created_at": datetime.now(UTC).isoformat(),
             "backed_up": True,
         }
         with _manifest_path().open("a", encoding="utf-8") as handle:

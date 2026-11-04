@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
+from app.routers.errors import internal_error
 from app.schemas.mcp import (
     AddServerRequest,
     CatalogEntry,
@@ -15,7 +16,6 @@ from app.schemas.mcp import (
     ToolListResponse,
 )
 from app.services import mcp_client_service as mcp
-from app.routers.errors import internal_error
 
 router = APIRouter()
 

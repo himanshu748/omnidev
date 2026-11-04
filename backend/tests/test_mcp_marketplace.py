@@ -7,6 +7,7 @@ import sys
 import pytest
 import pytest_asyncio
 
+from app.config import settings as app_settings
 from app.services import mcp_client_service as mcp
 from app.services.mcp_client_service import MCPError
 
@@ -106,7 +107,7 @@ async def test_child_env_has_no_secrets(monkeypatch):
     assert set(captured["env"].keys()) <= {"PATH", "HOME"}
     assert pathlib.Path(captured["env"]["HOME"]) != pathlib.Path.home()
     assert pathlib.Path(captured["env"]["HOME"]).is_relative_to(
-        pathlib.Path(mcp.settings.data_dir)
+        pathlib.Path(app_settings.data_dir)
     )
 
 
@@ -184,6 +185,8 @@ async def test_server_endpoints(client, monkeypatch, coverage_tracker):
     assert listed.json()["servers"][0]["name"] == "memory"
     coverage_tracker("GET /api/mcp/servers")
 
+    coverage_tracker("PATCH /api/mcp/servers/{name}")
+    coverage_tracker("DELETE /api/mcp/servers/{name}")
     toggled = await client.patch("/api/mcp/servers/memory", json={"enabled": False})
     assert toggled.status_code == 200
     assert toggled.json()["servers"][0]["enabled"] is False
@@ -221,7 +224,21 @@ async def test_chat_stream_with_tools_emits_events(client, monkeypatch):
         "/api/chat/stream", json={"message": "use tools", "use_tools": True}
     )
     assert resp.status_code == 200
-    events = [json.loads(l) for l in resp.text.splitlines() if l.strip()]
+    events = [json.loads(line) for line in resp.text.splitlines() if line.strip()]
     assert "session_id" in events[0]
     kinds = [next(iter(e)) for e in events[1:]]
     assert kinds == ["tool_call", "tool_result", "delta", "done"]
+
+
+@pytest.mark.asyncio
+async def test_server_tools_endpoint(client, monkeypatch, coverage_tracker):
+    """Starts the fake stdio server through the API and lists its tools."""
+    _install_fake_catalog(monkeypatch)
+    monkeypatch.setattr(mcp.shutil, "which", lambda _: sys.executable)
+    assert (await client.post("/api/mcp/servers", json={"catalog_id": "fake"})).status_code == 200
+
+    coverage_tracker("GET /api/mcp/servers/{name}/tools")
+    resp = await client.get("/api/mcp/servers/fake/tools")
+    assert resp.status_code == 200, resp.text
+    assert any(tool["name"] == "echo" for tool in resp.json()["tools"])
+    assert (await client.get("/api/mcp/servers/missing/tools")).status_code == 404
