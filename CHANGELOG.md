@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ## [Unreleased]
 
 ### 🔒 Security
+- **The local API now checks the `Host` header**, not just the client address, so a web page using DNS rebinding (a hostname that later resolves to `127.0.0.1`) can no longer drive it. Only `localhost`, `127.0.0.1` and `[::1]` are accepted unless `ALLOW_REMOTE_CLIENTS` is set.
 - **Agent commands now run inside an OS sandbox** (macOS Seatbelt, Linux bubblewrap). Before this, allowlisted programs such as `python3`, `node`, `make` and test runners executed project code with your full permissions. Now they can write only inside the workspace they run in. `.git/hooks` and `.git/config` stay read-only, credentials, keychains and browser data are unreadable, and the network is off by default, including OmniDev's own loopback API. If no sandbox is available, commands are refused instead of running unsandboxed.
 - **Code Gen preview cannot reach this Mac or the local network.** All network loads are blocked except HTTPS to a short allowlist of public CDNs (jsDelivr, unpkg, cdnjs, Tailwind, esm.sh, Google Fonts). Matching host spellings could not stop a hostname that resolves to loopback, but an allowlist can. The page cannot navigate away from itself, and if the filter cannot load the preview does not run. CI checks this against a real WKWebView, using a hostname that resolves to loopback.
 
@@ -16,6 +17,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `GET`/`POST /api/agent/sandbox`, and a `sandbox` field on the agent `agent` and `approval_required` events.
 - Commands that would be refused are rejected before any approval prompt.
 - CI runs the real sandbox on macOS (including an offline `swift build`) and on Linux.
+
+### 🐛 Fixed
+- Agent mode no longer crashes with `NameError` when a reasoning model spends its whole token budget during a tool-calling round; the retry keeps the tools.
+- Chat history replay stays within its 24,000-character budget even after a very long reply. An oversized newest message is trimmed to its most recent text behind a marker; stored history is untouched.
+- The backend reports its real version (0.7.1) in `/openapi.json` and `/health` instead of 0.3.0.
+
+### 🛠 Developer experience
+- Ruff lint (`make lint`, CI job), line coverage in CI with a 70% floor (`make coverage`), and a full test run now fails if any API endpoint has no test.
+- `.editorconfig`, an optional pre-commit config, a devcontainer for backend work on any OS, and weekly Dependabot updates for GitHub Actions.
+- `script/build_and_run.sh` moved to `scripts/macos/build-and-run.sh`; the 2026-08 security review moved to `docs/security/`.
 
 ## [0.7.1] - 2026-07-25
 

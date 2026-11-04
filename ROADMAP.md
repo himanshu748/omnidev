@@ -14,28 +14,36 @@ landing real artifacts on disk.
 > prompt → streaming code → iterate with memory ("now add auth", "refactor to
 > TypeScript") → land in a real Git repo on disk — with zero data leaving the laptop.
 
-## Now (0.3.x → 0.4)
+## Shipped
 
-- [x] Provider-agnostic AI layer (local Ollama `gemma4:e4b` or Gemini)
-- [x] Local model manager — status, recommendations, streaming `ollama pull`
-- [x] DevOps agent safety: boto3 plan preview, human approval, read-only mode, audit log
-- [x] SSRF guard on the scraper + preview
-- [x] One honest license, honest version, CI on every PR
-- [ ] **Streaming** AI text + Code Gen output (SSE)
-- [ ] **Conversation memory / sessions** so you can iterate
-- [ ] **Git integration** — land a generated project in a real repo
+- [x] Provider-agnostic AI layer: local Ollama (`gemma4:12b`, or `gemma4:e2b` on smaller Macs) or optional Gemini
+- [x] Streaming chat and agent runs (NDJSON), with conversation memory across turns
+- [x] Agent mode: workspaces, per-action approvals, backups before every write, no delete tool
+- [x] OS-level sandbox for agent commands (macOS Seatbelt / Linux bubblewrap), network off by default
+- [x] Knowledge: on-device OCR, hybrid search with citations, sensitive-file exclusions
+- [x] Git landing for generated projects (`POST /api/git/land`)
+- [x] MCP server (`make mcp`) and a curated MCP marketplace
+- [x] Local model manager: status, recommendations, streaming pull, delete
+- [x] Native macOS app with onboarding, menu-bar extra, Settings, and update checks
+- [x] Release workflow on `v*` tags (app zip, DMG, checksums)
+- [x] Safety: SSRF guard, DevOps plan preview and approval, loopback-only API with DNS-rebinding protection, isolated Code Gen preview
+
+## Now (0.8)
+
+- [ ] Stream Code Gen output ([#15](https://github.com/himanshu748/omnidev/issues/15))
+- [ ] Run third-party MCP servers inside the sandbox ([#25](https://github.com/himanshu748/omnidev/issues/25))
+- [ ] Model details and local GGUF import ([#20](https://github.com/himanshu748/omnidev/issues/20))
+- [ ] Migrate the MCP server to MCP SDK v2 ([#14](https://github.com/himanshu748/omnidev/issues/14))
 
 ## Next
 
-- [ ] Resource-abuse guards: vision upload cap, scraper JS/selector guards, DevOps rate limits
-- [ ] Extended model management: delete / show info / import GGUF
-- [ ] Native macOS: model-manager surface, richer menu bar, first-run onboarding
-- [ ] Docker Compose / devcontainer for reproducible dev
+- [ ] macOS app tests in CI ([#8](https://github.com/himanshu748/omnidev/issues/8)) and VoiceOver labels everywhere ([#9](https://github.com/himanshu748/omnidev/issues/9))
+- [ ] Vision OCR indexing exercised on a macOS runner ([#12](https://github.com/himanshu748/omnidev/issues/12))
+- [ ] Static type checking, starting with the safety-critical services ([#7](https://github.com/himanshu748/omnidev/issues/7))
+- [ ] Repository-wide Ruff formatting ([#6](https://github.com/himanshu748/omnidev/issues/6))
 
 ## Later
 
-- [ ] Signed + notarized DMG, release automation on `v*` tags, Homebrew cask
-- [ ] Optional sandboxed code execution (Docker/nsjail, network-off, resource-limited)
-- [ ] MCP server surface so other agents can drive OmniDev
+- [ ] Signed and notarized DMG, plus a Homebrew cask ([#16](https://github.com/himanshu748/omnidev/issues/16))
 
 Have an idea? Open a [feature request](https://github.com/himanshu748/omnidev/issues/new?template=feature_request.yml), or see [CONTRIBUTING.md](CONTRIBUTING.md) to pick up an open issue.

@@ -4,12 +4,13 @@
 
 Native macOS app. A local Gemma 4 model reads your files (including screenshots), answers with citations, and can edit code and run your tests, without a single byte leaving your machine.
 
-[Download](https://github.com/himanshu748/omnidev/releases/latest) · [Landing page](https://omnidev-flame.vercel.app) · [Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [Contributing](CONTRIBUTING.md)
+[Download](https://github.com/himanshu748/omnidev/releases/latest) · [Landing page](https://omnidev-flame.vercel.app) · [Architecture](docs/ARCHITECTURE.md) · [API Reference](docs/API.md) · [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md) · [Good first issues](https://github.com/himanshu748/omnidev/labels/good%20first%20issue)
 
 ![macOS](https://img.shields.io/badge/macOS-native%20SwiftUI-000000?logo=apple&logoColor=white)
 ![Ollama](https://img.shields.io/badge/AI-Ollama%20(offline)-222222?logo=ollama&logoColor=white)
 ![Google Gemini](https://img.shields.io/badge/AI-Gemini%20(optional)-4285F4?logo=google&logoColor=white)
-![Python 3.13](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
+[![CI](https://github.com/himanshu748/omnidev/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/himanshu748/omnidev/actions/workflows/ci.yml)
+![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue?logo=python&logoColor=white)
 ![License MIT](https://img.shields.io/badge/License-MIT-green)
 
 ![OmniDev answering a question about a screenshot, offline](docs/demo.gif)
