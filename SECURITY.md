@@ -51,5 +51,7 @@ OmniDev already defends the areas most relevant to a local AI cockpit:
   enforces this.
 - **Secrets** — API error boundaries scrub secret-like values from responses.
 
+Past reviews: [2026-08 security and reliability review](docs/security/2026-08-review.md).
+
 Out of scope: issues requiring a compromised local machine or physical access,
 and third-party services (Ollama, Gemini, AWS) themselves.

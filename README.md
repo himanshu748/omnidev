@@ -107,7 +107,7 @@ OmniDev ships as a native macOS `.app` (`macos/`): pure SwiftUI, Command Center,
 
 ```bash
 # Build and run the macOS app from source
-./script/build_and_run.sh
+./scripts/macos/build-and-run.sh
 ```
 
 Stop the engine sidecar any time with `scripts/macos/stop-omnidev.sh`. See [docs/MACOS_APP.md](docs/MACOS_APP.md) for packaging details. Windows and Linux packages are planned next.
@@ -179,7 +179,7 @@ The engine self-installs into `~/Library/Application Support/OmniDev` on first r
 ### Option B: Build from source
 
 ```bash
-./script/build_and_run.sh
+./scripts/macos/build-and-run.sh
 ```
 
 This builds the SwiftUI app, starts the FastAPI engine sidecar from the checkout, and opens the native window.
