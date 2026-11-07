@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Refresh `ROADMAP.md` to distinguish shipped work from upcoming work and link planned items to their open issues.
+
 ### 🔒 Security
 - **The local API now checks the `Host` header**, not just the client address, so a web page using DNS rebinding (a hostname that later resolves to `127.0.0.1`) can no longer drive it. Only `localhost`, `127.0.0.1` and `[::1]` are accepted unless `ALLOW_REMOTE_CLIENTS` is set.
 - **Agent commands now run inside an OS sandbox** (macOS Seatbelt, Linux bubblewrap). Before this, allowlisted programs such as `python3`, `node`, `make` and test runners executed project code with your full permissions. Now they can write only inside the workspace they run in. `.git/hooks` and `.git/config` stay read-only, credentials, keychains and browser data are unreadable, and the network is off by default, including OmniDev's own loopback API. If no sandbox is available, commands are refused instead of running unsandboxed.
