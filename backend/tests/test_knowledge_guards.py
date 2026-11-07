@@ -397,7 +397,7 @@ def test_requirements_keep_pyobjc_macos_only():
     requirements = (P(__file__).resolve().parents[1] / "requirements.txt").read_text()
     for package in ("pyobjc-framework-Vision", "pyobjc-framework-Quartz"):
         line = next(
-            (l for l in requirements.splitlines() if l.strip().startswith(package)), None
+            (line for line in requirements.splitlines() if line.strip().startswith(package)), None
         )
         assert line is not None, f"{package} missing from requirements"
         assert 'sys_platform == "darwin"' in line, (
@@ -408,6 +408,7 @@ def test_requirements_keep_pyobjc_macos_only():
 def test_requirements_keep_mcp_on_compatible_major():
     """MCP 2 removed mcp.server.fastmcp, which OmniDev currently imports."""
     from pathlib import Path as P
+
     from packaging.requirements import Requirement
 
     requirements = (P(__file__).resolve().parents[1] / "requirements.txt").read_text()

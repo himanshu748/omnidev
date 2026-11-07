@@ -8,6 +8,7 @@ import json
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
+from app.routers.errors import service_unavailable
 from app.schemas.chat import (
     ChatRequest,
     SessionInfo,
@@ -22,7 +23,6 @@ from app.services.ai_service import (
     ensure_ai_configured,
     stream_chat,
 )
-from app.routers.errors import service_unavailable
 
 router = APIRouter()
 

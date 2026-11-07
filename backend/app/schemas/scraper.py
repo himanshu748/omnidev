@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field, HttpUrl
 
@@ -22,18 +21,18 @@ class ExtractMode(str, Enum):
 # ── Request ─────────────────────────────────────────────────
 class ScrapeRequest(BaseModel):
     url: HttpUrl
-    wait_for: Optional[str] = Field(
+    wait_for: str | None = Field(
         None,
         description="CSS selector to wait for before extracting.",
     )
     extract: ExtractMode = ExtractMode.text
     stealth: bool = True
-    headers: Optional[dict[str, str]] = None
-    cookies: Optional[list[dict[str, str]]] = Field(
+    headers: dict[str, str] | None = None
+    cookies: list[dict[str, str]] | None = Field(
         None,
         description="List of cookie dicts: [{name, value, domain?, path?}].",
     )
-    javascript: Optional[str] = Field(
+    javascript: str | None = Field(
         None,
         description="JS snippet to execute on the page before extraction.",
     )
@@ -45,13 +44,13 @@ class ScrapeRequest(BaseModel):
         description="Seconds to wait after page load (and wait_for) before extracting. "
         "Useful for JS-heavy sites that need extra rendering time.",
     )
-    proxy: Optional[str] = Field(
+    proxy: str | None = Field(
         None,
         description="HTTP/SOCKS proxy URL, e.g. http://user:pass@proxy:8080",
     )
     viewport_width: int = Field(1920, ge=320, le=3840)
     viewport_height: int = Field(1080, ge=480, le=2160)
-    block_resources: Optional[list[str]] = Field(
+    block_resources: list[str] | None = Field(
         None,
         description="Resource types to block: image, stylesheet, font, media, script",
     )

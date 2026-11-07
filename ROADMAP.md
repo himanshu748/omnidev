@@ -14,12 +14,17 @@ the one remaining item in the current workflow, and the open work that follows.
 - [x] DevOps safety: boto3 plan preview, explicit approval for destructive actions, read-only mode, and audit log.
 - [x] SSRF guard on the scraper and Code Gen preview.
 - [x] NDJSON streaming for chat and the agent.
-- [x] Conversation memory and sessions.
+- [x] Conversation memory and sessions, with replayed history bounded by the character budget ([#22](https://github.com/himanshu748/omnidev/issues/22)).
 - [x] Git integration to land generated projects and inspect repository status.
 - [x] MCP server and curated server marketplace.
 - [x] 10 MB vision upload limit.
 - [x] Native macOS first-run onboarding.
 - [x] Release automation for `v*` tags.
+- [x] OS-level sandbox for agent commands (macOS Seatbelt, Linux bubblewrap), with network off by default.
+- [x] Loopback API `Host` header validation against DNS rebinding ([#24](https://github.com/himanshu748/omnidev/issues/24)).
+- [x] One version across the backend, app, changelog, and security policy ([#4](https://github.com/himanshu748/omnidev/issues/4)).
+- [x] Ruff linting in CI, enforced endpoint test coverage, and backend line coverage ([#13](https://github.com/himanshu748/omnidev/issues/13)).
+- [x] Dependabot updates for GitHub Actions ([#10](https://github.com/himanshu748/omnidev/issues/10)), a backend devcontainer ([#17](https://github.com/himanshu748/omnidev/issues/17)), consolidated script directories ([#18](https://github.com/himanshu748/omnidev/issues/18)), and EditorConfig with optional pre-commit checks ([#19](https://github.com/himanshu748/omnidev/issues/19)).
 
 ## Now
 
@@ -27,22 +32,14 @@ the one remaining item in the current workflow, and the open work that follows.
 
 ## Next
 
-- [ ] Bound replayed chat history when the newest message exceeds the character budget ([#22](https://github.com/himanshu748/omnidev/issues/22)).
-- [ ] Validate loopback API `Host` headers to prevent DNS rebinding ([#24](https://github.com/himanshu748/omnidev/issues/24)).
 - [ ] Run third-party MCP stdio servers inside the agent sandbox ([#25](https://github.com/himanshu748/omnidev/issues/25)).
 - [ ] Add model details and import for local GGUF files ([#20](https://github.com/himanshu748/omnidev/issues/20)).
 - [ ] Add VoiceOver labels to icon-only macOS controls ([#9](https://github.com/himanshu748/omnidev/issues/9)).
 - [ ] Exercise macOS-only Vision OCR indexing in CI ([#12](https://github.com/himanshu748/omnidev/issues/12)).
-- [ ] Enforce endpoint test coverage and report backend line coverage ([#13](https://github.com/himanshu748/omnidev/issues/13)).
-- [ ] Add Ruff linting and formatting for the backend ([#6](https://github.com/himanshu748/omnidev/issues/6)).
+- [ ] Apply Ruff formatting across the backend; linting is already enforced ([#6](https://github.com/himanshu748/omnidev/issues/6)).
 - [ ] Add incremental static type checking for safety-critical services ([#7](https://github.com/himanshu748/omnidev/issues/7)).
 - [ ] Add an XCTest target for the macOS app ([#8](https://github.com/himanshu748/omnidev/issues/8)).
-- [ ] Add automated dependency updates for GitHub Actions and Python ([#10](https://github.com/himanshu748/omnidev/issues/10)).
 - [ ] Migrate the MCP server to Python SDK v2 ([#14](https://github.com/himanshu748/omnidev/issues/14)).
-- [ ] Add a devcontainer for backend development ([#17](https://github.com/himanshu748/omnidev/issues/17)).
-- [ ] Consolidate the script directories and move the dated security review ([#18](https://github.com/himanshu748/omnidev/issues/18)).
-- [ ] Add EditorConfig and optional pre-commit checks ([#19](https://github.com/himanshu748/omnidev/issues/19)).
-- [ ] Unify the backend, app, changelog, and security-policy versions ([#4](https://github.com/himanshu748/omnidev/issues/4)).
 
 ## Later
 

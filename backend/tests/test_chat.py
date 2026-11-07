@@ -69,7 +69,7 @@ async def test_chat_stream_endpoint(client, monkeypatch, coverage_tracker):
 
     resp = await client.post("/api/chat/stream", json={"message": "What is OmniDev?"})
     assert resp.status_code == 200
-    events = [json.loads(l) for l in resp.text.splitlines() if l.strip()]
+    events = [json.loads(line) for line in resp.text.splitlines() if line.strip()]
     text = "".join(e["delta"] for e in events if "delta" in e)
     assert text == "Local AI cockpit"
     assert events[-1] == {"done": True}
@@ -95,7 +95,7 @@ async def test_chat_stream_error_becomes_event(client, monkeypatch, coverage_tra
     _install_mock_ollama(monkeypatch, handler)
     resp = await client.post("/api/chat/stream", json={"message": "hi"})
     assert resp.status_code == 200  # stream opens, error is delivered as an event
-    events = [json.loads(l) for l in resp.text.splitlines() if l.strip()]
+    events = [json.loads(line) for line in resp.text.splitlines() if line.strip()]
     assert any("error" in e for e in events)
     coverage_tracker("POST /api/chat/stream")
 

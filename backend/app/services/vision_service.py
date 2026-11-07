@@ -5,8 +5,8 @@ Sends images to the active AI provider (Gemini cloud or Ollama local) for analys
 
 from __future__ import annotations
 
-from app.services.ai_service import analyze_image_bytes
 from app.schemas.vision import VisionMode
+from app.services.ai_service import analyze_image_bytes
 
 MODE_PROMPTS = {
     VisionMode.analyze: (

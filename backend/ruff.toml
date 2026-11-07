@@ -1,0 +1,19 @@
+# Lint config for the backend. Run `make lint` (CI runs the same check).
+target-version = "py311"
+line-length = 100
+extend-exclude = [".venv", "test-results"]
+
+[lint]
+# pycodestyle errors, pyflakes, import order, bugbear, pyupgrade.
+select = ["E4", "E7", "E9", "F", "I", "B", "UP"]
+ignore = [
+    "B008",   # FastAPI's File()/Depends() defaults are the intended pattern
+    "UP042",  # StrEnum changes str(member); the API relies on str+Enum behaviour
+]
+
+[lint.per-file-ignores]
+# Tests import after monkeypatching or path setup on purpose.
+"**/tests/**" = ["E402"]
+
+[lint.isort]
+known-first-party = ["app", "tests"]

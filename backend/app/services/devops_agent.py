@@ -16,16 +16,16 @@ import json
 import logging
 import os
 import threading
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
 
-logger = logging.getLogger(__name__)
-
 from app.config import settings
 from app.schemas.devops import ParsedIntent
 from app.services.ai_service import generate_structured, generate_text
+
+logger = logging.getLogger(__name__)
 
 # ── Supported actions ───────────────────────────────────────
 SUPPORTED_ACTIONS = [
@@ -219,7 +219,7 @@ def _audit_log(action: str, params: dict[str, Any], destructive: bool, ok: bool,
     if not path:
         return
     entry = {
-        "ts": datetime.now(timezone.utc).isoformat(),
+        "ts": datetime.now(UTC).isoformat(),
         "action": action,
         "params": params,
         "destructive": destructive,

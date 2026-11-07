@@ -288,3 +288,41 @@ async def test_persistent_starvation_raises_instead_of_returning_empty(monkeypat
     with pytest.raises(ai_service.AIResponseError) as exc:
         await ai_service.generate_text("q", max_tokens=60)
     assert "token budget" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_starved_tool_round_retries_with_tools(monkeypatch):
+    """The tool-calling round used to crash with NameError when starved."""
+    payloads: list[dict] = []
+
+    class FakeResponse:
+        status_code = 200
+
+        def __init__(self, payload):
+            self._payload = payload
+
+        def json(self):
+            return self._payload
+
+    async def fake_post(url, json=None, **kwargs):
+        payloads.append(json)
+        if len(payloads) == 1:
+            return FakeResponse(
+                {"message": {"content": "", "thinking": "..."}, "done_reason": "length"}
+            )
+        return FakeResponse(
+            {"message": {"content": "", "tool_calls": [{"function": {"name": "read_file"}}]},
+             "done_reason": "stop"}
+        )
+
+    monkeypatch.setattr(
+        ai_service, "_get_ollama_client", lambda: type("C", (), {"post": staticmethod(fake_post)})()
+    )
+    monkeypatch.setattr(ai_service.settings, "ai_provider", "ollama")
+    tools = [{"type": "function", "function": {"name": "read_file", "parameters": {}}}]
+
+    message = await ai_service.ollama_chat_round([{"role": "user", "content": "x"}], tools=tools)
+    assert message["tool_calls"][0]["function"]["name"] == "read_file"
+    assert len(payloads) == 2
+    assert payloads[1]["tools"] == tools
+    assert payloads[1]["options"]["num_predict"] >= ai_service.THINKING_RETRY_FLOOR

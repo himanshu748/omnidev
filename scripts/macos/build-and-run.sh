@@ -3,7 +3,7 @@ set -euo pipefail
 
 MODE="${1:-run}"
 APP_NAME="OmniDev"
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 APP_BUNDLE="$ROOT_DIR/dist/mac/${APP_NAME}.app"
 
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true

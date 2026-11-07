@@ -15,7 +15,8 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 from google import genai
@@ -371,6 +372,7 @@ async def ollama_chat_round(
     tools: list[dict[str, Any]],
     temperature: float | None = None,
     max_tokens: int = 2048,
+    _retrying: bool = False,
 ) -> dict[str, Any]:
     """
     One non-streaming /api/chat round with tool definitions.
@@ -417,13 +419,13 @@ async def ollama_chat_round(
         and (message.get("thinking") or "").strip()
         and data.get("done_reason") == "length"
     )
+    # The retry must keep the tools, or the agent loses tool calling mid-run.
     if starved and not _retrying:
-        return await _ollama_chat(
+        return await ollama_chat_round(
             messages,
-            model=model,
+            tools=tools,
             temperature=temperature,
             max_tokens=max(max_tokens * THINKING_RETRY_MULTIPLIER, THINKING_RETRY_FLOOR),
-            format_schema=format_schema,
             _retrying=True,
         )
     if starved:
@@ -647,7 +649,7 @@ async def generate_structured(
     )
     try:
         return extract_function_call(response, tool_name)
-    except ValueError:
+    except ValueError as missing_call:
         raw = get_response_text(response)
         try:
             parsed = json.loads(raw)
@@ -656,7 +658,9 @@ async def generate_structured(
                 f"Gemini reply did not include a {tool_name!r} call or valid JSON."
             ) from exc
         if not isinstance(parsed, dict):
-            raise AIResponseError(f"Gemini reply for {tool_name!r} was not a JSON object.")
+            raise AIResponseError(
+                f"Gemini reply for {tool_name!r} was not a JSON object."
+            ) from missing_call
         return parsed
 
 
