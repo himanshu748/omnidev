@@ -25,7 +25,7 @@ import os
 from pathlib import Path
 
 import httpx
-from mcp.server.fastmcp import FastMCP
+from mcp.server.mcpserver import MCPServer
 from pydantic import BaseModel, Field
 
 # Candidate backend URLs, probed in order at first use. An explicit
@@ -85,15 +85,8 @@ IMAGE_CONTENT_TYPES = {
     ".gif": "image/gif",
 }
 
-# stateless_http: every HTTP request is independent, with no server-side
-# session to create, resume or leak. That is what lets the MCP surface be
-# mounted straight into the running backend (see app/main.py) instead of
-# spawning a separate stdio process per client, and it means several clients
-# can use it at once without coordinating.
-mcp = FastMCP(
+mcp = MCPServer(
     "omnidev",
-    stateless_http=True,
-    json_response=True,
     instructions=(
         "OmniDev runs a local Gemma 4 model and developer tools entirely on "
         "this machine — no cloud calls, no API keys, no cost. Use local_llm "
