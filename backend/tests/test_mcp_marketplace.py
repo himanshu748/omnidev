@@ -84,10 +84,22 @@ async def test_manager_lists_and_calls_tools(monkeypatch):
 
     manager = mcp.get_manager()
     tools = await manager.list_tools(record)
-    assert [t["name"] for t in tools] == ["echo"]
+    assert [t["name"] for t in tools] == ["echo", "fail"]
+    assert tools[0]["input_schema"]["required"] == ["text"]
+    assert tools[0]["input_schema"]["properties"]["text"]["type"] == "string"
 
     result = await manager.call_tool(record, "echo", {"text": "hello"})
     assert result == "echo: hello"
+
+
+@pytest.mark.asyncio
+async def test_manager_preserves_tool_errors(monkeypatch):
+    _install_fake_catalog(monkeypatch)
+    record = {"name": "fake", "catalog_id": "fake", "params": {}, "enabled": True}
+
+    result = await mcp.get_manager().call_tool(record, "fail", {})
+    assert result.startswith("Tool error: ")
+    assert "fixture tool failed" in result
 
 
 @pytest.mark.asyncio

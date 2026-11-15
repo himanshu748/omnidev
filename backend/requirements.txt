@@ -6,9 +6,7 @@ boto3
 playwright
 playwright-stealth
 httpx
-# OmniDev still uses the v1 FastMCP API. MCP 2 removes those import paths,
-# so keep fresh installs on the maintained v1 line until the migration lands.
-mcp==1.29.0
+mcp>=2.3,<3
 ipinfo
 python-multipart
 pytest

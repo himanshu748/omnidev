@@ -3,6 +3,7 @@
 import json
 import os
 import pathlib
+import runpy
 import subprocess
 import sys
 import threading
@@ -16,6 +17,43 @@ from app.mcp import server as mcp_server
 from app.mcp.server import FileInput
 
 BACKEND_DIR = pathlib.Path(__file__).resolve().parents[1]
+
+
+@pytest.mark.asyncio
+async def test_tool_schemas_match_the_v1_contract():
+    """Snapshot taken from SDK 1.29.0 before the v2 migration."""
+    expected = json.loads(
+        (BACKEND_DIR / "tests" / "fixtures" / "mcp_tool_schemas.json").read_text()
+    )
+    actual = {}
+    for tool in await mcp_server.mcp.list_tools():
+        wire = tool.model_dump(mode="json", by_alias=True, exclude_none=True)
+        actual[tool.name] = {
+            key: wire[key] for key in ("inputSchema", "outputSchema") if key in wire
+        }
+    assert actual == expected
+
+
+@pytest.mark.parametrize("custom_binding", [False, True])
+def test_http_entrypoint_preserves_transport_settings(monkeypatch, custom_binding):
+    monkeypatch.setattr(sys, "argv", ["app.mcp", "--http"])
+    monkeypatch.delenv("OMNIDEV_MCP_HOST", raising=False)
+    monkeypatch.delenv("OMNIDEV_MCP_PORT", raising=False)
+    if custom_binding:
+        monkeypatch.setenv("OMNIDEV_MCP_HOST", "localhost")
+        monkeypatch.setenv("OMNIDEV_MCP_PORT", "9876")
+    calls = []
+    monkeypatch.setattr(mcp_server.mcp, "run", lambda **kwargs: calls.append(kwargs))
+
+    runpy.run_module("app.mcp", run_name="__main__")
+
+    assert calls == [{
+        "transport": "streamable-http",
+        "host": "localhost" if custom_binding else "127.0.0.1",
+        "port": 9876 if custom_binding else 8765,
+        "stateless_http": True,
+        "json_response": True,
+    }]
 
 
 def _mock_client(handler):

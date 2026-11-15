@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Migrate the MCP server and marketplace to Python SDK v2, preserving existing tool names and schemas, stateless HTTP endpoints, and preview-only AWS planning.
+- MCP HTTP requests now use SDK v2's default 4 MiB body limit; larger requests receive HTTP 413. Stdio is unaffected.
 - Refresh `ROADMAP.md` to distinguish shipped work from upcoming work and link planned items to their open issues.
 
 ### 🔒 Security

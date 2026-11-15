@@ -1,0 +1,445 @@
+{
+  "ask_file": {
+    "inputSchema": {
+      "properties": {
+        "path": {
+          "title": "Path",
+          "type": "string"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "question"
+      ],
+      "title": "ask_fileArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "ask_fileOutput",
+      "type": "object"
+    }
+  },
+  "aws_plan": {
+    "inputSchema": {
+      "properties": {
+        "command": {
+          "title": "Command",
+          "type": "string"
+        }
+      },
+      "required": [
+        "command"
+      ],
+      "title": "aws_planArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "aws_planOutput",
+      "type": "object"
+    }
+  },
+  "crawl_site": {
+    "inputSchema": {
+      "properties": {
+        "max_depth": {
+          "default": 1,
+          "title": "Max Depth",
+          "type": "integer"
+        },
+        "max_pages": {
+          "default": 5,
+          "title": "Max Pages",
+          "type": "integer"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "crawl_siteArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "crawl_siteOutput",
+      "type": "object"
+    }
+  },
+  "generate_project": {
+    "inputSchema": {
+      "properties": {
+        "framework": {
+          "default": "react",
+          "title": "Framework",
+          "type": "string"
+        },
+        "prompt": {
+          "title": "Prompt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "title": "generate_projectArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "generate_projectOutput",
+      "type": "object"
+    }
+  },
+  "index_folder": {
+    "inputSchema": {
+      "properties": {
+        "kind": {
+          "default": "",
+          "title": "Kind",
+          "type": "string"
+        },
+        "path": {
+          "title": "Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "index_folderArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "index_folderOutput",
+      "type": "object"
+    }
+  },
+  "list_knowledge_sources": {
+    "inputSchema": {
+      "properties": {},
+      "title": "list_knowledge_sourcesArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "list_knowledge_sourcesOutput",
+      "type": "object"
+    }
+  },
+  "list_models": {
+    "inputSchema": {
+      "properties": {},
+      "title": "list_modelsArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "list_modelsOutput",
+      "type": "object"
+    }
+  },
+  "local_llm": {
+    "inputSchema": {
+      "properties": {
+        "prompt": {
+          "title": "Prompt",
+          "type": "string"
+        },
+        "system": {
+          "default": "",
+          "title": "System",
+          "type": "string"
+        },
+        "temperature": {
+          "default": 0.7,
+          "title": "Temperature",
+          "type": "number"
+        }
+      },
+      "required": [
+        "prompt"
+      ],
+      "title": "local_llmArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "local_llmOutput",
+      "type": "object"
+    }
+  },
+  "local_vision": {
+    "inputSchema": {
+      "properties": {
+        "image_path": {
+          "title": "Image Path",
+          "type": "string"
+        },
+        "mode": {
+          "default": "analyze",
+          "title": "Mode",
+          "type": "string"
+        },
+        "prompt": {
+          "default": "",
+          "title": "Prompt",
+          "type": "string"
+        }
+      },
+      "required": [
+        "image_path"
+      ],
+      "title": "local_visionArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "local_visionOutput",
+      "type": "object"
+    }
+  },
+  "pull_model": {
+    "inputSchema": {
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "pull_modelArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "pull_modelOutput",
+      "type": "object"
+    }
+  },
+  "refine_project": {
+    "inputSchema": {
+      "$defs": {
+        "FileInput": {
+          "description": "One project file, as returned by generate_project.",
+          "properties": {
+            "content": {
+              "title": "Content",
+              "type": "string"
+            },
+            "path": {
+              "description": "Relative file path, e.g. src/App.tsx",
+              "title": "Path",
+              "type": "string"
+            }
+          },
+          "required": [
+            "path",
+            "content"
+          ],
+          "title": "FileInput",
+          "type": "object"
+        }
+      },
+      "properties": {
+        "files": {
+          "items": {
+            "$ref": "#/$defs/FileInput"
+          },
+          "title": "Files",
+          "type": "array"
+        },
+        "framework": {
+          "default": "react",
+          "title": "Framework",
+          "type": "string"
+        },
+        "instruction": {
+          "title": "Instruction",
+          "type": "string"
+        }
+      },
+      "required": [
+        "files",
+        "instruction"
+      ],
+      "title": "refine_projectArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "refine_projectOutput",
+      "type": "object"
+    }
+  },
+  "scrape_url": {
+    "inputSchema": {
+      "properties": {
+        "extract": {
+          "default": "markdown",
+          "title": "Extract",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        },
+        "wait_seconds": {
+          "default": 0,
+          "title": "Wait Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "title": "scrape_urlArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "scrape_urlOutput",
+      "type": "object"
+    }
+  },
+  "search_knowledge": {
+    "inputSchema": {
+      "properties": {
+        "query": {
+          "title": "Query",
+          "type": "string"
+        },
+        "top_k": {
+          "default": 8,
+          "title": "Top K",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "query"
+      ],
+      "title": "search_knowledgeArguments",
+      "type": "object"
+    },
+    "outputSchema": {
+      "properties": {
+        "result": {
+          "title": "Result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "result"
+      ],
+      "title": "search_knowledgeOutput",
+      "type": "object"
+    }
+  }
+}

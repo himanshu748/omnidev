@@ -265,7 +265,7 @@ class MCPManager:
             {
                 "name": tool.name,
                 "description": tool.description or "",
-                "input_schema": tool.inputSchema or {"type": "object", "properties": {}},
+                "input_schema": tool.input_schema or {"type": "object", "properties": {}},
             }
             for tool in result.tools
         ]
@@ -284,7 +284,7 @@ class MCPManager:
         text = "\n".join(parts) or "(no text content)"
         if len(text) > TOOL_RESULT_MAX_CHARS:
             text = text[:TOOL_RESULT_MAX_CHARS] + "\n…(truncated)"
-        if getattr(result, "isError", False):
+        if result.is_error:
             return f"Tool error: {text}"
         return text
 

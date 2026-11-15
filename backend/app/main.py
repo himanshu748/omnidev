@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from playwright.async_api import async_playwright, Playwright, Browser
 
 from app.config import settings
-from mcp.server.fastmcp.server import StreamableHTTPASGIApp
+from mcp.server.streamable_http_manager import StreamableHTTPASGIApp
 from starlette.routing import Route
 
 from app.mcp import server as mcp_module
@@ -158,7 +158,9 @@ app.include_router(knowledge.router, prefix="/api/knowledge", tags=["Knowledge"]
 # prefix, so /mcp would 307 to /mcp/, and a redirected POST is exactly the
 # kind of thing MCP clients handle inconsistently. Registering the raw ASGI
 # handler on both spellings means the documented URL just works.
-mcp_server.streamable_http_app()  # creates the session manager
+# Each HTTP request is independent, with no per-client session to leak or
+# coordinate. SDK v2 configures the transport here, not on MCPServer.
+mcp_server.streamable_http_app(stateless_http=True, json_response=True)
 
 
 class _SelfHostedMCP:
