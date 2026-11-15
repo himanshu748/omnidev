@@ -18,7 +18,10 @@ GET /health
 ```json
 {
   "status": "ok",
-  "service": "omnidev"
+  "service": "omnidev",
+  "version": "0.7.1",
+  "ai_provider": "ollama",
+  "ai_model": "gemma4:12b"
 }
 ```
 

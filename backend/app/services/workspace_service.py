@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -97,7 +97,7 @@ def add_workspace(raw_path: str) -> dict[str, Any]:
         raise WorkspaceError("That folder is already a workspace.")
     record = {
         "path": str(path),
-        "added_at": datetime.now(timezone.utc).isoformat(),
+        "added_at": datetime.now(UTC).isoformat(),
     }
     records.append(record)
     _save(records)

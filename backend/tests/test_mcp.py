@@ -6,11 +6,10 @@ import pathlib
 import subprocess
 import sys
 import threading
+from contextlib import asynccontextmanager
 
 import httpx
 import pytest
-import pytest_asyncio
-from contextlib import asynccontextmanager
 
 from app.mcp import server as mcp_server
 from app.mcp.server import FileInput

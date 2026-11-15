@@ -11,14 +11,15 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
 from app.config import settings
 from app.services.ai_service import (
-    AIConfigurationError,
     OLLAMA_INSTALL_HINT,
+    AIConfigurationError,
     _get_ollama_client,
     get_provider,
 )

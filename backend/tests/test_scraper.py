@@ -66,6 +66,7 @@ async def test_scraper_returns_503_when_browser_unavailable(client, app, monkeyp
 
 # ── JS injection guard ──────────────────────────────────────
 import pytest as _pytest
+
 from app.services.scraper_service import _reject_dangerous_js
 from app.services.url_guard import BlockedURLError
 
@@ -231,7 +232,7 @@ async def test_scraper_crawl_503_when_browser_unavailable(client, app, monkeypat
 
 
 # ── HTML → Markdown converter (pure helper) ─────────────────
-from app.services.scraper_service import html_to_markdown, _same_registered_domain
+from app.services.scraper_service import _same_registered_domain, html_to_markdown
 
 
 def test_markdown_headings_and_paragraphs():

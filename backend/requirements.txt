@@ -13,6 +13,9 @@ ipinfo
 python-multipart
 pytest
 pytest-asyncio
+# Dev tooling: coverage report and lint/format (make lint, CI).
+pytest-cov
+ruff
 moto
 numpy
 pypdf

@@ -35,11 +35,12 @@ import platform
 import shutil
 import subprocess
 import tempfile
+from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 from app.config import settings
 from app.services import workspace_service

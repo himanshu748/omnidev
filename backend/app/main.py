@@ -6,18 +6,18 @@ FastAPI entry point with lifespan-managed Playwright browser.
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
 import logging
-from typing import AsyncIterator
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from playwright.async_api import async_playwright, Playwright, Browser
-
-from app.config import settings
 from mcp.server.fastmcp.server import StreamableHTTPASGIApp
+from playwright.async_api import Browser, Playwright, async_playwright
 from starlette.routing import Route
 
+from app import __version__
+from app.config import settings
 from app.mcp import server as mcp_module
 from app.mcp.server import mcp as mcp_server
 from app.routers import (
@@ -99,8 +99,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 # ── App ─────────────────────────────────────────────────────
 app = FastAPI(
     title="OmniDev",
-    description="All-in-One AI Developer Platform",
-    version="0.3.0",
+    description="Local-first AI developer cockpit",
+    version=__version__,
     lifespan=lifespan,
 )
 
@@ -110,18 +110,39 @@ app = FastAPI(
 _LOOPBACK_HOSTS = {"127.0.0.1", "::1", "::ffff:127.0.0.1"}
 
 
+# A loopback client address alone is not enough: with DNS rebinding a web page
+# reaches 127.0.0.1 under an attacker's hostname. Browsers always send that
+# hostname, so the Host header must name loopback too.
+_LOOPBACK_NAMES = {"localhost", "127.0.0.1", "::1"}
+
+
+def _host_name(host_header: str) -> str:
+    host = host_header.strip().lower()
+    if host.startswith("["):  # [::1]:8000
+        return host[1 : host.find("]")] if "]" in host else host
+    return host.rsplit(":", 1)[0] if host.count(":") == 1 else host
+
+
 @app.middleware("http")
 async def _loopback_only(request, call_next):
     if not settings.allow_remote_clients:
+        from fastapi.responses import JSONResponse
+
         client = request.client.host if request.client else None
         if client not in _LOOPBACK_HOSTS:
-            from fastapi.responses import JSONResponse
-
             return JSONResponse(
                 status_code=403,
                 content={
                     "detail": "OmniDev's API is loopback-only. Set ALLOW_REMOTE_CLIENTS=1 "
                     "to allow remote access (not recommended — the API has no authentication)."
+                },
+            )
+        if _host_name(request.headers.get("host", "")) not in _LOOPBACK_NAMES:
+            return JSONResponse(
+                status_code=403,
+                content={
+                    "detail": "OmniDev's API only answers to localhost, 127.0.0.1 or [::1] "
+                    "in the Host header (DNS rebinding protection)."
                 },
             )
     return await call_next(request)
@@ -203,6 +224,7 @@ async def health():
     return {
         "status": "ok",
         "service": "omnidev",
+        "version": __version__,
         "ai_provider": ai_provider,
         "ai_model": ai_model,
     }

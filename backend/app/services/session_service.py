@@ -11,10 +11,9 @@ from __future__ import annotations
 import asyncio
 import sqlite3
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-from app.config import settings
 from app.services.data_paths import private_data_root, protect_file
 
 # Bound how much history is replayed into the model context.
@@ -60,7 +59,7 @@ def _connect() -> sqlite3.Connection:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 def _create_session_sync(first_message: str) -> str:
@@ -100,12 +99,30 @@ def _context_messages_sync(session_id: str) -> list[dict[str, str]]:
     budget = CONTEXT_CHAR_BUDGET
     kept: list[dict[str, str]] = []
     for row in rows:  # newest → oldest
-        budget -= len(row["content"])
-        if budget < 0 and kept:
+        content = row["content"]
+        if len(content) > budget:
+            # Only the newest message is ever cut, keeping its tail (the most
+            # recent text); older ones that do not fit end the replay.
+            if not kept:
+                kept.append({"role": row["role"], "content": _truncate_head(content, budget)})
             break
-        kept.append({"role": row["role"], "content": row["content"]})
+        budget -= len(content)
+        kept.append({"role": row["role"], "content": content})
     kept.reverse()
     return kept
+
+
+TRUNCATION_MARKER = "[…earlier part of this message omitted to fit the context budget]\n"
+
+
+def _truncate_head(content: str, limit: int) -> str:
+    """Keep the end of `content` so the result, marker included, fits `limit`."""
+    if len(content) <= limit:
+        return content
+    room = limit - len(TRUNCATION_MARKER)
+    if room <= 0:
+        return content[-limit:] if limit > 0 else ""
+    return TRUNCATION_MARKER + content[-room:]
 
 
 def _list_sessions_sync(limit: int) -> list[dict]:

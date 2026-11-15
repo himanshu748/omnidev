@@ -15,10 +15,11 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import re as _re
 import time
 from html import unescape
-from typing import Optional
-from urllib.parse import urljoin, urlparse
+from html.parser import HTMLParser as _HTMLParser
+from urllib.parse import urlparse
 
 from playwright.async_api import Browser, BrowserContext, Page
 from playwright_stealth import Stealth
@@ -41,7 +42,6 @@ _MAX_CONTENT_CHARS = 5_000_000
 # Injected page JS runs inside a headless browser on the SERVER's network, so a
 # fetch to an internal host would bypass the URL guard. Reject the network
 # primitives that could exfiltrate data or reach internal services.
-import re as _re
 
 _DANGEROUS_JS = _re.compile(
     r"\b(?:fetch|XMLHttpRequest|sendBeacon|WebSocket|EventSource|importScripts)\b|"
@@ -84,7 +84,6 @@ def _reject_dangerous_js(code: str) -> None:
 # Markdown for headings, links, lists, paragraphs, blockquotes, code, hr and
 # emphasis. Anything it does not understand degrades to its inline text.
 
-from html.parser import HTMLParser as _HTMLParser
 
 _BLOCK_TAGS = {
     "p", "div", "section", "article", "header", "footer", "main",
@@ -350,9 +349,9 @@ _METADATA_JS = r"""() => {
 
 
 async def _build_context(browser: Browser, *, url: str, stealth: bool,
-                         headers: Optional[dict[str, str]],
-                         cookies: Optional[list[dict[str, str]]],
-                         proxy: Optional[str],
+                         headers: dict[str, str] | None,
+                         cookies: list[dict[str, str]] | None,
+                         proxy: str | None,
                          viewport_width: int, viewport_height: int) -> BrowserContext:
     """Create a configured browser context (stealth, proxy, headers, cookies)."""
     ctx_opts: dict = {
@@ -397,18 +396,18 @@ async def scrape(
     browser: Browser,
     *,
     url: str,
-    wait_for: Optional[str] = None,
+    wait_for: str | None = None,
     extract: ExtractMode = ExtractMode.text,
     stealth: bool = True,
-    headers: Optional[dict[str, str]] = None,
-    cookies: Optional[list[dict[str, str]]] = None,
-    javascript: Optional[str] = None,
+    headers: dict[str, str] | None = None,
+    cookies: list[dict[str, str]] | None = None,
+    javascript: str | None = None,
     timeout_ms: int = 30000,
     wait_seconds: float = 0,
-    proxy: Optional[str] = None,
+    proxy: str | None = None,
     viewport_width: int = 1920,
     viewport_height: int = 1080,
-    block_resources: Optional[list[str]] = None,
+    block_resources: list[str] | None = None,
 ) -> dict:
     """
     Open a page, optionally apply stealth, extract content, and close.
@@ -598,7 +597,7 @@ async def scrape(
             "content": content,
             "screenshot_b64": screenshot_b64,
             "pdf_b64": pdf_b64,
-            "links": [l.model_dump() for l in links] if links else None,
+            "links": [link.model_dump() for link in links] if links else None,
             "metadata": metadata.model_dump() if metadata else None,
             "markdown": markdown,
             "article": article.model_dump() if article else None,

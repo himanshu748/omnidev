@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
+from app.routers.errors import bad_request, internal_error, not_found, service_unavailable
 from app.schemas.models import (
     InstalledModel,
     ModelsResponse,
@@ -14,7 +15,6 @@ from app.schemas.models import (
 )
 from app.services import models_service
 from app.services.ai_service import AIConfigurationError
-from app.routers.errors import bad_request, internal_error, not_found, service_unavailable
 
 router = APIRouter()
 

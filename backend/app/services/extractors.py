@@ -114,13 +114,13 @@ def _ocr_pdf_page(path: Path, page_number: int) -> str:
         return ""
     Vision, NSURL, CIImage = loaded
     try:
+        import Quartz
         from Quartz import (
             CGPDFDocumentCreateWithURL,
             CGPDFDocumentGetPage,
             CGPDFPageGetBoxRect,
             kCGPDFMediaBox,
         )
-        import Quartz
     except Exception:
         return ""
 

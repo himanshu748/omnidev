@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, Request
 
+from app.routers.errors import internal_error
 from app.schemas.scraper import (
     CrawlRequest,
     CrawlResponse,
@@ -12,7 +13,6 @@ from app.schemas.scraper import (
 )
 from app.services.scraper_service import crawl, scrape
 from app.services.url_guard import BlockedURLError
-from app.routers.errors import internal_error
 
 router = APIRouter()
 

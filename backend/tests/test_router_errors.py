@@ -3,7 +3,6 @@ import pytest
 from app.config import settings
 from app.routers import devops, scraper, storage, vision
 
-
 SECRET_LIKE_ERROR = "provider failed with sk-live-secret-token and /private/local/path"
 
 

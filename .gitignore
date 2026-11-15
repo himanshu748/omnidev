@@ -82,3 +82,9 @@ frontend/public/downloads/
 # Vercel
 .vercel
 .env*.local
+
+# Coverage output
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml

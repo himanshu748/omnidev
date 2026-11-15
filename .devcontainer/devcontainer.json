@@ -1,0 +1,30 @@
+// Backend development on any OS (Codespaces or VS Code Dev Containers).
+// The native macOS app still needs a Mac; see CONTRIBUTING.md.
+{
+  "name": "OmniDev backend",
+  "image": "mcr.microsoft.com/devcontainers/python:3.13-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "24" }
+  },
+  // Same hashed install as CI, plus Chromium's system libraries and bubblewrap
+  // so the agent command sandbox can run where the host allows it.
+  "postCreateCommand": "make setup && backend/.venv/bin/python -m playwright install-deps chromium && sudo apt-get install -y bubblewrap",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": { "label": "OmniDev API", "onAutoForward": "notify" }
+  },
+  // Local Dev Containers forward to localhost:8000, which the API accepts.
+  // A Codespaces forwarded URL (*.app.github.dev) is refused by the loopback
+  // Host check on purpose; use curl inside the container, or VS Code locally.
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "backend/.venv/bin/python",
+        "python.testing.pytestEnabled": true,
+        "python.testing.cwd": "${workspaceFolder}/backend",
+        "[python]": { "editor.defaultFormatter": "charliermarsh.ruff" }
+      },
+      "extensions": ["ms-python.python", "charliermarsh.ruff", "editorconfig.editorconfig"]
+    }
+  }
+}

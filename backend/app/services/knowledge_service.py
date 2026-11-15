@@ -33,15 +33,15 @@ import os
 import re
 import sqlite3
 import subprocess
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
 from app.config import settings
-from app.services.data_paths import private_data_root, protect_file
 from app.services import ai_service, extractors, file_guards
+from app.services.data_paths import private_data_root, protect_file
 from app.services.file_guards import SkipReason, SkipTally
 
 CHUNK_CHARS = 2000
@@ -126,7 +126,7 @@ def _connect() -> sqlite3.Connection:
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 # ── Job state ───────────────────────────────────────────────
@@ -456,7 +456,7 @@ def _replace_file_chunks_sync(
             "DELETE FROM knowledge_chunks WHERE source_id = ? AND file_path = ?",
             (source_id, file_path),
         )
-        for index, (chunk, blob) in enumerate(zip(chunks, blobs)):
+        for index, (chunk, blob) in enumerate(zip(chunks, blobs, strict=True)):
             cursor = conn.execute(
                 """
                 INSERT INTO knowledge_chunks

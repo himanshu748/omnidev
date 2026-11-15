@@ -19,16 +19,16 @@ import json
 import os
 import re
 import shutil
+from collections.abc import AsyncIterator
 from contextlib import AsyncExitStack
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from app.config import settings
-from app.services.data_paths import private_data_root, private_subdir, write_private_text
 from app.services.ai_service import ollama_chat_round
+from app.services.data_paths import private_data_root, private_subdir, write_private_text
 
 TOOL_TIMEOUT_SECONDS = 60
 TOOL_RESULT_MAX_CHARS = 8_000

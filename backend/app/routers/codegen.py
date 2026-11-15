@@ -36,11 +36,11 @@ async def codegen_generate(body: CodeGenRequest):
         result = await generate_project(prompt=body.prompt, framework=body.framework)
         return _to_response(result)
     except AIConfigurationError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Code generation failed")
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Code generation failed") from exc
 
 
 @router.post("/refine", response_model=CodeGenResponse)
@@ -58,8 +58,8 @@ async def codegen_refine(body: CodeGenRefineRequest):
         )
         return _to_response(result)
     except AIConfigurationError as exc:
-        raise HTTPException(status_code=503, detail=str(exc))
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except Exception:
-        raise HTTPException(status_code=500, detail="Code generation failed")
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail="Code generation failed") from exc
