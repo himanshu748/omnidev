@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Serialize agent backup manifest updates and atomically publish complete manifests before pruning old snapshots. Failed writes preserve previous backups and report a safe failure result.
+
 ### Changed
 
 - Migrate the MCP server and marketplace to Python SDK v2, preserving existing tool names and schemas, stateless HTTP endpoints, and preview-only AWS planning.
