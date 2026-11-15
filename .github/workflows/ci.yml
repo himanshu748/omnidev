@@ -102,7 +102,7 @@ jobs:
 
   macos:
     name: macOS app (swift build)
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         working-directory: macos
@@ -120,7 +120,7 @@ jobs:
 
   agent-sandbox-macos:
     name: Agent sandbox (macOS Seatbelt)
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         working-directory: backend
