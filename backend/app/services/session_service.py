@@ -23,6 +23,10 @@ CONTEXT_CHAR_BUDGET = 24_000
 TITLE_MAX_CHARS = 64
 
 
+class SessionNotFoundError(Exception):
+    """A message cannot be saved because its conversation no longer exists."""
+
+
 def _db_path() -> Path:
     return private_data_root() / "omnidev.db"
 
@@ -31,6 +35,9 @@ def _connect() -> sqlite3.Connection:
     path = _db_path()
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
+    # Connection-local, and must be enabled before any transaction starts.
+    # Existing rows are preserved; this enforces all subsequent writes.
+    conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute(
         """
@@ -81,12 +88,17 @@ def _session_exists_sync(session_id: str) -> bool:
 
 
 def _append_message_sync(session_id: str, role: str, content: str) -> None:
-    with _connect() as conn:
-        conn.execute(
-            "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
-            (session_id, role, content, _now()),
-        )
-        conn.execute("UPDATE sessions SET updated_at = ? WHERE id = ?", (_now(), session_id))
+    try:
+        with _connect() as conn:
+            conn.execute(
+                "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
+                (session_id, role, content, _now()),
+            )
+            conn.execute("UPDATE sessions SET updated_at = ? WHERE id = ?", (_now(), session_id))
+    except sqlite3.IntegrityError as exc:
+        if exc.sqlite_errorcode == sqlite3.SQLITE_CONSTRAINT_FOREIGNKEY:
+            raise SessionNotFoundError("Unknown session_id.") from exc
+        raise
 
 
 def _context_messages_sync(session_id: str) -> list[dict[str, str]]:

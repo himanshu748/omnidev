@@ -119,3 +119,123 @@ async def test_session_endpoints(client, monkeypatch, coverage_tracker):
     deleted = await client.delete(f"/api/chat/sessions/{session_id}")
     assert deleted.status_code == 200
     assert (await client.get(f"/api/chat/sessions/{session_id}")).status_code == 404
+
+
+# Foreign-key regressions: all databases remain inside the temporary data_dir.
+def test_connections_enable_foreign_keys():
+    for _ in range(2):
+        with session_service._connect() as conn:
+            assert conn.execute("PRAGMA foreign_keys").fetchone()[0] == 1
+
+
+def test_missing_and_deleted_sessions_reject_messages():
+    session_id = session_service._create_session_sync("deleted")
+    session_service._delete_session_sync(session_id)
+    for missing_id in ("never-existed", session_id):
+        with pytest.raises(session_service.SessionNotFoundError):
+            session_service._append_message_sync(missing_id, "user", "not saved")
+    with session_service._connect() as conn:
+        assert conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0] == 0
+
+
+def test_direct_session_delete_cascades():
+    session_id = session_service._create_session_sync("cascade")
+    session_service._append_message_sync(session_id, "user", "hello")
+    with session_service._connect() as conn:
+        conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+    assert session_service._list_messages_sync(session_id) == []
+
+
+def test_delete_committed_while_append_is_preparing(monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event, current_thread
+
+    session_id = session_service._create_session_sync("concurrent")
+    preparing, deleted = Event(), Event()
+    original_now = session_service._now
+
+    def pause_writer() -> str:
+        if current_thread().name.startswith("append-regression"):
+            preparing.set()
+            assert deleted.wait(5), "delete did not complete"
+        return original_now()
+
+    monkeypatch.setattr(session_service, "_now", pause_writer)
+    with ThreadPoolExecutor(max_workers=1, thread_name_prefix="append-regression") as pool:
+        future = pool.submit(session_service._append_message_sync, session_id, "user", "late")
+        try:
+            assert preparing.wait(5), "append did not start"
+            assert session_service._delete_session_sync(session_id)
+        finally:
+            deleted.set()
+        with pytest.raises(session_service.SessionNotFoundError):
+            future.result(timeout=5)
+    with session_service._connect() as conn:
+        assert conn.execute("PRAGMA foreign_key_check").fetchall() == []
+        assert conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0] == 0
+
+
+def test_existing_database_preserves_history_and_enforces_new_writes():
+    session_id = session_service._create_session_sync("legacy")
+    session_service._append_message_sync(session_id, "user", "keep me")
+    # Simulate a database written by the old implementation, including an orphan.
+    with session_service._connect() as conn:
+        conn.execute("PRAGMA foreign_keys = OFF")
+        conn.execute(
+            "INSERT INTO messages (session_id, role, content, created_at) VALUES (?, ?, ?, ?)",
+            ("legacy-orphan", "user", "preserve old data", session_service._now()),
+        )
+    session_service._append_message_sync(session_id, "assistant", "still works")
+    assert [m["content"] for m in session_service._list_messages_sync(session_id)] == [
+        "keep me", "still works"
+    ]
+    with pytest.raises(session_service.SessionNotFoundError):
+        session_service._append_message_sync("new-orphan", "user", "refused")
+    assert len(session_service._list_messages_sync("legacy-orphan")) == 1
+
+
+def test_other_integrity_errors_are_not_missing_sessions():
+    import sqlite3
+
+    session_id = session_service._create_session_sync("valid")
+    with pytest.raises(sqlite3.IntegrityError):
+        session_service._append_message_sync(session_id, "invalid-role", "refused")
+
+
+@pytest.mark.asyncio
+async def test_chat_delete_between_lookup_and_append_returns_404(client, monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+    session_id = await session_service.create_session("race")
+    original_exists = session_service.session_exists
+
+    async def delete_after_lookup(value: str) -> bool:
+        exists = await original_exists(value)
+        await session_service.delete_session(value)
+        return exists
+
+    monkeypatch.setattr(session_service, "session_exists", delete_after_lookup)
+    response = await client.post(
+        "/api/chat/stream", json={"session_id": session_id, "message": "late"}
+    )
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Unknown session_id."}
+
+
+@pytest.mark.asyncio
+async def test_chat_deleted_during_generation_emits_missing_session(client, monkeypatch):
+    monkeypatch.setattr(settings, "ai_provider", "ollama")
+    session_id = await session_service.create_session("stream race")
+
+    async def delete_while_streaming(*args, **kwargs):
+        yield "answer"
+        await session_service.delete_session(session_id)
+
+    monkeypatch.setattr("app.routers.chat.stream_chat", delete_while_streaming)
+    response = await client.post(
+        "/api/chat/stream", json={"session_id": session_id, "message": "hello"}
+    )
+    assert response.status_code == 200
+    events = [json.loads(line) for line in response.text.splitlines()]
+    assert events[-1] == {"error": "Unknown session_id."}
+    assert {"done": True} not in events
+    assert await session_service.list_messages(session_id) == []

@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- Enforce SQLite session foreign keys on every connection so chat messages cannot outlive a deleted conversation. Concurrent deletion returns a missing-session error instead of creating orphan messages; existing history is preserved.
+
 ### Changed
 
 - Migrate the MCP server and marketplace to Python SDK v2, preserving existing tool names and schemas, stateless HTTP endpoints, and preview-only AWS planning.
