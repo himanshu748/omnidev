@@ -22,7 +22,7 @@ from app.services.ai_service import (
     ensure_ai_configured,
     stream_chat,
 )
-from app.routers.errors import service_unavailable
+from app.routers.errors import not_found, service_unavailable
 
 router = APIRouter()
 
@@ -57,7 +57,10 @@ async def chat_stream(body: ChatRequest):
         session_id = await session_service.create_session(body.message)
 
     history = await session_service.context_messages(session_id)
-    await session_service.append_message(session_id, "user", body.message)
+    try:
+        await session_service.append_message(session_id, "user", body.message)
+    except session_service.SessionNotFoundError as exc:
+        raise not_found("Unknown session_id.") from exc
     messages = history + [{"role": "user", "content": body.message}]
     system = body.system or DEFAULT_SYSTEM
 
@@ -114,6 +117,8 @@ async def chat_stream(body: ChatRequest):
                     session_id, "assistant", "".join(answer_parts)
                 )
             yield json.dumps({"done": True}) + "\n"
+        except session_service.SessionNotFoundError:
+            yield json.dumps({"error": "Unknown session_id."}) + "\n"
         except (AIConfigurationError, AIResponseError) as exc:
             yield json.dumps({"error": str(exc)}) + "\n"
         except Exception:

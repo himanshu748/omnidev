@@ -245,6 +245,8 @@ Content-Type: application/json
 
 Returns matching chunks with `file_path`, `snippet` and cosine `score`. Chat grounding: pass `"use_knowledge": true` to `POST /api/chat/stream` and the stream emits a `{"knowledge": {"cited_files": [...]}}` event before the answer deltas.
 
+Chat conversation writes enforce SQLite foreign keys. If a session is deleted before its incoming message is saved, `POST /api/chat/stream` returns HTTP 404 with `{"detail": "Unknown session_id."}`. If deletion happens during generation, the already-open stream ends with `{"error": "Unknown session_id."}` rather than a `done` event, and the generated answer is not persisted. Existing databases keep their history, including any legacy orphan rows; new orphan writes are rejected without a destructive data migration.
+
 ## 🤖 Agent Mode
 
 ### Run a Task
