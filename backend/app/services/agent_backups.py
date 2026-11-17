@@ -16,6 +16,8 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import tempfile
+import threading
 import time
 import uuid
 from datetime import datetime, timezone
@@ -27,6 +29,10 @@ from app.services.data_paths import private_subdir
 MAX_BACKUPS = 200
 MAX_AGE_DAYS = 14
 MAX_BACKUP_BYTES = 8_000_000
+
+# Agent edits run in worker threads of the single backend process. Hold this
+# across publication and restore so pruning cannot remove an in-use snapshot.
+_MANIFEST_LOCK = threading.RLock()
 
 
 def _root() -> Path:
@@ -45,81 +51,105 @@ def snapshot(path: Path, *, reason: str = "") -> dict[str, Any] | None:
     Never raises: a failed backup must not block the edit the user asked for,
     but it is reported as `backed_up: false` so the caller can say so.
     """
-    try:
-        if not path.is_file():
-            return None
-        size = path.stat().st_size
-        if size > MAX_BACKUP_BYTES:
-            return {
-                "id": "",
+    with _MANIFEST_LOCK:
+        destination: Path | None = None
+        try:
+            if not path.is_file():
+                return None
+            size = path.stat().st_size
+            if size > MAX_BACKUP_BYTES:
+                return {
+                    "id": "",
+                    "path": str(path),
+                    "backed_up": False,
+                    "note": f"file is {size / 1e6:.1f} MB, too large to snapshot",
+                }
+            backup_id = f"{int(time.time())}-{uuid.uuid4().hex[:8]}"
+            destination = _root() / f"{backup_id}{path.suffix or '.bak'}"
+            shutil.copy2(path, destination)
+            os.chmod(destination, 0o600)
+            record = {
+                "id": backup_id,
                 "path": str(path),
-                "backed_up": False,
-                "note": f"file is {size / 1e6:.1f} MB, too large to snapshot",
+                "backup_path": str(destination),
+                "bytes": size,
+                "reason": reason,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "backed_up": True,
             }
-        backup_id = f"{int(time.time())}-{uuid.uuid4().hex[:8]}"
-        destination = _root() / f"{backup_id}{path.suffix or '.bak'}"
-        shutil.copy2(path, destination)
-        os.chmod(destination, 0o600)
-        record = {
-            "id": backup_id,
-            "path": str(path),
-            "backup_path": str(destination),
-            "bytes": size,
-            "reason": reason,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "backed_up": True,
-        }
-        with _manifest_path().open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(record) + "\n")
-        _prune()
-        return record
-    except Exception as exc:  # never block the user's edit
-        return {"id": "", "path": str(path), "backed_up": False, "note": str(exc)[:120]}
+            _prune([*_load_manifest(), record])
+            return record
+        except Exception:  # never block the user's edit or expose exception details
+            if destination is not None:
+                try:
+                    destination.unlink(missing_ok=True)
+                except OSError:
+                    pass
+            return {"id": "", "path": str(path), "backed_up": False, "note": "Could not save backup."}
 
 
 def _load_manifest() -> list[dict[str, Any]]:
-    path = _manifest_path()
-    if not path.exists():
-        return []
-    records: list[dict[str, Any]] = []
-    for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            records.append(json.loads(line))
-        except json.JSONDecodeError:
-            continue
-    return records
+    with _MANIFEST_LOCK:
+        path = _manifest_path()
+        if not path.exists():
+            return []
+        records: list[dict[str, Any]] = []
+        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+        return records
 
 
 def _write_manifest(records: list[dict[str, Any]]) -> None:
-    with _manifest_path().open("w", encoding="utf-8") as handle:
+    """Publish a complete private manifest without truncating the old one."""
+    with _MANIFEST_LOCK:
+        path = _manifest_path()
+        fd, temporary_name = tempfile.mkstemp(prefix=".manifest-", suffix=".tmp", dir=path.parent)
+        temporary = Path(temporary_name)
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+                for record in records:
+                    handle.write(json.dumps(record) + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, path)
+        finally:
+            try:
+                temporary.unlink(missing_ok=True)
+            except OSError:
+                pass
+
+
+def _prune(records: list[dict[str, Any]] | None = None) -> None:
+    with _MANIFEST_LOCK:
+        records = _load_manifest() if records is None else records
+        cutoff = time.time() - MAX_AGE_DAYS * 86400
+        kept: list[dict[str, Any]] = []
+        dropped: list[dict[str, Any]] = []
         for record in records:
-            handle.write(json.dumps(record) + "\n")
-
-
-def _prune() -> None:
-    records = _load_manifest()
-    cutoff = time.time() - MAX_AGE_DAYS * 86400
-    kept: list[dict[str, Any]] = []
-    dropped: list[dict[str, Any]] = []
-    for record in records:
-        try:
-            created = datetime.fromisoformat(record["created_at"]).timestamp()
-        except (KeyError, ValueError):
-            created = time.time()
-        (dropped if created < cutoff else kept).append(record)
-    if len(kept) > MAX_BACKUPS:
-        dropped.extend(kept[: len(kept) - MAX_BACKUPS])
-        kept = kept[-MAX_BACKUPS:]
-    for record in dropped:
-        try:
-            Path(record.get("backup_path", "")).unlink(missing_ok=True)
-        except OSError:
-            pass
-    if dropped:
+            try:
+                created = datetime.fromisoformat(record["created_at"]).timestamp()
+            except (KeyError, ValueError):
+                created = time.time()
+            (dropped if created < cutoff else kept).append(record)
+        if len(kept) > MAX_BACKUPS:
+            dropped.extend(kept[: len(kept) - MAX_BACKUPS])
+            kept = kept[-MAX_BACKUPS:]
+        # Publish first: if serialization or replacement fails, all old manifest
+        # entries and their snapshot files remain available for restoration.
         _write_manifest(kept)
+        for record in dropped:
+            try:
+                Path(record.get("backup_path", "")).unlink(missing_ok=True)
+            except (OSError, TypeError, ValueError):
+                # A stale/malformed cleanup path must not turn an already
+                # published backup into a reported failure.
+                pass
 
 
 def list_backups(limit: int = 50) -> list[dict[str, Any]]:
@@ -133,16 +163,17 @@ class RestoreError(ValueError):
 
 def restore(backup_id: str) -> dict[str, Any]:
     """Put a snapshot back where it came from."""
-    record = next((r for r in _load_manifest() if r.get("id") == backup_id), None)
-    if record is None:
-        raise RestoreError(f"Unknown backup id {backup_id!r}.")
-    source = Path(record.get("backup_path", ""))
-    if not source.is_file():
-        raise RestoreError("The snapshot file is gone; it may have been pruned.")
-    target = Path(record["path"])
-    try:
-        target.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy2(source, target)
-    except OSError as exc:
-        raise RestoreError(f"Could not restore to {target}: {exc}") from exc
-    return {"id": backup_id, "restored_to": str(target), "bytes": record.get("bytes", 0)}
+    with _MANIFEST_LOCK:
+        record = next((r for r in _load_manifest() if r.get("id") == backup_id), None)
+        if record is None:
+            raise RestoreError(f"Unknown backup id {backup_id!r}.")
+        source = Path(record.get("backup_path", ""))
+        if not source.is_file():
+            raise RestoreError("The snapshot file is gone; it may have been pruned.")
+        target = Path(record["path"])
+        try:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, target)
+        except OSError as exc:
+            raise RestoreError(f"Could not restore to {target}: {exc}") from exc
+        return {"id": backup_id, "restored_to": str(target), "bytes": record.get("bytes", 0)}
