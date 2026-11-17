@@ -349,3 +349,5 @@ HTTP status codes follow REST conventions:
 - `400`, Bad request / invalid input
 - `422`, Validation error (Pydantic)
 - `500`, Internal server error
+
+Agent backup operations serialize within the backend process. Snapshot publication replaces the complete private manifest atomically before pruning expired files; a failed write preserves the previous manifest and reports `backed_up: false` with a safe note. This does not coordinate multiple backend processes or guarantee power-loss durability. Restore conflict detection remains a separate feature.

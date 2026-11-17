@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Serialize agent backup manifest updates and atomically publish complete manifests before pruning old snapshots. Failed writes preserve previous backups and report a safe failure result.
 - Enforce SQLite session foreign keys on every connection so chat messages cannot outlive a deleted conversation. Concurrent deletion returns a missing-session error instead of creating orphan messages; existing history is preserved.
 
 ### Changed
