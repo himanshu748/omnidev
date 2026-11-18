@@ -42,6 +42,18 @@ claude-local: ## Run Claude Code on the local Gemma model (no cloud, no API key)
 test: ## Run backend tests
 	cd $(BACKEND) && .venv/bin/pytest -q
 
+.PHONY: setup-typecheck
+setup-typecheck: ## Install the hash-locked development-only checker after make setup
+	$(PY) -m pip install --require-hashes -r $(BACKEND)/requirements-typecheck.lock
+
+.PHONY: typecheck
+typecheck: ## Check the four safety-critical services in strict mode
+	cd $(BACKEND) && .venv/bin/pyright app/services/file_guards.py app/services/url_guard.py app/services/agent_tools.py app/services/data_paths.py
+
+.PHONY: typecheck-all
+typecheck-all: ## Report the basic-mode app baseline (currently advisory in CI)
+	cd $(BACKEND) && .venv/bin/pyright
+
 .PHONY: mac
 mac: ## Build and run the native macOS app
 	cd macos && swift run OmniDev

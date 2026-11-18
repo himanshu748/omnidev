@@ -146,7 +146,7 @@ def is_evicted(path: Path) -> bool:
     and it silently consumes the user's quota and disk.
     """
     try:
-        return bool(os.stat(path).st_flags & SF_DATALESS)
+        return bool(getattr(os.stat(path), "st_flags", 0) & SF_DATALESS)
     except (OSError, AttributeError):
         return False
 
@@ -219,9 +219,9 @@ class ReadTimeout(TimeoutError):
 
 def run_with_timeout(
     function: Callable[..., Any],
-    *args,
+    *args: Any,
     timeout: float = READ_TIMEOUT_SECONDS,
-    **kwargs,
+    **kwargs: Any,
 ) -> Any:
     """
     Run a blocking extraction under a hard wall clock.
