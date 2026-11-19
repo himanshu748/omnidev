@@ -326,9 +326,14 @@ The `agent` start event carries this status as `sandbox`, and `approval_required
 ```http
 GET  /api/agent/backups
 POST /api/agent/backups/{id}/restore
+POST /api/agent/backups/{id}/restore?force=true
 ```
 
 The agent has no delete tool, but replacing a file's contents loses what was there, so every write and edit copies the file aside first. Backups live in `~/.omnidev/agent-backups` (mode `0600`, pruned by count and age) and restore puts the exact bytes back. Overwriting an existing file always requires approval, even inside a workspace; creating a new file does not.
+
+Restore accepts an unchanged file or the completed agent edit recorded for that backup. A different existing destination (including a file recreated with the same agent-output bytes) returns HTTP **409** without overwriting it. Existing legacy records have no known destination fingerprint and also require explicit `?force=true` when the destination exists. Ask the user before choosing force: it discards the destination's current contents. A missing destination can be recreated without force; original bytes already present make restore a no-op. Symlink destinations or parent directories are refused even with force, as are edits detected while staging a restore.
+
+Fingerprints contain SHA-256 and file identity/change metadata, never file contents. A failed post-edit fingerprint update is reported in the tool result and leaves restore conservative. Restores stage a private sibling file before atomic replacement, with a final destination check. The backend lock serializes its own worker threads; the final check is best effort against other processes, not a cross-process compare-and-swap or power-loss guarantee.
 
 ## 🔐 Authentication
 

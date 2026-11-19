@@ -582,3 +582,24 @@ def test_restore_rejects_unknown_id(tmp_path, monkeypatch):
     monkeypatch.setattr(settings, "data_dir", str(tmp_path / "data"))
     with pytest.raises(agent_backups.RestoreError):
         agent_backups.restore("nope")
+
+
+@pytest.mark.asyncio
+async def test_completed_state_failure_warns_without_claiming_edit_failed(workspace, monkeypatch):
+    from pathlib import Path
+
+    from app.services import agent_backups as backups
+
+    target = workspace / "main.py"
+    original = target.read_text()
+    monkeypatch.setattr(backups, "record_completed_edit", lambda *args: False)
+    result = await agent_tools.call_tool(
+        "write_file", {"path": str(target), "content": "completed agent edit"}
+    )
+    assert "Replaced" in result and "post-edit state could not be recorded" in result
+    assert "force" in result
+    assert target.read_text() == "completed agent edit"
+    record = backups.list_backups()[0]
+    assert Path(record["backup_path"]).read_text() == original
+    with pytest.raises(backups.RestoreConflict):
+        backups.restore(record["id"])
