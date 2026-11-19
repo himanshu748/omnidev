@@ -101,10 +101,8 @@ jobs:
         run: pytest -q
 
   typecheck:
-    name: Backend (Pyright, advisory)
+    name: Backend (Pyright)
     runs-on: ubuntu-latest
-    # Incremental rollout: make this required once the whole-app baseline is clean.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -132,7 +130,12 @@ jobs:
 
       - name: Report the whole-app basic-mode baseline
         if: ${{ !cancelled() }}
-        run: make typecheck-all
+        run: |
+          set +e
+          make typecheck-all
+          baseline_status=$?
+          set -e
+          printf 'Whole-app basic-mode baseline exit: %s (informational)\n' "$baseline_status"
 
   backend-macos:
     name: Backend (macOS Vision OCR)
