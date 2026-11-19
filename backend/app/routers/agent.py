@@ -8,7 +8,7 @@ import json
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
-from app.routers.errors import bad_request, not_found, service_unavailable
+from app.routers.errors import bad_request, conflict, not_found, service_unavailable
 from app.schemas.agent import (
     AgentRunRequest,
     ApprovalDecisionRequest,
@@ -83,10 +83,12 @@ async def list_backups(limit: int = 50):
 
 
 @router.post("/backups/{backup_id}/restore")
-async def restore_backup(backup_id: str):
+async def restore_backup(backup_id: str, force: bool = False):
     """Put a file back the way it was before the agent touched it."""
     try:
-        return agent_backups.restore(backup_id)
+        return agent_backups.restore(backup_id, force=force)
+    except agent_backups.RestoreConflict as exc:
+        raise conflict(str(exc)) from exc
     except agent_backups.RestoreError as exc:
         raise not_found(str(exc)) from exc
 

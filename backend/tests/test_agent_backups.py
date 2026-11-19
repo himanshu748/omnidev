@@ -44,7 +44,7 @@ def test_failed_replace_preserves_manifest_and_referenced_backup(tmp_path, monke
     assert manifest.read_bytes() == before
     assert Path(original["backup_path"]).read_text() == "first"
     assert set(backups._root().iterdir()) == {manifest, Path(original["backup_path"])}
-    backups.restore(original["id"])
+    backups.restore(original["id"], force=True)
     assert target.read_text() == "first"
 
 
@@ -107,7 +107,7 @@ def test_age_and_count_retention_keep_valid_restore_records(tmp_path, monkeypatc
     assert [r["id"] for r in kept] == [created[2]["id"], created[1]["id"]]
     assert not Path(old["backup_path"]).exists()
     assert not Path(created[0]["backup_path"]).exists()
-    backups.restore(created[1]["id"])
+    backups.restore(created[1]["id"], force=True)
     assert target.read_text() == "two"
 
 

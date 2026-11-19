@@ -13,9 +13,11 @@ by count and age so this never becomes an unbounded second copy of a project.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
+import stat
 import tempfile
 import threading
 import time
@@ -43,6 +45,29 @@ def _manifest_path() -> Path:
     return _root() / "manifest.jsonl"
 
 
+def _stat_key(info: os.stat_result) -> tuple[int, ...]:
+    return (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns, info.st_ctime_ns)
+
+
+def _fingerprint(path: Path) -> dict[str, Any] | None:
+    """Hash a stable regular file without following a final symlink."""
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    except FileNotFoundError:
+        return None
+    with os.fdopen(fd, "rb") as handle:
+        before = os.fstat(handle.fileno())
+        if not stat.S_ISREG(before.st_mode):
+            raise OSError("Not a regular file.")
+        digest = hashlib.sha256()
+        while chunk := handle.read(65536):
+            digest.update(chunk)
+        after = os.fstat(handle.fileno())
+        if _stat_key(before) != _stat_key(after) or _stat_key(after) != _stat_key(path.lstat()):
+            raise OSError("File changed while being fingerprinted.")
+    return {"sha256": digest.hexdigest(), "stat": list(_stat_key(after))}
+
+
 def snapshot(path: Path, *, reason: str = "") -> dict[str, Any] | None:
     """
     Copy a file aside before it is changed. Returns the backup record, or
@@ -56,6 +81,11 @@ def snapshot(path: Path, *, reason: str = "") -> dict[str, Any] | None:
         try:
             if not path.is_file():
                 return None
+            if path.is_symlink():
+                raise OSError("Refusing to snapshot a symlink.")
+            # Accept stable aliases such as /var on macOS, then retain the
+            # canonical parent path so a later symlink replacement is detected.
+            path = path.resolve(strict=True)
             size = path.stat().st_size
             if size > MAX_BACKUP_BYTES:
                 return {
@@ -64,10 +94,16 @@ def snapshot(path: Path, *, reason: str = "") -> dict[str, Any] | None:
                     "backed_up": False,
                     "note": f"file is {size / 1e6:.1f} MB, too large to snapshot",
                 }
+            original = _fingerprint(path)
             backup_id = f"{int(time.time())}-{uuid.uuid4().hex[:8]}"
             destination = _root() / f"{backup_id}{path.suffix or '.bak'}"
             shutil.copy2(path, destination)
             os.chmod(destination, 0o600)
+            saved = _fingerprint(destination)
+            if original is None or saved is None or original != _fingerprint(path):
+                raise OSError("Source changed while being snapshotted.")
+            if saved["sha256"] != original["sha256"]:
+                raise OSError("Snapshot does not match the original.")
             record = {
                 "id": backup_id,
                 "path": str(path),
@@ -76,6 +112,8 @@ def snapshot(path: Path, *, reason: str = "") -> dict[str, Any] | None:
                 "reason": reason,
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "backed_up": True,
+                "original_sha256": saved["sha256"],
+                "expected_target": original,
             }
             _prune([*_load_manifest(), record])
             return record
@@ -157,23 +195,87 @@ def list_backups(limit: int = 50) -> list[dict[str, Any]]:
     return list(reversed(records))[:limit]
 
 
+def record_completed_edit(backup_id: str, content: str) -> bool:
+    """Remember only the agent's completed output; fail closed on a race/error."""
+    with _MANIFEST_LOCK:
+        try:
+            records = _load_manifest()
+            record = next((r for r in records if r.get("id") == backup_id), None)
+            if record is None:
+                return False
+            current = _fingerprint(Path(record["path"]))
+            intended_hash = hashlib.sha256(content.encode("utf-8")).hexdigest()
+            if current is None or current["sha256"] != intended_hash:
+                return False
+            record["expected_target"] = current
+            _write_manifest(records)
+            return True
+        except (OSError, ValueError, TypeError):
+            # The edit already happened. Keep the old manifest so restore
+            # requires an explicit overwrite rather than trusting unknown bytes.
+            return False
+
+
 class RestoreError(ValueError):
     """The backup cannot be restored."""
 
 
-def restore(backup_id: str) -> dict[str, Any]:
-    """Put a snapshot back where it came from."""
+class RestoreConflict(RestoreError):
+    """Restoring would overwrite an unexpected destination state."""
+
+
+def _restore_target_state(target: Path) -> dict[str, Any] | None:
+    # Refuse visible symlinks in the destination and its canonical parent path.
+    if any(path.is_symlink() for path in (target, *target.parents)):
+        raise RestoreConflict("Restore conflict: remove the destination symlink before restoring.")
+    try:
+        return _fingerprint(target)
+    except OSError as exc:
+        raise RestoreConflict("Restore conflict: destination is not a stable regular file.") from exc
+
+
+def restore(backup_id: str, *, force: bool = False) -> dict[str, Any]:
+    """Restore unchanged/agent-edited files; other existing files need force."""
     with _MANIFEST_LOCK:
         record = next((r for r in _load_manifest() if r.get("id") == backup_id), None)
         if record is None:
             raise RestoreError(f"Unknown backup id {backup_id!r}.")
         source = Path(record.get("backup_path", ""))
-        if not source.is_file():
+        if source.is_symlink() or not source.is_file():
             raise RestoreError("The snapshot file is gone; it may have been pruned.")
         target = Path(record["path"])
+        current = _restore_target_state(target)
+        result = {"id": backup_id, "restored_to": str(target), "bytes": record.get("bytes", 0)}
+        # Repeated undo is harmless when the original bytes are already present.
+        if current is not None and current["sha256"] == record.get("original_sha256"):
+            return result
+        if current is not None and current != record.get("expected_target") and not force:
+            raise RestoreConflict(
+                "Restore conflict: destination changed or its expected state is unknown; "
+                "retry with force=true only to explicitly overwrite it."
+            )
+        temporary: Path | None = None
         try:
             target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.copy2(source, target)
+            fd, name = tempfile.mkstemp(prefix=".restore-", suffix=".tmp", dir=target.parent)
+            os.close(fd)
+            temporary = Path(name)
+            shutil.copy2(source, temporary)
+            saved = _fingerprint(temporary)
+            expected_hash = record.get("original_sha256")
+            if expected_hash and (saved is None or saved["sha256"] != expected_hash):
+                raise RestoreError("The snapshot no longer matches its recorded fingerprint.")
+            if _restore_target_state(target) != current:
+                raise RestoreConflict("Restore conflict: destination changed during restore; retry.")
+            # Atomic publication avoids exposing a partially copied destination.
+            # The final check is best effort across processes, not filesystem CAS.
+            os.replace(temporary, target)
         except OSError as exc:
-            raise RestoreError(f"Could not restore to {target}: {exc}") from exc
-        return {"id": backup_id, "restored_to": str(target), "bytes": record.get("bytes", 0)}
+            raise RestoreError("Could not restore the snapshot.") from exc
+        finally:
+            if temporary is not None:
+                try:
+                    temporary.unlink(missing_ok=True)
+                except OSError:
+                    pass
+        return result
