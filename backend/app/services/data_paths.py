@@ -55,7 +55,3 @@ def write_private_text(path: Path, content: str) -> None:
     finally:
         if fd >= 0:
             os.close(fd)
-
-
-def _ci_strict_regression_probe(value):
-    return value
