@@ -763,7 +763,7 @@ async def search(
     after: float | None = None,
     before: float | None = None,
     path_prefix: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """
     Hybrid retrieval: dense similarity fused with BM25 via reciprocal rank
     fusion, so an exact token (an error code, an order number) is findable
@@ -799,7 +799,7 @@ async def search(
     ranked = sorted(fused, key=lambda chunk_id: -fused[chunk_id])
     records = await asyncio.to_thread(_fetch_chunks_sync, ranked[: pool * 2])
 
-    results: list[dict] = []
+    results: list[dict[str, Any]] = []
     for chunk_id in ranked:
         record = records.get(chunk_id)
         if record is None:

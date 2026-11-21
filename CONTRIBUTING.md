@@ -181,6 +181,33 @@ def scrape(data):
     ...
 ```
 
+### Incremental Python type checking
+
+The development-only Pyright checker is pinned in `backend/requirements-typecheck.lock`,
+separate from the runtime lock. After `make setup`, install it and run:
+
+```bash
+make setup-typecheck  # requires Node.js on PATH (CI pins Node 24.9.0)
+make typecheck        # strict: file_guards, url_guard, agent_tools, data_paths
+make typecheck-all    # basic: all backend/app, retaining strictness in those four files
+```
+
+`backend/pyrightconfig.json` targets Python 3.11 and uses `backend/.venv` for
+installed dependency types. The strict service baseline is clean. The whole-app
+baseline still reports existing diagnostics outside those services, including
+untyped dynamic PyObjC symbols on macOS; a nonzero exit from `typecheck-all` is
+expected until those are addressed. Diagnostics are not excluded or disabled.
+The `Backend (Pyright, advisory)` CI job runs both checks and initially allows
+failure, as this is an incremental rollout. Once the remaining baseline is clean,
+a maintainer can remove its `continue-on-error` setting to enforce it.
+
+To update the checker lock without repinning runtime dependencies:
+
+```bash
+cd backend
+uv pip compile requirements-typecheck.txt --constraint requirements.lock --python-version 3.11 --universal --generate-hashes -o requirements-typecheck.lock
+```
+
 ### Swift
 
 - Views live in `Views/`, services in `Services/`, and shared helpers in `Support/`.

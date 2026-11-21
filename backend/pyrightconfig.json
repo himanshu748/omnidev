@@ -1,0 +1,15 @@
+{
+  "include": [
+    "app"
+  ],
+  "typeCheckingMode": "basic",
+  "strict": [
+    "app/services/file_guards.py",
+    "app/services/url_guard.py",
+    "app/services/agent_tools.py",
+    "app/services/data_paths.py"
+  ],
+  "pythonVersion": "3.11",
+  "venvPath": ".",
+  "venv": ".venv"
+}

@@ -62,7 +62,7 @@ def is_blocked_host(host: str | None) -> bool:
     return not resolved or any(_ip_is_blocked(ip) for ip in resolved)
 
 
-def _ip_is_blocked(ip: str) -> bool:
+def _ip_is_blocked(ip: str | int) -> bool:
     if ip in _BLOCKED_EXACT_IPS:
         return True
     try:
@@ -79,7 +79,7 @@ def _ip_is_blocked(ip: str) -> bool:
     )
 
 
-def validate_public_url(url: str, *, allow_schemes: tuple[str, ...] = ("http", "https")) -> str:
+def validate_public_url(url: object, *, allow_schemes: tuple[str, ...] = ("http", "https")) -> str:
     """
     Return the URL if it is safe to fetch, else raise BlockedURLError.
 

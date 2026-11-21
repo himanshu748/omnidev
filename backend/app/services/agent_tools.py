@@ -22,7 +22,7 @@ import difflib
 import shutil
 import subprocess
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from app.services import agent_backups, command_sandbox, knowledge_service, workspace_service
 
@@ -331,7 +331,7 @@ def _list_dir(path_raw: str) -> str:
     path = resolve_path(path_raw)
     if not path.is_dir():
         raise ToolError(f"Not a directory: {path}")
-    entries = []
+    entries: list[str] = []
     for child in sorted(path.iterdir()):
         if child.name.startswith(".") or child.name in _EXCLUDED_LIST_DIRS:
             continue
@@ -342,7 +342,7 @@ def _list_dir(path_raw: str) -> str:
     return "\n".join(entries) if entries else "(empty directory)"
 
 
-def _write_file(path_raw: str, content: str) -> str:
+def _write_file(path_raw: str, content: str | None) -> str:
     path = resolve_path(path_raw)
     if content is None:
         raise ToolError("content is required.")
@@ -523,7 +523,7 @@ def precheck(tool: str, arguments: dict[str, Any]) -> str | None:
     try:
         _check_command(
             str(arguments.get("command", "")),
-            [str(a) for a in (arguments.get("args") or [])],
+            [str(a) for a in cast(list[object], arguments.get("args") or [])],
         )
     except ToolError as exc:
         return str(exc)
