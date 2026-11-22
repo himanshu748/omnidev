@@ -113,6 +113,7 @@ def snapshot(path: Path, *, reason: str = "") -> dict[str, Any] | None:
                 "created_at": datetime.now(timezone.utc).isoformat(),
                 "backed_up": True,
                 "original_sha256": saved["sha256"],
+                "original_target": original,
                 "expected_target": original,
             }
             _prune([*_load_manifest(), record])
@@ -234,10 +235,40 @@ def _restore_target_state(target: Path) -> dict[str, Any] | None:
         raise RestoreConflict("Restore conflict: destination is not a stable regular file.") from exc
 
 
+def _advance_undo_chain(records: list[dict[str, Any]], record: dict[str, Any], saved: dict[str, Any]) -> bool:
+    """Rebind proven predecessor expectations after our own atomic replacement."""
+    original = record.get("original_target")
+    if not isinstance(original, dict):
+        return True  # Legacy snapshots lack proof of the pre-edit file identity.
+    previous = []
+    for candidate in records:
+        if candidate.get("id") == record["id"]:
+            break
+        if candidate.get("path") == record["path"] and candidate.get("expected_target") == original:
+            previous.append(candidate)
+    if not previous:
+        return True
+    try:
+        current = _restore_target_state(Path(record["path"]))
+        # Rename changes ctime, but not the staged inode, bytes or mtime. Do not
+        # adopt a different writer's replacement merely because its bytes match.
+        if current is None or current["sha256"] != saved["sha256"] or current["stat"][:-1] != saved["stat"][:-1]:
+            return False
+        for candidate in previous:
+            candidate["expected_target"] = current
+        _write_manifest(records)
+        return True
+    except (OSError, ValueError, TypeError):
+        # The file is restored; failed metadata publication must keep the old,
+        # stricter expectations rather than authorize an unknown destination.
+        return False
+
+
 def restore(backup_id: str, *, force: bool = False) -> dict[str, Any]:
     """Restore unchanged/agent-edited files; other existing files need force."""
     with _MANIFEST_LOCK:
-        record = next((r for r in _load_manifest() if r.get("id") == backup_id), None)
+        records = _load_manifest()
+        record = next((r for r in records if r.get("id") == backup_id), None)
         if record is None:
             raise RestoreError(f"Unknown backup id {backup_id!r}.")
         source = Path(record.get("backup_path", ""))
@@ -270,6 +301,8 @@ def restore(backup_id: str, *, force: bool = False) -> dict[str, Any]:
             # Atomic publication avoids exposing a partially copied destination.
             # The final check is best effort across processes, not filesystem CAS.
             os.replace(temporary, target)
+            if saved is not None and not _advance_undo_chain(records, record, saved):
+                result["note"] = "Restored. An earlier backup may still require explicit overwrite confirmation."
         except OSError as exc:
             raise RestoreError("Could not restore the snapshot.") from exc
         finally:

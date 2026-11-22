@@ -286,3 +286,73 @@ def test_snapshot_canonicalizes_existing_parent_alias(tmp_path):
     assert backups.record_completed_edit(record["id"], "agent output")
     backups.restore(record["id"])
     assert (alias / "source.txt").read_text() == "original"
+
+
+def _two_completed_edits(tmp_path):
+    target = tmp_path / "chain.txt"
+    target.write_text("before")
+    first = backups.snapshot(target)
+    target.write_text("first agent edit")
+    assert backups.record_completed_edit(first["id"], "first agent edit")
+    second = backups.snapshot(target)
+    target.write_text("second agent edit")
+    assert backups.record_completed_edit(second["id"], "second agent edit")
+    return target, first, second
+
+
+def test_consecutive_agent_edits_can_be_undone_in_reverse_order(tmp_path):
+    target, first, second = _two_completed_edits(tmp_path)
+    backups.restore(second["id"])
+    assert target.read_text() == "first agent edit"
+    backups.restore(first["id"])
+    assert target.read_text() == "before"
+
+
+def test_chained_undo_still_preserves_a_later_independent_edit(tmp_path):
+    target, first, second = _two_completed_edits(tmp_path)
+    backups.restore(second["id"])
+    target.write_text("independent edit after undo")
+    with pytest.raises(backups.RestoreConflict):
+        backups.restore(first["id"])
+    assert target.read_text() == "independent edit after undo"
+
+
+def test_intervening_recreation_does_not_reauthorize_an_older_backup(tmp_path):
+    target = tmp_path / "chain.txt"
+    target.write_text("before")
+    first = backups.snapshot(target)
+    target.write_text("agent edit")
+    assert backups.record_completed_edit(first["id"], "agent edit")
+    target.rename(tmp_path / "previous-file")
+    target.write_text("agent edit")
+    second = backups.snapshot(target)
+    target.write_text("second edit")
+    assert backups.record_completed_edit(second["id"], "second edit")
+    backups.restore(second["id"])
+    with pytest.raises(backups.RestoreConflict):
+        backups.restore(first["id"])
+    assert target.read_text() == "agent edit"
+
+
+def test_failed_chain_publication_preserves_older_conflict_guard(tmp_path, monkeypatch):
+    target, first, second = _two_completed_edits(tmp_path)
+    before = backups._manifest_path().read_bytes()
+    def fail_write(records):
+        raise OSError("injected publication failure")
+    monkeypatch.setattr(backups, "_write_manifest", fail_write)
+    result = backups.restore(second["id"])
+    assert target.read_text() == "first agent edit"
+    assert "confirmation" in result["note"]
+    assert backups._manifest_path().read_bytes() == before
+    with pytest.raises(backups.RestoreConflict):
+        backups.restore(first["id"])
+
+
+def test_three_consecutive_agent_edits_can_be_undone(tmp_path):
+    target, first, second = _two_completed_edits(tmp_path)
+    third = backups.snapshot(target)
+    target.write_text("third edit")
+    assert backups.record_completed_edit(third["id"], "third edit")
+    for record, expected in [(third, "second agent edit"), (second, "first agent edit"), (first, "before")]:
+        backups.restore(record["id"])
+        assert target.read_text() == expected
