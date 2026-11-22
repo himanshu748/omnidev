@@ -308,6 +308,31 @@ def test_consecutive_agent_edits_can_be_undone_in_reverse_order(tmp_path):
     assert target.read_text() == "before"
 
 
+@pytest.mark.parametrize("recreated", [False, True])
+def test_identical_agent_write_keeps_undo_chain_but_recreation_does_not(tmp_path: Path, recreated: bool) -> None:
+    target = tmp_path / "chain.txt"
+    target.write_text("before")
+    first = backups.snapshot(target)
+    target.write_text("agent edit")
+    assert backups.record_completed_edit(first["id"], "agent edit")
+    second = backups.snapshot(target)
+    target.write_text("agent edit")
+    assert backups.record_completed_edit(second["id"], "agent edit")
+    if recreated:
+        target.rename(tmp_path / "previous-file")
+        target.write_text("agent edit")
+    unchanged = target.stat()
+    backups.restore(second["id"])
+    assert target.stat() == unchanged
+    if recreated:
+        with pytest.raises(backups.RestoreConflict):
+            backups.restore(first["id"])
+        assert target.read_text() == "agent edit"
+    else:
+        backups.restore(first["id"])
+        assert target.read_text() == "before"
+
+
 def test_chained_undo_still_preserves_a_later_independent_edit(tmp_path):
     target, first, second = _two_completed_edits(tmp_path)
     backups.restore(second["id"])

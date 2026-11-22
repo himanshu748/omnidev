@@ -279,6 +279,8 @@ def restore(backup_id: str, *, force: bool = False) -> dict[str, Any]:
         result = {"id": backup_id, "restored_to": str(target), "bytes": record.get("bytes", 0)}
         # Repeated undo is harmless when the original bytes are already present.
         if current is not None and current["sha256"] == record.get("original_sha256"):
+            if current == record.get("expected_target") and not _advance_undo_chain(records, record, current):
+                result["note"] = "Restored. An earlier backup may still require explicit overwrite confirmation."
             return result
         if current is not None and current != record.get("expected_target") and not force:
             raise RestoreConflict(
