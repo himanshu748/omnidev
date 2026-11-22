@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Detect agent backup restore conflicts before overwriting newer independent edits. Record original/completed-edit fingerprints, return HTTP 409 with an explicit force option, and preserve destinations on failed staged restores. Preserve chained undo after identical-content agent writes without trusting recreated destinations. Legacy existing-file restores require force; symlink paths are refused.
+
 - Serialize agent backup manifest updates and atomically publish complete manifests before pruning old snapshots. Failed writes preserve previous backups and report a safe failure result.
 - Enforce SQLite session foreign keys on every connection so chat messages cannot outlive a deleted conversation. Concurrent deletion returns a missing-session error instead of creating orphan messages; existing history is preserved.
 

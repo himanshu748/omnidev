@@ -57,6 +57,8 @@ EXPECTED_ENDPOINTS = [
     "POST /api/knowledge/search",
     "GET /api/knowledge/status",
     "POST /api/agent/stream",
+    "GET /api/agent/backups",
+    "POST /api/agent/backups/{backup_id}/restore",
     "GET /api/agent/workspaces",
     "POST /api/agent/workspaces",
     "DELETE /api/agent/workspaces",

@@ -342,6 +342,17 @@ def _list_dir(path_raw: str) -> str:
     return "\n".join(entries) if entries else "(empty directory)"
 
 
+def _backup_note(backup: dict[str, Any] | None, content: str) -> str:
+    if backup and backup.get("backed_up"):
+        note = f" The previous version is saved as backup {backup['id']}."
+        if not agent_backups.record_completed_edit(backup["id"], content):
+            note += " Warning: post-edit state could not be recorded; restore may require force."
+        return note
+    if backup:
+        return f" Warning: no backup was saved ({backup.get('note', 'unknown reason')})."
+    return ""
+
+
 def _write_file(path_raw: str, content: str | None) -> str:
     path = resolve_path(path_raw)
     if content is None:
@@ -362,12 +373,7 @@ def _write_file(path_raw: str, content: str | None) -> str:
     lines = content.count("\n") + 1
     if not existed:
         return f"Created {path} ({lines} lines)."
-    note = ""
-    if backup and backup.get("backed_up"):
-        note = f" The previous version is saved as backup {backup['id']}."
-    elif backup:
-        note = f" Warning: no backup was saved ({backup.get('note', 'unknown reason')})."
-    return f"Replaced {path} ({lines} lines).{note}"
+    return f"Replaced {path} ({lines} lines).{_backup_note(backup, content)}"
 
 
 def _closest_region(haystack: str, needle: str) -> str:
@@ -415,13 +421,13 @@ def _edit_file(path_raw: str, old_text: str, new_text: str) -> str:
         )
 
     updated = original.replace(old_text, new_text, 1)
-    agent_backups.snapshot(path, reason="edit_file")
+    backup = agent_backups.snapshot(path, reason="edit_file")
     try:
         path.write_text(updated, encoding="utf-8")
     except OSError as exc:
         raise ToolError(f"Could not write {path}: {exc}") from exc
     delta = updated.count("\n") - original.count("\n")
-    return f"Edited {path} ({delta:+d} lines)."
+    return f"Edited {path} ({delta:+d} lines).{_backup_note(backup, updated)}"
 
 
 def _check_command(command: str, args: list[str]) -> None:
