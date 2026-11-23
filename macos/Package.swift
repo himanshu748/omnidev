@@ -16,6 +16,11 @@ let package = Package(
             resources: [
                 .copy("Resources/AppIcon.png")
             ]
+        ),
+        .testTarget(
+            name: "OmniDevMacTests",
+            dependencies: ["OmniDevMac"],
+            resources: [.copy("Fixtures")]
         )
     ]
 )

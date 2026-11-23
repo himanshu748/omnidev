@@ -47,6 +47,10 @@ enum LocalModelCatalog {
     /// The best default for this machine: 12B needs headroom for its 7.6GB
     /// weights plus context; below 16GB the E2B keeps everything responsive.
     static var recommendedForThisMac: Entry {
-        machineMemoryGB >= 16 ? entries[0] : entries[2]
+        recommended(memoryGB: machineMemoryGB)
+    }
+
+    static func recommended(memoryGB: Int) -> Entry {
+        memoryGB >= 16 ? entries[0] : entries[2]
     }
 }
