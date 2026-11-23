@@ -154,10 +154,12 @@ When you touch one of these areas, add or extend a test that proves the guard st
 make test                          # backend suite (same as CI)
 cd backend && .venv/bin/pytest tests/test_scraper.py -q -k ssrf   # one focused test
 cd macos && swift build            # native app must compile (CI builds -c release)
+cd macos && swift test             # native XCTest logic and backend-wire fixtures
 ```
 
 - The `Backend (macOS Vision OCR)` CI job runs the backend suite on macOS 15, including `tests/test_vision_ocr_macos.py`. That test extracts the synthetic `ORBIT SEARCH` PNG with real on-device Vision OCR and verifies knowledge indexing/retrieval; only embeddings use an offline fake. It skips on non-macOS platforms, but a broken Vision installation on macOS fails the test. The checked-in PNG needs no image-generation dependency at test time.
 - Tests must not need the network, Ollama, Gemini, or real AWS. Use `moto` for AWS, `tests/fake_mcp_server.py` for MCP, and monkeypatch the `ai_service` calls.
+- `macos/Tests/OmniDevMacTests` covers numeric update-version ordering, memory-based model recommendations, checkout selection in private temporary directories, and the app's existing JSON decoder. Its response fixtures are also validated against the backend Pydantic schemas by `backend/tests/test_swift_fixtures.py`. Mac CI runs `swift test`; these tests do not launch the app or install its engine.
 - Tests use a temporary `data_dir` (see `conftest.py`). Never write to `~/.omnidev` from a test.
 - macOS-only code such as Vision OCR via `pyobjc` is installed only on `darwin`, and backend CI runs on Ubuntu. Guard those tests with a platform skip.
 - For UI changes, include before and after screenshots in the PR.

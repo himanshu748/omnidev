@@ -166,7 +166,7 @@ jobs:
         run: pytest -q
 
   macos:
-    name: macOS app (swift build)
+    name: macOS app (swift build and test)
     runs-on: macos-15
     defaults:
       run:
@@ -178,6 +178,9 @@ jobs:
 
       - name: Build Swift package
         run: swift build -c release
+
+      - name: Test Swift package
+        run: swift test
 
       - name: Code Gen preview network isolation (real WKWebView)
         working-directory: .

@@ -16,12 +16,8 @@ enum ProjectPaths {
         candidates.append(cwd)
         candidates.append(cwd.deletingLastPathComponent())
 
-        for candidate in candidates {
-            let backend = candidate.appendingPathComponent("backend")
-            let launcher = candidate.appendingPathComponent("scripts/macos/launch-omnidev.sh")
-            if fileManager.fileExists(atPath: backend.path) && fileManager.fileExists(atPath: launcher.path) {
-                return candidate.standardizedFileURL
-            }
+        if let checkout = checkoutRoot(candidates: candidates) {
+            return checkout
         }
 
         // No dev checkout — install the engine bundled inside the .app.
@@ -30,5 +26,18 @@ enum ProjectPaths {
         }
 
         return cwd.standardizedFileURL
+    }
+
+    /// Select a checkout without invoking the installed-engine fallback.
+    static func checkoutRoot(candidates: [URL]) -> URL? {
+        let fileManager = FileManager.default
+        for candidate in candidates {
+            let backend = candidate.appendingPathComponent("backend")
+            let launcher = candidate.appendingPathComponent("scripts/macos/launch-omnidev.sh")
+            if fileManager.fileExists(atPath: backend.path) && fileManager.fileExists(atPath: launcher.path) {
+                return candidate.standardizedFileURL
+            }
+        }
+        return nil
     }
 }

@@ -1,0 +1,20 @@
+{
+  "url": "https://example.com",
+  "title": "Fixture",
+  "status_code": 200,
+  "content": "Fixture page",
+  "screenshot_b64": null,
+  "pdf_b64": null,
+  "links": [
+    {
+      "href": "https://example.org",
+      "text": "External",
+      "is_external": true
+    }
+  ],
+  "metadata": null,
+  "markdown": null,
+  "article": null,
+  "word_count": null,
+  "elapsed_ms": 12
+}

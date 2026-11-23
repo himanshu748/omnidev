@@ -1,0 +1,11 @@
+{
+  "files": [
+    {
+      "path": "index.html",
+      "content": "<main>Fixture</main>"
+    }
+  ],
+  "instructions": "Preview locally",
+  "summary": "Fixture project",
+  "entry": "index.html"
+}

@@ -1,0 +1,19 @@
+{
+  "action": "ec2.stop_instances",
+  "params": {},
+  "raw_result": null,
+  "summary": "Confirm before stopping",
+  "needs_confirmation": true,
+  "plan": {
+    "service": "ec2",
+    "operation": "stop_instances",
+    "params": {
+      "InstanceIds": [
+        "i-fixture"
+      ]
+    },
+    "destructive": true,
+    "read_only": false,
+    "impact": "Stops the selected fixture instance"
+  }
+}
